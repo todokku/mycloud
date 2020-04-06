@@ -12,7 +12,7 @@ fi
 
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
-    #apt update
+    apt update
 
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
