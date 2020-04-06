@@ -43,6 +43,7 @@ class MqttController {
      * @param {*} message 
      */
     static _processIncommingMessage(topic, message) {
+        console.log("Processing " + topic);
         let topicSplit = topic.split("/");
         if(topicSplit[0].length == 0)
             topicSplit.shift();
@@ -57,7 +58,6 @@ class MqttController {
                 try {
                     let data = JSON.parse(message.toString());
                     let targetService = this.services[data.service].versions.find(o => o.version == data.version);
-                    console.log(path.join(global.appRoot, "..", "data", "mc_services", "charts", targetService.chartFile));
                     let helmChartData = fs.readFileSync(path.join(global.appRoot, "..", "data", "mc_services", "charts", targetService.chartFile));
 
                     let base64Encoded = helmChartData.toString('base64');
