@@ -20,10 +20,13 @@ export default class Namespace extends Command {
 
 		apiData.name = await cli.prompt(`Please provide a name for the new namespace`);		
 
+		cli.action.start("Creating namespace");
 		let result = await this.api("namespaces", {
 			method: "create",
 			data: apiData
 		});
+		cli.action.stop();
+		
 		if(this.handleError(result)){
 			this.log("Namespace created successfully");
 		}

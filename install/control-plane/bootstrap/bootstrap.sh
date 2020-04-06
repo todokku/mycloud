@@ -39,12 +39,15 @@ git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
 
-cp /home/vagrant/mycloud/install/nginx_resources/nginx.conf /home/vagrant/.mycloud/nginx
-cp /home/vagrant/mycloud/install/nginx_resources/registry.conf /home/vagrant/.mycloud/nginx/conf.d
+cp /home/vagrant/mycloud/install/control-plane/nginx_resources/nginx.conf /home/vagrant/.mycloud/nginx
+cp /home/vagrant/mycloud/install/control-plane/nginx_resources/registry.conf /home/vagrant/.mycloud/nginx/conf.d
 touch /home/vagrant/.mycloud/nginx/conf.d/default.conf
 touch /home/vagrant/.mycloud/nginx/conf.d/tcp.conf
 
 chown -R vagrant: /home/vagrant/.mycloud
+
+API_IP=$(hostname -I | cut -d' ' -f2)
+sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
 echo "[TASK 8] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
@@ -185,9 +188,6 @@ echo "EOT"  >> /home/vagrant/configPrivateRegistry.sh
 
 echo "systemctl stop docker && systemctl start docker"  >> /home/vagrant/configPrivateRegistry.sh
 #echo "printf \"mycloud_master_pass\" | docker login registry.mycloud.org:5043 --username mycloud_master_user --password-stdin"  >> /home/vagrant/configPrivateRegistry.sh
-
-API_IP=$(hostname -I | cut -d' ' -f2)
-sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
 echo "$API_IP mycloud.registry.com registry.mycloud.org" >> /etc/hosts
 

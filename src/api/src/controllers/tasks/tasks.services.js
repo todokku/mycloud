@@ -149,7 +149,7 @@ class TaskServiceController {
         try {
             // console.log(data);
             let targetService = this.services[data.service].versions.find(o => o.version == data.chartVersion);
-            let serviceConfigFile = path.join(global.appRoot, "..", "..", "..", "mc_services", "charts", `${targetService.chartFile.substring(0, targetService.chartFile.lastIndexOf("."))}.yaml`);
+            let serviceConfigFile = path.join(global.appRoot, "..", "data", "mc_services", "charts", `${targetService.chartFile.substring(0, targetService.chartFile.lastIndexOf("."))}.yaml`);
 
             return { "code": 200, "config": fs.readFileSync(serviceConfigFile, "utf8") };
         } catch (error) {
