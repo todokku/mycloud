@@ -36,6 +36,6 @@ Vagrant.configure(2) do |config|
       end
     end
     
-    mycloud.vm.provision "shell", path: "./bootstrap/bootstrap.sh", args: "<PSQL_U> <PSQL_P> <MC_U> <MC_P>"
+    mycloud.vm.provision "shell", path: "./bootstrap/bootstrap.sh", args: "<PSQL_P> <MC_U> <MC_P>"
   end
 end

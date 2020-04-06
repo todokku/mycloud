@@ -1,9 +1,8 @@
 #!/bin/bash
 
-POSTGRES_USER="$1"
-POSTGRES_PASSWORD="$2"
-API_SYSADMIN_USER="$3"
-API_SYSADMIN_PASSWORD="$4"
+POSTGRES_PASSWORD="$1"
+API_SYSADMIN_USER="$2"
+API_SYSADMIN_PASSWORD="$3"
 
 API_IP=$(hostname -I | cut -d' ' -f2)
 
@@ -13,6 +12,7 @@ IP_SUB="${arrIN[@]:(-1)}"
 unset 'arrIN[${#arrIN[@]}-1]'
 DHCP_MASK=$(join_by . "${arrIN[@]}")
 DHCP_RESERVED="[250,251,252,253,254,$IP_SUB]"
+POSTGRES_USER="postgres"
 NGINX_HOST_IP="$API_IP"
 DB_HOST="$API_IP"
 MOSQUITTO_IP="$API_IP"

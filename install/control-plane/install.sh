@@ -45,9 +45,6 @@ install_core_components() {
         exit 1
     fi
 
-    echo "==> Please specify a PostgreSQL username:"
-    read PSQL_U
-
     echo "==> Please specify a PostgreSQL password:"
     read PSQL_P
 
@@ -59,7 +56,6 @@ install_core_components() {
 
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
-    sed -i "s/<PSQL_U>/$PSQL_U/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
     sed -i "s/<MC_U>/$MC_U/g" ./Vagrantfile
     sed -i "s/<MC_P>/$MC_P/g" ./Vagrantfile
