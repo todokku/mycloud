@@ -289,7 +289,7 @@ class MqttController {
                         this.pendingResponses[requestId].reject(new Error("Request timed out"));
                         delete this.pendingResponses[requestId];
                     }
-                }.bind(this, requestId), timeout ? timeout : 3000)
+                }.bind(this, requestId), timeout ? timeout : 6000)
             };
 
             OsController.getIp().then(thisIp => {
