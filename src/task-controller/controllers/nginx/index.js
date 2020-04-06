@@ -23,20 +23,28 @@ class NGinxController {
     static prepareHttpConfigFile() {
         return new Promise((resolve, reject) => {
             (async () => {
+                console.log("HEEEERE 1");
                 let nginxConfigFileContent = `/usr/src/app/nginx/conf.d/default.conf`;
                 let workingTmpFile = nginxConfigFileContent + ".processing";
                 if (fs.existsSync(nginxConfigFileContent)) {
+                    console.log("HEEEERE 2");
                     if (fs.existsSync(workingTmpFile)) {
+                        console.log("HEEEERE 3");
                         fs.unlinkSync(workingTmpFile);
                     }
+                    console.log("HEEEERE 4");
                     fs.copyFileSync(nginxConfigFileContent, workingTmpFile);
+                    console.log("HEEEERE 5");
                 } else {
                     return reject(new Error("Could not find nginx config file"));
                 }
+                console.log("HEEEERE 6");
                 NginxConfFile.create(workingTmpFile, function (err, conf) {
                     if (err) {
+                        console.log("HEEEERE 7", err);
                         return reject(err);
                     }
+                    console.log("HEEEERE 8");
                     resolve(conf);
                 });
             })();
