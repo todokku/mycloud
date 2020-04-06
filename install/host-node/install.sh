@@ -7,18 +7,18 @@ cd $_DIR
 
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
-    #sudo apt update
+    #apt update
 
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
-        sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        sudo apt-get update
-        sudo apt-get install docker-ce docker-ce-cli containerd.io -y
-        sudo usermod -aG docker $USER
+        apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        apt-get update
+        apt-get install docker-ce docker-ce-cli containerd.io -y
+        usermod -aG docker $USER
     else
-        sudo apt-get update
+        apt-get update
     fi
 
     VIRTUALBOX_EXISTS=$(command -v vboxmanage)
@@ -34,16 +34,16 @@ dependencies () {
     NODE_EXISTS=$(command -v node)
     if [ "$NODE_EXISTS" == "" ]; then
         curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh &> /dev/null
-        sudo bash nodesource_setup.sh &> /dev/null
-        sudo apt install nodejs -y &> /dev/null
+        bash nodesource_setup.sh &> /dev/null
+        apt install nodejs -y &> /dev/null
         rm -rf nodesource_setup.sh &> /dev/null
     fi
 
     PM2_EXISTS=$(command -v pm2)
     if [ "$PM2_EXISTS" == "" ]; then
-        sudo npm install pm2@latest -g &> /dev/null
-        sudo chown $(id -u):$(id -g) $HOME/.pm2/rpc.sock $HOME/.pm2/pub.sock
-        sudo pm2 install pm2-logrotate
+        npm install pm2@latest -g &> /dev/null
+        chown $(id -u):$(id -g) $HOME/.pm2/rpc.sock $HOME/.pm2/pub.sock
+        pm2 install pm2-logrotate
         pm2 set pm2-logrotate:max_size 10M
         pm2 set pm2-logrotate:compress true
         pm2 set pm2-logrotate:rotateInterval '* * 1 * *'
@@ -68,7 +68,7 @@ dependencies () {
 
     GIT_EXISTS=$(command -v git)
     if [ "$GIT_EXISTS" == "" ]; then
-        sudo apt install git -y &> /dev/null
+        apt install git -y &> /dev/null
     fi
 }
 
@@ -112,8 +112,9 @@ collect_informations() {
 }
 
 authorize_private_registry() {
-    sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$MASTER_IP:/home/vagrant/configPrivateRegistry.sh ./configPrivateRegistry.sh
-    sudo ./configPrivateRegistry.sh
+    sshpass -p 'kubeadmin' scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$MASTER_IP:/home/vagrant/configPrivateRegistry.sh ./configPrivateRegistry.sh
+    ./configPrivateRegistry.sh
+    rm -rf ./configPrivateRegistry.sh
 }
 
 pull_git() {
@@ -136,9 +137,9 @@ install_core_components() {
     echo "[STEP 2] Installing host controller components ..."
     cd $HOME/mycloud/src/host-node/ # Position cmd in src folder
     
-    HAS_GLUSTER_CONTAINER=$(sudo docker ps -a | grep "gluster-ctl")
+    HAS_GLUSTER_CONTAINER=$(docker ps -a | grep "gluster-ctl")
     if [ "$HAS_GLUSTER_CONTAINER" == "" ]; then
-        sudo docker pull gluster/gluster-centos &> /dev/null
+        docker pull gluster/gluster-centos &> /dev/null
 
         mkdir -p $HOME/.mycloud/gluster/etc/glusterfs &> /dev/null
         mkdir -p $HOME/.mycloud/gluster/var/lib/glusterd &> /dev/null
@@ -178,7 +179,7 @@ install_core_components() {
         pm2 restart mycloud-host-node
     fi
 }
-
+postgremcpass
 # Install dependencies
 dependencies
 
@@ -200,22 +201,36 @@ install_core_components
 echo "[DONE] MyCloud host controller deployed successfully!"
 
 if [ "$IS_GLUSTER_PEER" == "true" ]; then
+    docker rm -f gluster-ctl
+
+    docker run \
+      -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
+      -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
+      -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
+      -v $HOME/.mycloud/gluster/bricks:/bricks:z \
+      -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+      -d --privileged=true \
+      --restart unless-stopped \
+      --net=host -v /dev/:/dev \
+      --name gluster-ctl \
+      gluster/gluster-centos
+
     # Join the gluster network
     echo ""
-    echo "Start the gluster container manually for the first time (adjust the '\$HOME/.mycloud/gluster/bricks' part according to where you wish to mount your volumes):"
-    echo ""
-    echo "  docker run \\"
-    echo "      -v \$HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
-    echo "      -v \$HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
-    echo "      -v \$HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
-    echo "      -v \$HOME/.mycloud/gluster/bricks:/bricks:z \\"
-    echo "      -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
-    echo "      -d --privileged=true \\"
-    echo "      --restart unless-stopped \\"
-    echo "      --net=host -v /dev/:/dev \\"
-    echo "      --name gluster-ctl \\"
-    echo "      gluster/gluster-centos"
-    echo ""
+    # echo "Start the gluster container manually for the first time (adjust the '\$HOME/.mycloud/gluster/bricks' part according to where you wish to mount your volumes):"
+    # echo ""
+    # echo "  docker run \\"
+    # echo "      -v \$HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
+    # echo "      -v \$HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
+    # echo "      -v \$HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
+    # echo "      -v \$HOME/.mycloud/gluster/bricks:/bricks:z \\"
+    # echo "      -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
+    # echo "      -d --privileged=true \\"
+    # echo "      --restart unless-stopped \\"
+    # echo "      --net=host -v /dev/:/dev \\"
+    # echo "      --name gluster-ctl \\"
+    # echo "      gluster/gluster-centos"
+    # echo ""
     echo "To add this Gluster peer to the network, execute the following command on the master gluster peer host:"
     echo ""
     echo "  docker exec gluster-ctl gluster peer probe $(ip route get 1.1.1.1 | grep -oP 'src \K\S+')"
