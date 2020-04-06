@@ -140,6 +140,7 @@ docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
     --network host \
+    -e NGINX_HOST_IP=192.168.0.99 \
     -e DB_HOST=192.168.0.99 \
     -e DB_PASS=postgrespass \
     -e MOSQUITTO_IP=192.168.0.99 \

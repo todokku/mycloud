@@ -61,6 +61,7 @@ export default class ServiceList extends Command {
 
 				if(o.routes.length > 0){
 					o.routes.forEach(b => {
+
 						let routeName = `${chalk.blue('Route:')} ${b.lanUrl.ip}:${b.lanUrl.externalPort} -> ${b.lanUrl.internalPort}`;
 						tree.nodes[serviceName].insert(routeName);
 						if(b.domainNameUrl) {
