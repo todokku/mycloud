@@ -27,7 +27,7 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         vagrant ssh -c "sudo bash /joincluster.sh" 2>/dev/null
         if [ $? -eq 0 ]; then
-            # vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org:5043 --docker-username=$4 --docker-password=$5 --docker-email=mycloud@mycloud.com"
+            # vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org --docker-username=$4 --docker-password=$5 --docker-email=mycloud@mycloud.com"
             # if [ $? -eq 1 ]; then
             #     echo "[ERROR] Could not create private registry secret"
             #     _onError

@@ -21,7 +21,7 @@ if [ $? -eq 0 ]; then
         _onError
     fi
 
-    vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org:5043 --docker-username=$3 --docker-password=$4 --docker-email=mycloud@mycloud.com" 2>/dev/null
+    vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org --docker-username=$3 --docker-password=$4 --docker-email=mycloud@mycloud.com" 2>/dev/null
     if [ $? -eq 1 ]; then
         echo "[ERROR] Could not create private registry secret"
         _onError

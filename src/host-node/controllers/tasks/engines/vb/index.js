@@ -364,7 +364,7 @@ class EngineController {
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
             await this.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
-            await this.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org:5043 --username ${rUser} --password-stdin`, true);
+            await this.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
 
             // Install nginx ingress controller on cluster
             await this.sshExec(masterIpHost[0], [
@@ -494,7 +494,7 @@ class EngineController {
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
             await this.sshExec(workerIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
-            await this.sshExec(workerIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org:5043 --username ${rUser} --password-stdin`, true);
+            await this.sshExec(workerIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
 
             await OSController.execSilentCommand(path.join(targetFolder, "stop_vm.sh"));
             await OSController.execSilentCommand(`VBoxManage storagectl worker.${hash} --name "SATA Controller" --add sata --bootable on`);
@@ -1283,7 +1283,7 @@ class EngineController {
        
         await this.copySsh(node.ip, tmpZipFile, zipPath);
 
-        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org:5043 --username ${rUser} --password-stdin`);
+        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`);
 
         let buildDone = false;
         try {
@@ -1297,13 +1297,13 @@ class EngineController {
             }
             await this.feedbackSshExec(node.ip, `docker build -t ${imageName}:${imageVersion} ${folderPath}`, cb);
             buildDone = true;
-            await this.feedbackSshExec(node.ip, `docker tag ${imageName}:${imageVersion} registry.mycloud.org:5043/${accountName}/${orgName}/${imageName}:${imageVersion}`, cb);
-            await this.feedbackSshExec(node.ip, `docker push registry.mycloud.org:5043/${accountName}/${orgName}/${imageName}:${imageVersion}`, cb);
+            await this.feedbackSshExec(node.ip, `docker tag ${imageName}:${imageVersion} registry.mycloud.org/${accountName}/${orgName}/${imageName}:${imageVersion}`, cb);
+            await this.feedbackSshExec(node.ip, `docker push registry.mycloud.org/${accountName}/${orgName}/${imageName}:${imageVersion}`, cb);
         } finally {
             try {
                 if(buildDone){
                     await this.sshExec(node.ip, 
-                        `docker image rm registry.mycloud.org:5043/${accountName}/${orgName}/${imageName}:${imageVersion}`
+                        `docker image rm registry.mycloud.org/${accountName}/${orgName}/${imageName}:${imageVersion}`
                     );
                 }
                 await this.sshExec(node.ip, `rm -rf ${folderPath}`);
@@ -1320,11 +1320,11 @@ class EngineController {
      * @param {*} rPass 
      */
     static async deleteRegistryImage(node, imageName, rUser, rPass) {
-        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org:5043 --username ${rUser} --password-stdin`);
-        let tagsResponse = await this.sshExec(node.ip, `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org:5043/v2/${imageName}/tags/list`);
+        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`);
+        let tagsResponse = await this.sshExec(node.ip, `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org/v2/${imageName}/tags/list`);
         tagsResponse = JSON.parse(tagsResponse);
 
-        let etag = await this.sshExec(node.ip, `curl -k -sSL -I -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://${rUser}:${rPass}@registry.mycloud.org:5043/v2/${imageName}/manifests/${tagsResponse.tags[0]}" | awk '$1 == "Docker-Content-Digest:" { print $2 }' | tr -d $'\r'`, true);
+        let etag = await this.sshExec(node.ip, `curl -k -sSL -I -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://${rUser}:${rPass}@registry.mycloud.org/v2/${imageName}/manifests/${tagsResponse.tags[0]}" | awk '$1 == "Docker-Content-Digest:" { print $2 }' | tr -d $'\r'`, true);
         if(etag.code != 0){
             throw new Error("Could not delete image");
         }
@@ -1334,7 +1334,7 @@ class EngineController {
             throw new Error("Could not delete image");
         }
 
-        let result = await this.sshExec(node.ip, `curl -k -v -sSL -X DELETE "https://${rUser}:${rPass}@registry.mycloud.org:5043/v2/${imageName}/manifests/${etag}"`, true);
+        let result = await this.sshExec(node.ip, `curl -k -v -sSL -X DELETE "https://${rUser}:${rPass}@registry.mycloud.org/v2/${imageName}/manifests/${etag}"`, true);
         if(result.code != 0){
             throw new Error("Could not delete image");
         }
@@ -1352,11 +1352,11 @@ class EngineController {
      * @param {*} rPass 
      */
     static async getRegistryImages(node, orgName, accountName, rUser, rPass) {
-        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org:5043 --username ${rUser} --password-stdin`);
-        let result = await this.sshExec(node.ip, `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org:5043/v2/_catalog`);
+        await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`);
+        let result = await this.sshExec(node.ip, `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org/v2/_catalog`);
         result = JSON.parse(result);
         let repos = result.repositories.filter(o => o.indexOf(`${accountName}/${orgName}/`) == 0);
-        let tagCommands = repos.map(o => `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org:5043/v2/${o}/tags/list`);
+        let tagCommands = repos.map(o => `curl -k -X GET https://${rUser}:${rPass}@registry.mycloud.org/v2/${o}/tags/list`);
         let allTags = await this.sshExec(node.ip, tagCommands, true, true);
         allTags = allTags.map(o => JSON.parse(o.stdout));
         return allTags;
