@@ -55,8 +55,8 @@ class MqttController {
         // If message is not expected by another local task process 
         else if(!this.expected(topicSplit, message)){
             if(topic.startsWith("/mycloud/k8s/host/query/api/get_chart_binary/")){
+                let data = JSON.parse(message.toString());
                 try {
-                    let data = JSON.parse(message.toString());
                     let targetService = this.services[data.service].versions.find(o => o.version == data.version);
                     let helmChartData = fs.readFileSync(path.join(global.appRoot, "..", "data", "mc_services", "charts", targetService.chartFile));
 
@@ -75,6 +75,7 @@ class MqttController {
                     }));
                 }
             } else if(topic.startsWith("/mycloud/k8s/host/query/api/get_services_config/")){
+                let data = JSON.parse(message.toString());
                 try {
                     this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
