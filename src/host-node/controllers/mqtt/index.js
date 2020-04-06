@@ -67,6 +67,7 @@ class MqttController {
                
                 if(topic.startsWith("/mycloud/k8s/host/query/k8s_nodes/free_memory")){
                     let freeMem = await OsController.getFreeMemory();
+                    console.log("freeMem =>", `/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, freeMem);
                     let data = JSON.parse(message.toString());
                     this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
