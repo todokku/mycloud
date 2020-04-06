@@ -75,10 +75,6 @@ echo "export TERM=xterm" >> /etc/bashrc
 systemctl disable glusterd
 systemctl stop glusterd
 
-
-
-
-
 # Configure kubelet IP since running in VB
 # sed -i '9iEnvironment="KUBELET_EXTRA_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"' /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
 M_IP="$(hostname -I | cut -d' ' -f2)"

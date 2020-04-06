@@ -1,5 +1,24 @@
 #!/bin/bash
 
+POSTGRES_USER="$1"
+POSTGRES_PASSWORD="$2"
+API_SYSADMIN_USER="$3"
+API_SYSADMIN_PASSWORD="$4"
+
+API_IP=$(hostname -I | cut -d' ' -f2)
+
+function join_by { local IFS="$1"; shift; echo "$*"; }
+arrIN=(${API_IP//./ })
+IP_SUB="${arrIN[@]:(-1)}"
+unset 'arrIN[${#arrIN[@]}-1]'
+DHCP_MASK=$(join_by . "${arrIN[@]}")
+DHCP_RESERVED="[250,251,252,253,254,$IP_SUB]"
+NGINX_HOST_IP="$API_IP"
+DB_HOST="$API_IP"
+MOSQUITTO_IP="$API_IP"
+REGISTRY_IP="$API_IP"
+DB_PASS=$POSTGRES_PASSWORD
+
 # Update environment file
 cat >>/etc/environment<<EOF
 LANG=en_US.utf-8
@@ -46,7 +65,6 @@ touch /home/vagrant/.mycloud/nginx/conf.d/tcp.conf
 
 chown -R vagrant: /home/vagrant/.mycloud
 
-API_IP=$(hostname -I | cut -d' ' -f2)
 sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP:3030/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
 echo "[TASK 8] Set root password"
@@ -112,8 +130,8 @@ docker run -d \
     --restart unless-stopped \
     --network host \
     -v /home/vagrant/.mycloud/postgres/data:/var/lib/postgresql/data \
-    -e POSTGRES_PASSWORD=postgrespass \
-    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+    -e POSTGRES_USER=$POSTGRES_USER \
     postgres:12.2-alpine
 
 # Install Mosquitto
@@ -141,13 +159,13 @@ docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
     --network host \
-    -e NGINX_HOST_IP=192.168.0.99 \
-    -e DB_HOST=192.168.0.99 \
-    -e DB_PASS=postgrespass \
-    -e MOSQUITTO_IP=192.168.0.99 \
-    -e API_SYSADMIN_USER=mycloudadmin \
-    -e API_SYSADMIN_PASSWORD=mycloudpassword \
-    -e REGISTRY_IP=192.168.0.99 \
+    -e NGINX_HOST_IP=$NGINX_HOST_IP \
+    -e DB_HOST=$DB_HOST \
+    -e DB_PASS=$DB_PASS \
+    -e MOSQUITTO_IP=$MOSQUITTO_IP \
+    -e API_SYSADMIN_USER=$API_SYSADMIN_USER \
+    -e API_SYSADMIN_PASSWORD=$API_SYSADMIN_PASSWORD \
+    -e REGISTRY_IP=$REGISTRY_IP \
     -e CRYPTO_KEY=YDbxyG16Q6ujlCpjXH2Pq7nPAtJF66jLGwx4RYkHqhY= \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
@@ -159,13 +177,14 @@ docker run -d \
     --name mycloud-ctrl \
     --restart unless-stopped \
     --network host \
-    -e DB_HOST=192.168.0.99 \
-    -e DB_PASS=postgrespass \
-    -e MOSQUITTO_IP=192.168.0.99 \
-    -e API_SYSADMIN_USER=mycloudadmin \
-    -e API_SYSADMIN_PASSWORD=mycloudpassword \
-    -e DHCP_MASK=192.168.0 \
-    -e NGINX_HOST_IP=192.168.0.99 \
+    -e DB_HOST=$DB_HOST \
+    -e DB_PASS=$DB_PASS \
+    -e MOSQUITTO_IP=$MOSQUITTO_IP \
+    -e API_SYSADMIN_USER=$API_SYSADMIN_USER \
+    -e API_SYSADMIN_PASSWORD=$API_SYSADMIN_PASSWORD \
+    -e DHCP_MASK=$DHCP_MASK \
+    -e NGINX_HOST_IP=$NGINX_HOST_IP \
+    -e DHCP_RESERVED=$DHCP_RESERVED \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9

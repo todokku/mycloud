@@ -27,6 +27,5 @@
       "usernameField": "email",
       "passwordField": "password"
     }
-  },
-  "postgres": "postgres://postgres:postgresadmin@192.168.68.161:30809/postgres"
+  }
 }
