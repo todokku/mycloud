@@ -151,39 +151,39 @@ install_core_components() {
         fi
     fi
 
-    if [ "$IS_K8S_NODE" == "true" ]; then
-        cp env.template env
+    # if [ "$IS_K8S_NODE" == "true" ]; then
+    cp env.template env
 
-        VM_BASE=$HOME/mycloud/vm_base
+    VM_BASE=$HOME/mycloud/vm_base
 
-        if [[ $(uname -s) == Darwin ]]; then
-            INET=$(route get 10.10.10.10 | grep 'interface' | tr -s " " | sed -e 's/^[ \t]*//' | cut -d ' ' -f 2)
-        fi
-        if [[ $(uname -s) == Linux ]]; then
-            INET=$(route | grep '^default' | grep -o '[^ ]*$')
-        fi
-
-        sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
-        sed -i "s/<DB_PORT>/5432/g" ./env
-        sed -i "s/<DB_PASS>/$PW/g" ./env
-        sed -i "s/<MOSQUITTO_PORT>/1883/g" ./env
-        sed -i "s/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g" ./env
-        sed -i "s/<NET_INTEFACE>/$INET/g" ./env
-        sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
-        sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
-        sed -i "s/<GLUSTER_VOL>/$GLUSTER_VOLUME/g" ./env
-
-        cp env .env
-        rm env
-
-        HOST_NODE_DEPLOYED=$(pm2 ls | grep "mycloud-host-node")
-        if [ "$HOST_NODE_DEPLOYED" == "" ]; then
-            npm i
-            pm2 start index.js --watch --name mycloud-host-node --time
-        else
-            pm2 restart mycloud-host-node
-        fi
+    if [[ $(uname -s) == Darwin ]]; then
+        INET=$(route get 10.10.10.10 | grep 'interface' | tr -s " " | sed -e 's/^[ \t]*//' | cut -d ' ' -f 2)
     fi
+    if [[ $(uname -s) == Linux ]]; then
+        INET=$(route | grep '^default' | grep -o '[^ ]*$')
+    fi
+
+    sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
+    sed -i "s/<DB_PORT>/5432/g" ./env
+    sed -i "s/<DB_PASS>/$PW/g" ./env
+    sed -i "s/<MOSQUITTO_PORT>/1883/g" ./env
+    sed -i "s/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g" ./env
+    sed -i "s/<NET_INTEFACE>/$INET/g" ./env
+    sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
+    sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
+    sed -i "s/<GLUSTER_VOL>/$GLUSTER_VOLUME/g" ./env
+
+    cp env .env
+    rm env
+
+    HOST_NODE_DEPLOYED=$(pm2 ls | grep "mycloud-host-node")
+    if [ "$HOST_NODE_DEPLOYED" == "" ]; then
+        npm i
+        pm2 start index.js --watch --name mycloud-host-node --time
+    else
+        pm2 restart mycloud-host-node
+    fi
+    # fi
 }
 
 # Install dependencies
