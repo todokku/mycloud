@@ -100,7 +100,8 @@ collect_informations() {
     if [ "$IS_GLUSTER_PEER" == "y" ]; then
         IS_GLUSTER_PEER="true"
 
-        echo "==> What filesystem is used for your volume provisionning (see list of available volumes with the command 'df -h')?:"
+        echo "==> What filesystem is used for your volume provisionning ('/dev/<NAME>'):"
+        echo "    NOTE: To see list of available volumes, use the command 'df -h'. Do NOT enter the '/dev/' portion of the filesystem name)"
         read GLUSTER_VOLUME
         while [[ "$GLUSTER_VOLUME" == "" ]]; do
             echo "==> Invalide answer, try again:"
