@@ -113,7 +113,7 @@ collect_informations() {
 
 authorize_private_registry() {
     sshpass -p 'kubeadmin' scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$MASTER_IP:/home/vagrant/configPrivateRegistry.sh ./configPrivateRegistry.sh
-    ./configPrivateRegistry.sh
+    sudo ./configPrivateRegistry.sh
     rm -rf ./configPrivateRegistry.sh
 }
 
