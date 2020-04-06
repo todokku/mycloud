@@ -158,15 +158,15 @@ install_core_components() {
         INET=$(route | grep '^default' | grep -o '[^ ]*$')
     fi
 
-    sed -i 's/<MASTER_IP>/$MASTER_IP/g' ./env
-    sed -i 's/<DB_PORT>/5432/g' ./env
-    sed -i 's/<DB_PASS>/$PW/g' ./env
-    sed -i 's/<MOSQUITTO_PORT>/1883/g' ./env
-    sed -i 's/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g' ./env
-    sed -i 's/<NET_INTEFACE>/$INET/g' ./env
-    sed -i 's/<IS_K8S_NODE>/$IS_K8S_NODE/g' ./env
-    sed -i 's/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g' ./env
-    sed -i 's/<GLUSTER_VOL>/$GLUSTER_VOLUME/g' ./env
+    sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
+    sed -i "s/<DB_PORT>/5432/g" ./env
+    sed -i "s/<DB_PASS>/$PW/g" ./env
+    sed -i "s/<MOSQUITTO_PORT>/1883/g" ./env
+    sed -i "s/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g" ./env
+    sed -i "s/<NET_INTEFACE>/$INET/g" ./env
+    sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
+    sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
+    sed -i 's/<GLUSTER_VOL>/'"$GLUSTER_VOLUME"'/g' ./env
 
     cp env .env
     rm env
