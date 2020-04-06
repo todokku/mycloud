@@ -215,27 +215,15 @@ class TaskServiceController {
                     };
                     routeData.domainNameUrl = null;
                     
-                    if(service.tcpStream) {
-                        if(service.domainName) {
+                    if(service.domainName) {
+                        if(service.tcpStream) {
                             routeData.domainNameUrl = {
                                 url: `${account.name}-${org.name}-${workspace.name}-${service.namespace}-${service.name}-${service.virtualPort}.${service.domainName}`.toLowerCase(),
                                 internalPort: service.port
                             };
                         } else {
                             routeData.domainNameUrl = {
-                                url: process.env.NGINX_HOST_IP,
-                                internalPort: service.port
-                            };
-                        }
-                    } else {
-                        if(service.domainName) {
-                            routeData.domainNameUrl = {
                                 url: `${account.name}-${org.name}-${workspace.name}-${service.namespace}-${service.name}.${service.domainName}`.toLowerCase(),
-                                internalPort: service.port
-                            };
-                        } else {
-                            routeData.domainNameUrl = {
-                                url: process.env.NGINX_HOST_IP,
                                 internalPort: service.port
                             };
                         }
