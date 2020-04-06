@@ -272,7 +272,7 @@ class MqttController {
      * @param {*} timeout 
      */
     static queryRequestResponse(targetHost, task, payload, timeout) {
-        console.log(`MQTT task: ${task}`);
+        console.log(`MQTT task: ${targetHost}/${task}`);
         return new Promise((resolve, reject) => {
             let requestId = null;
             while(requestId == null){
