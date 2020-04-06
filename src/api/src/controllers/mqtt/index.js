@@ -57,7 +57,7 @@ class MqttController {
                 try {
                     let data = JSON.parse(message.toString());
                     let targetService = this.services[data.service].versions.find(o => o.version == data.version);
-                    let helmChartData = fs.readFileSync(path.join(global.appRoot, "data", "..", "mc_services", "charts", targetService.chartFile));
+                    let helmChartData = fs.readFileSync(path.join(global.appRoot, "..", "data", "mc_services", "charts", targetService.chartFile));
 
                     let base64Encoded = helmChartData.toString('base64');
                     this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
