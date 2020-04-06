@@ -47,7 +47,7 @@ touch /home/vagrant/.mycloud/nginx/conf.d/tcp.conf
 chown -R vagrant: /home/vagrant/.mycloud
 
 API_IP=$(hostname -I | cut -d' ' -f2)
-sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
+sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP:3030/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
 echo "[TASK 8] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
@@ -183,13 +183,13 @@ echo "cat <<EOT >> /etc/docker/certs.d/mycloud.registry.com:5000/ca.crt" >> /hom
 echo "$CRT"  >> /home/vagrant/configPrivateRegistry.sh
 echo "EOT"  >> /home/vagrant/configPrivateRegistry.sh
 
-echo "mkdir -p /etc/docker/certs.d/registry.mycloud.org:5043" >> /home/vagrant/configPrivateRegistry.sh
-echo "cat <<EOT >> /etc/docker/certs.d/registry.mycloud.org:5043/ca.crt" >> /home/vagrant/configPrivateRegistry.sh
+echo "mkdir -p /etc/docker/certs.d/registry.mycloud.org" >> /home/vagrant/configPrivateRegistry.sh
+echo "cat <<EOT >> /etc/docker/certs.d/registry.mycloud.org/ca.crt" >> /home/vagrant/configPrivateRegistry.sh
 echo "$CRT_NGINX"  >> /home/vagrant/configPrivateRegistry.sh
 echo "EOT"  >> /home/vagrant/configPrivateRegistry.sh
 
 echo "systemctl stop docker && systemctl start docker"  >> /home/vagrant/configPrivateRegistry.sh
-#echo "printf \"mycloud_master_pass\" | docker login registry.mycloud.org:5043 --username mycloud_master_user --password-stdin"  >> /home/vagrant/configPrivateRegistry.sh
+#echo "printf \"mycloud_master_pass\" | docker login registry.mycloud.org --username mycloud_master_user --password-stdin"  >> /home/vagrant/configPrivateRegistry.sh
 
 echo "$API_IP mycloud.registry.com registry.mycloud.org" >> /etc/hosts
 
@@ -202,13 +202,13 @@ echo "------------------------------------------------------"
 echo ""
 echo "Once the script executed, you can login to the private repository:"
 echo ""
-echo "\$ docker login registry.mycloud.org:5043"
+echo "\$ docker login registry.mycloud.org"
 echo "NOTE: Username: mycloud_master_user, Password: mycloud_master_pass"
 echo ""
 echo "To push an image to the new registry:"
 echo ""
-echo "\$ docker tag <image name>:<image tag> registry.mycloud.org:5043/<image name>:<image tag>"
-echo "\$ docker push registry.mycloud.org:5043/<image name>:<image tag>"
+echo "\$ docker tag <image name>:<image tag> registry.mycloud.org/<image name>:<image tag>"
+echo "\$ docker push registry.mycloud.org/<image name>:<image tag>"
 echo ""
 echo "[INFO] For K8S, execute the scripe as sudo on each node. You will have to create a secret to hold the basic auth credentials in order to pull images:"
 echo "https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#before-you-begin"
