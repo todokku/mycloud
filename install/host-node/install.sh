@@ -73,6 +73,15 @@ dependencies () {
 }
 
 collect_informations() {
+    LOCAL_IPS="$(hostname -I)"
+    arrIN=(${LOCAL_IPS// / })
+    echo "==> Please select the proper LAN IP address for this VM:"
+    select LOCAL_IP in "${arrIN[@]}"; do 
+    if [ "$LOCAL_IP" != "" ]; then
+        break
+    fi
+    done
+
     echo "==> Please enter the control-plane VM IP:"
     read MASTER_IP  
 
@@ -225,21 +234,12 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
       --name gluster-ctl \
       gluster/gluster-centos
 
-    LOCAL_IPS="$(hostname -I)"
-    arrIN=(${LOCAL_IPS// / })
-    echo "==> Please select the proper LAN IP address for this VM:"
-    select LOCAL_IP in "${arrIN[@]}"; do 
-    if [ "$LOCAL_IP" != "" ]; then
-        break
-    fi
-    done
-  
     # Join the gluster network
     echo ""
     echo "=> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
     echo "   PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
     echo ""
-    echo "  docker exec gluster-ctl gluster peer probe $LOCAL_IPS"
+    echo "   docker exec gluster-ctl gluster peer probe $LOCAL_IPS"
 fi
 
 cd "$_PWD"
