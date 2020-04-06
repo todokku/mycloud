@@ -5,6 +5,11 @@ _PWD="$(pwd)"
 
 cd $_DIR
 
+# Make sure we are root or sudo
+if [[ $EUID -ne 0 ]]; then
+   sudo su
+fi
+
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
     #apt update
@@ -182,8 +187,6 @@ install_core_components() {
     fi
 }
 
-# Password: postgremcpass
-
 # Install dependencies
 dependencies
 
@@ -205,8 +208,9 @@ install_core_components
 echo "[DONE] MyCloud host controller deployed successfully!"
 
 if [ "$IS_GLUSTER_PEER" == "true" ]; then
-    docker rm -f gluster-ctl
 
+    # Start the gluster controller
+    docker rm -f gluster-ctl
     docker run \
       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
@@ -221,21 +225,8 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
 
     # Join the gluster network
     echo ""
-    # echo "Start the gluster container manually for the first time (adjust the '\$HOME/.mycloud/gluster/bricks' part according to where you wish to mount your volumes):"
-    # echo ""
-    # echo "  docker run \\"
-    # echo "      -v \$HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
-    # echo "      -v \$HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
-    # echo "      -v \$HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
-    # echo "      -v \$HOME/.mycloud/gluster/bricks:/bricks:z \\"
-    # echo "      -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
-    # echo "      -d --privileged=true \\"
-    # echo "      --restart unless-stopped \\"
-    # echo "      --net=host -v /dev/:/dev \\"
-    # echo "      --name gluster-ctl \\"
-    # echo "      gluster/gluster-centos"
-    # echo ""
-    echo "To add this Gluster peer to the network, execute the following command on the master gluster peer host:"
+    echo "=> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
+    echo "   PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
     echo ""
     echo "  docker exec gluster-ctl gluster peer probe $(ip route get 1.1.1.1 | grep -oP 'src \K\S+')"
 fi

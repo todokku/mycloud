@@ -10,12 +10,12 @@ dependencies () {
 
     VIRTUALBOX_EXISTS=$(command -v vboxmanage)
     if [ "$VIRTUALBOX_EXISTS" == "" ]; then
-        apt install virtualbox -y &> /dev/null
+        sudo apt install virtualbox -y &> /dev/null
     fi
 
     VAGRANT_EXISTS=$(command -v vagrant)
     if [ "$VAGRANT_EXISTS" == "" ]; then
-        apt install vagrant -y &> /dev/null
+        sudo apt install vagrant -y &> /dev/null
     fi
 
     GIT_EXISTS=$(command -v git)
