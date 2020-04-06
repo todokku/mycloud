@@ -27,7 +27,7 @@ class MqttController {
             this.client = mqtt.connect(options.host, options);
             this.client.on('connect', () => {
                 this.online = true;
-                
+                console.log(`MY IP IS ${this.ip}`);
                 this.client.subscribe(`/mycloud/k8s/host/query/${this.ip}/#`);
                 this.client.subscribe(`/mycloud/k8s/host/respond/${this.ip}/#`);
 
