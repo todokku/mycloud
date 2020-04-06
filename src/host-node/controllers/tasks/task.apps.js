@@ -77,7 +77,7 @@ class TaskAppsController {
                 }
             });
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "build image"
             }));
@@ -86,7 +86,7 @@ class TaskAppsController {
             // curl -k -X GET https://registry_user:registry_pass@192.168.0.98:5000/v2/oasis/sdfgsdfg/tags/list 
         } catch (error) {
             console.log("ERROR 9 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "build image"
@@ -111,14 +111,14 @@ class TaskAppsController {
             
             let r = await EngineController.getRegistryImages(data.node, org.name, acc.name, org.registryUser, rPass);
            
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "list images",
                 output: r
             }));
         } catch (error) {
             console.log("ERROR 9 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "list images"
@@ -138,13 +138,13 @@ class TaskAppsController {
             
             await EngineController.deleteRegistryImage(data.node, data.imageName, org.registryUser, rPass);
            
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "delete images"
             }));
         } catch (error) {
             console.log("ERROR 9 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "delete images"

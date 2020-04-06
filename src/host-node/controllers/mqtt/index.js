@@ -67,7 +67,8 @@ class MqttController {
                
                 if(topic.startsWith("/mycloud/k8s/host/query/k8s_nodes/free_memory")){
                     let freeMem = await OsController.getFreeMemory();
-                    this.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    let data = JSON.parse(message.toString());
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
                         memory: freeMem,
                         ip: await OsController.getIp(),
@@ -80,8 +81,8 @@ class MqttController {
                     // TODO: Get all host volumes from db and calculate total usage (there is a function in DBController called "getGlusterHostVolumes").
                     // Substract that from the total free disk space
                     // Substract used space in the folder reserved for VM dedicated storages 
-
-                    this.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    let data = JSON.parse(message.toString());
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
                         space: totalDiskSpace,
                         ip: await OsController.getIp(),
@@ -189,8 +190,7 @@ class MqttController {
                     await TaskRuntimeController.untaint_master(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_config`)) {
-                    let task = JSON.parse(message.toString());
-                    await TaskRuntimeController.grabMasterConfigFile(topicSplit, task.ip, task.workspaceId);
+                    await TaskRuntimeController.grabMasterConfigFile(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_state`)) {
                     await TaskRuntimeController.get_k8s_state(topicSplit, JSON.parse(message.toString()));

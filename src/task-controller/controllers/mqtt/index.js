@@ -25,7 +25,7 @@ class MqttController {
             this.online = true;
             this.client.subscribe(`/mycloud/alert/#`);
             this.client.subscribe(`/mycloud/task/new/#`);
-            this.client.subscribe(`/mycloud/k8s/host/respond/#`);
+            this.client.subscribe(`/mycloud/k8s/host/respond/taskmanager/#`);
             this.client.subscribe(`/mycloud/k8s/host/query/taskmanager/#`);
             
         });

@@ -76,14 +76,14 @@ class TaskController {
     static async takeNodeSnapshot(topicSplit, ip, data) {
         try{
             let snapshotName = await EngineController.takeSnapshot(data.node);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "take snapshot",
                 snapshot: snapshotName
             }));
         } catch (_error) {
             console.log(_error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message,
                 task: "take snapshot"
@@ -100,13 +100,13 @@ class TaskController {
         try{
             await EngineController.kubectl(`kubectl create ${data.type} ${data.name}${data.ns ? " --namespace=" + data.ns : ""}`, data.node);
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "create k8s resource"
             }));
         } catch (_error) {
             console.log(_error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message,
                 task: "create k8s resource"
@@ -123,7 +123,7 @@ class TaskController {
         try{
             await EngineController.restoreSnapshot(data.node, data.snapshot);
             if(topicSplit.length == 7){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "restore snapshot"
                 }));
@@ -131,7 +131,7 @@ class TaskController {
         } catch (_error) {
             console.log(_error);
             if(topicSplit.length == 7){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: _error.code ? _error.code : 500,
                     message: _error.message,
                     task: "restore snapshot"
@@ -149,7 +149,7 @@ class TaskController {
         try{
             await EngineController.deleteSnapshot(data.node, data.snapshot);
             if(topicSplit.length == 7){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "delete snapshot"
                 }));
@@ -157,7 +157,7 @@ class TaskController {
         } catch (_error) {
             console.log(_error);
             if(topicSplit.length == 7){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: _error.code ? _error.code : 500,
                     message: _error.message,
                     task: "delete snapshot"
@@ -185,13 +185,13 @@ class TaskController {
             }
             await TaskGlusterController.provisionGlusterVolume(data.gluster_targets, data.workspaceId, data.name, data.size, data.type);
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "provision gluster volume"
             }));
         } catch (_error) {
             console.log(_error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message,
                 task: "provision gluster volume"
@@ -209,13 +209,13 @@ class TaskController {
             let volume = await DBController.getVolume(data.volumeId);
             await TaskGlusterController.deprovisionGlusterVolume(volume.id, volume.name, volume.secret);
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deprovision gluster volume"
             }));
         } catch (_error) {
             console.log(_error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message,
                 task: "deprovision gluster volume"
@@ -233,12 +233,12 @@ class TaskController {
         task.payload = JSON.parse(task.payload);
         try {
             await TaskRuntimeController.deployWorkspaceCluster(data.socketId, ip, task.targetId);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "create workspace cluster"
             }));
         } catch (_error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message ? _error.message : "An error occured",
                 task: "create workspace cluster"

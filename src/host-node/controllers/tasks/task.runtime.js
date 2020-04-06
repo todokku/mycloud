@@ -89,13 +89,13 @@ class TaskRuntimeController {
                 );
                 resourceResponses[data.targets[i]] = result
             }
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "get k8s resources",
                 output: resourceResponses
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "get k8s resources",
@@ -112,13 +112,13 @@ class TaskRuntimeController {
     static async getK8SResourceValues(topicSplit, ip, data) {
         try{
             let result = await EngineController.getK8SResourceValues(data.node, data.ns, data.target, data.targetName, data.jsonpath);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "get k8s resource values",
                 output: result
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "get k8s resource values",
@@ -141,7 +141,7 @@ class TaskRuntimeController {
                 throw new Error("The volume does not have any gluster peers");
             }
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "bind volume"
@@ -151,12 +151,12 @@ class TaskRuntimeController {
 
         try {
             await EngineController.mountGlusterVolume(data.nodeProfile.node, volumeName, volumeGlusterHosts[0].ip);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "bind volume"
             }));
         } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "bind volume"
@@ -175,7 +175,7 @@ class TaskRuntimeController {
 
             let nextPortIndex = await EngineController.getNextSATAPortIndex(data.nodeProfile.node.hostname);
             if(nextPortIndex == null){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 500,
                     message: "No more port indexes available",
                     task: "bind volume"
@@ -190,12 +190,12 @@ class TaskRuntimeController {
             //     // await DBController.setVolumePortIndex(data.volume.id, null);
             //     throw _e;
             // }
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "bind volume"
             }));
         } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "bind volume"
@@ -216,13 +216,13 @@ class TaskRuntimeController {
                 throw new Error("The volume does not have any gluster peers");
             }
             await EngineController.unmountVolume(data.nodeProfile.node, volumeName);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "unbind volume",
                 data: data
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "unbind volume",
@@ -240,7 +240,7 @@ class TaskRuntimeController {
         try {
             let volume = await DBController.getVolume(data.volumeId);
             if(volume.portIndex == null){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "detatch volume"
                 }));
@@ -249,13 +249,13 @@ class TaskRuntimeController {
             
             await EngineController.detatchLocalK8SVolume(data.node, volume.portIndex, data.delDiskFile, data.skipRestart);
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "detatch volume",
                 data: data
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "detatch volume",
@@ -276,13 +276,13 @@ class TaskRuntimeController {
             let volumeName = volume.name + "-" + volume.secret;
             await EngineController.cleanUpDeletedVolume(data.node, volumeName);
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "delete local volume",
                 data: data
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "delete local volume",
@@ -300,13 +300,13 @@ class TaskRuntimeController {
         try {
              await EngineController.unmountVolume(data.nodeProfile.node, data.volumeMountName);
              
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                  status: 200,
                  task: "unbind volume",
                  data: data
              }));
         } catch (err) {
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                  status: err.code ? err.code : 500,
                  message: err.message,
                  task: "unbind volume",
@@ -326,13 +326,13 @@ class TaskRuntimeController {
         try {
              await EngineController.mountLocalVolume(data.node, data.mountFolderName, data.volume.portIndex);
              
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                  status: 200,
                  task: "mount volume",
                  data: data
              }));
          } catch (err) {
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                  status: err.code ? err.code : 500,
                  message: err.message,
                  task: "mount volume",
@@ -351,13 +351,13 @@ class TaskRuntimeController {
         let tFile = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, data.fileName);
         try {
             await OSController.execSilentCommand(`rm -rf ${tFile}`);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "delete file",
                 data: data
             }));
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
                 task: "delete file",
@@ -393,14 +393,14 @@ class TaskRuntimeController {
             } 
 
             await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deploy persistant volume",
                 data: data
             }));
         } catch (error) {
             console.log("ERROR 2 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy persistant volume",
@@ -424,14 +424,14 @@ class TaskRuntimeController {
                 throw new Error("Could not create folders");
             } 
   
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deploy persistant volume",
                 data: data
             }));
         } catch (error) {
             console.log("ERROR 2 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy persistant volume",
@@ -507,14 +507,14 @@ class TaskRuntimeController {
                 await rmfr(tmp_working_dir);
             }
             
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deploy service",
                 data: result
             }));
         } catch (error) {
             console.log("ERROR 9 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy service"
@@ -603,7 +603,7 @@ class TaskRuntimeController {
                 await EngineController.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
             }
             
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "update cluster ingress"
             }));
@@ -613,7 +613,7 @@ class TaskRuntimeController {
                 fs.writeFileSync(ingressYamlPath, YAML.stringify(backupYamlContent));
                 try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
             }
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "update cluster ingress",
@@ -682,7 +682,7 @@ class TaskRuntimeController {
                 }
                 await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);
                 
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "update cluster pod presets"
                 }));
@@ -693,7 +693,7 @@ class TaskRuntimeController {
             }
         } catch (error) {
             console.log("ERROR =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "update cluster pod presets",
@@ -729,13 +729,13 @@ class TaskRuntimeController {
                 }
             }
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "delete service"
             }));
         } catch (error) {
             console.log("ERROR 10 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "delete service",
@@ -762,14 +762,14 @@ class TaskRuntimeController {
             let yamlTmpPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.workspaceId.toString(), data.node.hostname, `pvc.yml`);
             fs.writeFileSync(yamlTmpPath, YAML.stringify(pvcTemplate));
             await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deploy persistant volume claim",
                 data: data
             }));
         } catch (error) {
             console.log("ERROR 3 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy persistant volume claim",
@@ -811,13 +811,13 @@ class TaskRuntimeController {
                 await EngineController.sshExec(data.node.ip, `rm -rf /mnt/${data.volume.name}-${data.volume.secret}/${volumeDirs[i]}`, true);
             }
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "remove all pv for volume",
                 data: data
             }));
         } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "remove all pv for volume",
@@ -836,13 +836,13 @@ class TaskRuntimeController {
         try {
             await EngineController.removePersistantVolumeClaim(data.pvcName, data.ns, data.node);     
             
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "remove persistant volume claim",
                 data: data
             }));
         } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy persistant volume claim",
@@ -866,13 +866,13 @@ class TaskRuntimeController {
                 throw new Error("Could not delete folders");
             } 
            
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "remove persistant volume",
                 data: data
             }));
         } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
                 task: "deploy persistant volume",
@@ -889,7 +889,7 @@ class TaskRuntimeController {
     static async detatch_worker(topicSplit, payload) {
         try {
             await EngineController.detatchWorker(payload.masterNode, payload.workerNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "detatch",
                 nodeType: "worker",
@@ -897,7 +897,7 @@ class TaskRuntimeController {
             }));
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "detatch",
@@ -923,14 +923,14 @@ class TaskRuntimeController {
                 }));
                 
                 await DBController.deleteK8SWorkerNode(payload.workerNode.id);
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "deprovision",
                     nodeType: "worker",
                     node: payload.workerNode
                 }));
             } else {
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 404,
                     task: "deprovision",
                     nodeType: "worker",
@@ -938,7 +938,7 @@ class TaskRuntimeController {
                 }));
             }
         } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "deprovision",
@@ -962,7 +962,7 @@ class TaskRuntimeController {
 
             result = await EngineController.deployWorker(topicSplit, payload, org.registryUser, rPass);
             dbId = await DBController.createK8SWorkerNode(result.nodeIp, result.nodeHostname, result.workspaceId, result.hostId, result.hash);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 hash: result.hash,
                 task: "provision",
@@ -992,7 +992,7 @@ class TaskRuntimeController {
                 await DBController.deleteK8SWorkerNode(dbId);
             }
 
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "provision",
@@ -1009,7 +1009,7 @@ class TaskRuntimeController {
     static async taint_master(topicSplit, payload) {
         try {
             await EngineController.taintMaster(payload.masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "taintMaster",
                 nodeType: "master",
@@ -1017,7 +1017,7 @@ class TaskRuntimeController {
             }));
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "taintMaster",
@@ -1035,7 +1035,7 @@ class TaskRuntimeController {
     static async untaint_master(topicSplit, payload) {
         try {
             await EngineController.untaintMaster(payload.masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "untaintMaster",
                 nodeType: "master",
@@ -1043,7 +1043,7 @@ class TaskRuntimeController {
             }));
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "untaintMaster",
@@ -1058,18 +1058,18 @@ class TaskRuntimeController {
      * @param {*} masterIp 
      * @param {*} workspaceId 
      */
-    static async grabMasterConfigFile(topicSplit, masterIp, workspaceId) {
+    static async grabMasterConfigFile(topicSplit, data) {
         try {
-            let tmpConfigFilePath = await EngineController.grabMasterConfigFile(masterIp, workspaceId);
+            let tmpConfigFilePath = await EngineController.grabMasterConfigFile(data.ip, data.workspaceId);
             let _b = fs.readFileSync(tmpConfigFilePath);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 config: _b.toString('base64')
             }));
             fs.unlinkSync(tmpConfigFilePath);
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "grabMasterConfigFile",
@@ -1086,7 +1086,7 @@ class TaskRuntimeController {
     static async get_k8s_state(topicSplit, masterNode) {
         try {
             let stateData = await EngineController.getK8SState(masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${masterNode.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "getK8SState",
                 nodeType: "master",
@@ -1095,7 +1095,7 @@ class TaskRuntimeController {
             }));
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${this.parent.ip}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${masterNode.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "getK8SState",

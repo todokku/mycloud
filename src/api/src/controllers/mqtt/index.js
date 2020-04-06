@@ -25,7 +25,7 @@ class MqttController {
         this.client.on('connect', () => {
             this.online = true;
             this.client.subscribe(`/mycloud/k8s/host/query/api/#`);
-            this.client.subscribe(`/mycloud/k8s/host/respond/#`);         
+            this.client.subscribe(`/mycloud/k8s/host/respond/api/#`);         
             this.client.subscribe(`/mycloud/cli/event/#`);         
         });
         
