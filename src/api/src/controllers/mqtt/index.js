@@ -61,14 +61,14 @@ class MqttController {
                     let helmChartData = fs.readFileSync(path.join(global.appRoot, "..", "data", "mc_services", "charts", targetService.chartFile));
 
                     let base64Encoded = helmChartData.toString('base64');
-                    this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
                         task: "get chart binary",
                         data: base64Encoded
                     }));
                 } catch (error) {
                     console.log("ERROR =>", error);
-                    this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: error.code ? error.code : 500,
                         message: error.message,
                         task: "get chart binary"
@@ -76,13 +76,13 @@ class MqttController {
                 }
             } else if(topic.startsWith("/mycloud/k8s/host/query/api/get_services_config/")){
                 try {
-                    this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
                         services: this.services
                     }));
                 } catch (error) {
                     console.log("ERROR =>", error);
-                    this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: error.code ? error.code : 500,
                         message: error.message,
                         task: "get chart binary"
@@ -93,7 +93,7 @@ class MqttController {
                 fs.readFile(data.zipPath, (err, zipData) => {
                     if (err) {
                         console.log("ERROR =>", err);
-                        return this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                        return this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                             status: err.code ? err.code : 500,
                             message: err.message,
                             task: "get chart binary"
@@ -102,7 +102,7 @@ class MqttController {
                     if(data.delete) {
                         fs.unlinkSync(data.zipPath);
                     }
-                    this.client.publish(`/mycloud/k8s/host/respond/api/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    this.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                         status: 200,
                         task: "get chart binary",
                         data: zipData.toString('base64')
