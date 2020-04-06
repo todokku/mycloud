@@ -174,10 +174,7 @@ class TaskController {
      */
     static async provisionGlusterVolume(topicSplit, ip, data) {
         console.log(1);
-        let task = await DBController.getTaskById(data.taskId);
-        if(task.status == "IN_PROGRESS" || task.status == "DONE"){
-            return;
-        }
+        
         console.log(2);
         try{
             let dbHostNode = await DBController.getGlusterHostByIp(ip);
