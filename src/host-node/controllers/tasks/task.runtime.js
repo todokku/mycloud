@@ -1061,7 +1061,7 @@ class TaskRuntimeController {
     static async grabMasterConfigFile(topicSplit, data) {
         try {
             console.log(JSON.stringify(data, null, 4));
-            let tmpConfigFilePath = await EngineController.grabMasterConfigFile(data.ip, data.workspaceId);
+            let tmpConfigFilePath = await EngineController.grabMasterConfigFile(data.node.ip, data.node.workspaceId);
             let _b = fs.readFileSync(tmpConfigFilePath);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
@@ -1082,26 +1082,26 @@ class TaskRuntimeController {
     /**
      * get_k8s_state
      * @param {*} topicSplit 
-     * @param {*} masterNode 
+     * @param {*} data 
      */
-    static async get_k8s_state(topicSplit, masterNode) {
+    static async get_k8s_state(topicSplit, data) {
         try {
-            let stateData = await EngineController.getK8SState(masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${masterNode.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            let stateData = await EngineController.getK8SState(data.node);
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "getK8SState",
                 nodeType: "master",
                 state: stateData,
-                node: masterNode
+                node: data.node
             }));
         } catch (err) {
             console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${masterNode.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
                 task: "getK8SState",
                 nodeType: "master",
-                node: masterNode
+                node: data.node
             }));
         }
     }

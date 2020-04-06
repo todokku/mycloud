@@ -99,7 +99,9 @@ class TaskRuntimeController {
             let configFileContent = await MQTTController.queryRequestResponse(
                 masterNode.k8s_host.ip,
                 "get_k8s_config",
-                masterNode
+                {
+                    "node": masterNode
+                }
             );
 
             if(configFileContent.data.status == 200){
@@ -128,7 +130,9 @@ class TaskRuntimeController {
             return r;
         }
 
-        let response = await MQTTController.queryRequestResponse(r.data[0].k8s_host.ip, "get_k8s_state", r.data[0], 15000);
+        let response = await MQTTController.queryRequestResponse(r.data[0].k8s_host.ip, "get_k8s_state", {
+            "node": r.data[0]
+        }, 15000);
         if(response.data.status == 200){
             return {
                 "code": 200,
