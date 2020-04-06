@@ -134,6 +134,7 @@ docker run -d \
     eclipse-mosquitto:1.6
 
 # Run API server
+mkdir cd /home/vagrant/mycloud/tmp
 cd /home/vagrant/mycloud/src/api
 docker build -t mycloud-api:0.9 .
 docker run -d \

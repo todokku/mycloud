@@ -303,6 +303,9 @@ class EngineController {
             let WS_ID = "<WS_ID>";
             let IF_NAME = "<IF_NAME>";
             let STATIC_IP = "<STATIC_IP>";
+            let REGISTRY_IP = "<REGISTRY_IP>";
+
+
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
                     l = `${l.substring(0, l.indexOf(WS_ID))}${hash}${l.substring(l.indexOf(WS_ID)+7)}`;
@@ -313,14 +316,17 @@ class EngineController {
                 while(l.indexOf(STATIC_IP) != -1){
                     l = `${l.substring(0, l.indexOf(STATIC_IP))}${leasedIp ? ', ip: "'+leasedIp+'"' : ""}${l.substring(l.indexOf(STATIC_IP)+11)}`;
                 }
+                while(l.indexOf(REGISTRY_IP) != -1){
+                    l = `${l.substring(0, l.indexOf(REGISTRY_IP))}${process.env.REGISTRY_IP}${l.substring(l.indexOf(REGISTRY_IP)+13)}`;
+                }
                 return l;
             });
 
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
         } catch(err) {
-            // if (fs.existsSync(targetFolder)) {
-            //     await rmfr(targetFolder);
-            // }
+            if (fs.existsSync(targetFolder)) {
+                await rmfr(targetFolder);
+            }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
                     leasedIp: leasedIp

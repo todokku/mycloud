@@ -11,7 +11,8 @@ echo "[TASK 8] Enable and start kubelet service"
 systemctl enable kubelet 
 systemctl start kubelet 
 
-sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@192.168.0.98:/home/vagrant/configPrivateRegistry.sh /configPrivateRegistry.sh
+echo "[TASK 9] Configuring Docker registry on IP $1"
+sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/home/vagrant/configPrivateRegistry.sh /configPrivateRegistry.sh
 /configPrivateRegistry.sh
 
 # Initialize Kubernetes cluster
