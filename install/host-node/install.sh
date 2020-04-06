@@ -5,42 +5,37 @@ _PWD="$(pwd)"
 
 cd $_DIR
 
-# Make sure we are root or sudo
-if [[ $EUID -ne 0 ]]; then
-   sudo su
-fi
-
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
     # apt-get update -y
 
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
-        apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        apt-get update
-        apt-get install docker-ce docker-ce-cli containerd.io -y
-        usermod -aG docker $USER
+        sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+        sudo usermod -aG docker $USER
     else
-        apt-get update
+        sudo apt-get update
     fi
 
     VIRTUALBOX_EXISTS=$(command -v vboxmanage)
     if [ "$VIRTUALBOX_EXISTS" == "" ]; then
-        apt install virtualbox -y &> /dev/null
+        sudo apt install virtualbox -y &> /dev/null
     fi
 
     VAGRANT_EXISTS=$(command -v vagrant)
     if [ "$VAGRANT_EXISTS" == "" ]; then
-        apt install vagrant -y &> /dev/null
+        sudo apt install vagrant -y &> /dev/null
     fi
 
     NODE_EXISTS=$(command -v node)
     if [ "$NODE_EXISTS" == "" ]; then
         curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh &> /dev/null
         bash nodesource_setup.sh &> /dev/null
-        apt install nodejs -y &> /dev/null
+        sudo apt install nodejs -y &> /dev/null
         rm -rf nodesource_setup.sh &> /dev/null
     fi
 
@@ -56,12 +51,12 @@ dependencies () {
 
     TAR_EXISTS=$(command -v tar)
     if [ "$TAR_EXISTS" == "" ]; then
-        apt install tar -y &> /dev/null
+        sudo apt install tar -y &> /dev/null
     fi
 
     SSHPASS_EXISTS=$(command -v sshpass)
     if [ "$SSHPASS_EXISTS" == "" ]; then
-        apt install sshpass -y &> /dev/null
+        sudo apt install sshpass -y &> /dev/null
     fi
 
     HELM_EXISTS=$(command -v helm)
@@ -73,7 +68,7 @@ dependencies () {
 
     GIT_EXISTS=$(command -v git)
     if [ "$GIT_EXISTS" == "" ]; then
-        apt install git -y &> /dev/null
+        sudo apt install git -y &> /dev/null
     fi
 }
 
