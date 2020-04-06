@@ -166,7 +166,7 @@ install_core_components() {
     sed -i "s/<NET_INTEFACE>/$INET/g" ./env
     sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
     sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
-    sed -i 's/<GLUSTER_VOL>/'"$GLUSTER_VOLUME"'/g' ./env
+    sed -i "s/<GLUSTER_VOL>/$GLUSTER_VOLUME/g" ./env
 
     cp env .env
     rm env
