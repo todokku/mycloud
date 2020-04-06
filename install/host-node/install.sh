@@ -197,7 +197,7 @@ authorize_private_registry
 pull_git
 
 # Build vagrant boxes
-# build_vagrant_boxes
+build_vagrant_boxes
 
 # Install the core components
 install_core_components
