@@ -13,11 +13,11 @@ docker run -d \
     --restart unless-stopped \
     --network host \
     -e DB_HOST=192.168.0.98 \
-    -e DB_USER=postuser \
-    -e DB_PASS=postpass \
+    -e DB_USER=postgres \
+    -e DB_PASS=postgremcpass \
     -e MOSQUITTO_IP=192.168.0.98 \
-    -e API_SYSADMIN_USER=myclouduser \
-    -e API_SYSADMIN_PASSWORD=mycloudpass \
+    -e API_SYSADMIN_USER=mcuser \
+    -e API_SYSADMIN_PASSWORD=mcpass \
     -e REGISTRY_IP=192.168.0.98 \
     -e CRYPTO_KEY=YDbxyG16Q6ujlCpjXH2Pq7nPAtJF66jLGwx4RYkHqhY= \
     -v /home/vagrant/mycloud:/usr/src/app/data \

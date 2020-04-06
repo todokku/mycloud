@@ -12,7 +12,7 @@ fi
 
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
-    apt update
+    # apt-get update -y
 
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
@@ -218,7 +218,6 @@ echo "[DONE] MyCloud host controller deployed successfully!"
 if [ "$IS_GLUSTER_PEER" == "true" ]; then
 
     # Start the gluster controller
-    docker rm -f gluster-ctl
     docker run \
       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
@@ -231,12 +230,21 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
       --name gluster-ctl \
       gluster/gluster-centos
 
+    LOCAL_IPS="$(hostname -I)"
+    arrIN=(${LOCAL_IPS// / })
+    echo "==> Please select the proper LAN IP address for this VM:"
+    select LOCAL_IP in "${arrIN[@]}"; do 
+    if [ "$LOCAL_IP" != "" ]; then
+        break
+    fi
+    done
+  
     # Join the gluster network
     echo ""
     echo "=> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
     echo "   PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
     echo ""
-    echo "  docker exec gluster-ctl gluster peer probe $(ip route get 1.1.1.1 | grep -oP 'src \K\S+')"
+    echo "  docker exec gluster-ctl gluster peer probe $LOCAL_IPS"
 fi
 
 cd "$_PWD"
