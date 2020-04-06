@@ -158,25 +158,16 @@ install_core_components() {
         INET=$(route | grep '^default' | grep -o '[^ ]*$')
     fi
 
-echo "1"
+echo "GLUSTER_VOLUME => $GLUSTER_VOLUME"
     sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
-    echo "1"
     sed -i "s/<DB_PORT>/5432/g" ./env
-    echo "1"
     sed -i "s/<DB_PASS>/$PW/g" ./env
-    echo "1"
     sed -i "s/<MOSQUITTO_PORT>/1883/g" ./env
-    echo "1"
     sed -i "s/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g" ./env
-    echo "1"
     sed -i "s/<NET_INTEFACE>/$INET/g" ./env
-    echo "1"
     sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
-    echo "1"
     sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
-    echo "1"
     sed -i "s/<GLUSTER_VOL>/$GLUSTER_VOLUME/g" ./env
-    echo "1"
 
     cp env .env
     rm env
