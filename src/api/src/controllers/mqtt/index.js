@@ -174,6 +174,8 @@ class MqttController {
                 }));
             } else {
                 payload.queryTarget = "api";
+                console.log(payload);
+                console.log(`/mycloud/k8s/host/query/${targetHostIp}/${taskName}/${requestId}`);
                 this.client.publish(`/mycloud/k8s/host/query/${targetHostIp}/${taskName}/${requestId}`, JSON.stringify(payload));
             }
         });

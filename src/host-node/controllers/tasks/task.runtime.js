@@ -1060,7 +1060,6 @@ class TaskRuntimeController {
      */
     static async grabMasterConfigFile(topicSplit, data) {
         try {
-            console.log(data);
             let tmpConfigFilePath = await EngineController.grabMasterConfigFile(data.ip, data.workspaceId);
             let _b = fs.readFileSync(tmpConfigFilePath);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
