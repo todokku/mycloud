@@ -179,7 +179,9 @@ install_core_components() {
         pm2 restart mycloud-host-node
     fi
 }
-postgremcpass
+
+# Password: postgremcpass
+
 # Install dependencies
 dependencies
 
