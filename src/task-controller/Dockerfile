@@ -35,10 +35,6 @@ ENV DB_PASS=postgrespass
 ENV MOSQUITTO_IP=192.168.0.99
 ENV MOSQUITTO_PORT=1883
 
-# MyCloud sysadmin credentials
-ENV API_SYSADMIN_USER=mycloudadmin
-ENV API_SYSADMIN_PASSWORD=mycloudpassword
-
 # What subnet is MyCloud installed on, along with the reserved IPs
 ENV DHCP_OVERWRITE=true
 ENV DHCP_USE_PING=true

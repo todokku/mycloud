@@ -161,6 +161,7 @@ docker run -d \
     --network host \
     -e NGINX_HOST_IP=$NGINX_HOST_IP \
     -e DB_HOST=$DB_HOST \
+    -e DB_USER=$POSTGRES_USER \
     -e DB_PASS=$DB_PASS \
     -e MOSQUITTO_IP=$MOSQUITTO_IP \
     -e API_SYSADMIN_USER=$API_SYSADMIN_USER \
@@ -178,10 +179,9 @@ docker run -d \
     --restart unless-stopped \
     --network host \
     -e DB_HOST=$DB_HOST \
+    -e DB_USER=$POSTGRES_USER \
     -e DB_PASS=$DB_PASS \
     -e MOSQUITTO_IP=$MOSQUITTO_IP \
-    -e API_SYSADMIN_USER=$API_SYSADMIN_USER \
-    -e API_SYSADMIN_PASSWORD=$API_SYSADMIN_PASSWORD \
     -e DHCP_MASK=$DHCP_MASK \
     -e NGINX_HOST_IP=$NGINX_HOST_IP \
     -e DHCP_RESERVED=$DHCP_RESERVED \
