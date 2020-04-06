@@ -3,7 +3,7 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 _PWD="$(pwd)"
 
-cd $_DIR
+cd $DIR
 
 git pull
 docker build -t mycloud-ctrl:0.9 .
