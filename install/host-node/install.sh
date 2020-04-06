@@ -34,15 +34,15 @@ dependencies () {
     NODE_EXISTS=$(command -v node)
     if [ "$NODE_EXISTS" == "" ]; then
         curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh &> /dev/null
-        bash nodesource_setup.sh &> /dev/null
+        sudo bash nodesource_setup.sh &> /dev/null
         sudo apt install nodejs -y &> /dev/null
         rm -rf nodesource_setup.sh &> /dev/null
     fi
 
     PM2_EXISTS=$(command -v pm2)
     if [ "$PM2_EXISTS" == "" ]; then
-        npm install pm2@latest -g &> /dev/null
-        chown $(id -u):$(id -g) $HOME/.pm2/rpc.sock $HOME/.pm2/pub.sock
+        sudo npm install pm2@latest -g &> /dev/null
+        # chown $(id -u):$(id -g) $HOME/.pm2/rpc.sock $HOME/.pm2/pub.sock
         pm2 install pm2-logrotate
         pm2 set pm2-logrotate:max_size 10M
         pm2 set pm2-logrotate:compress true
@@ -239,7 +239,7 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
     echo "=> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
     echo "   PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
     echo ""
-    echo "   docker exec gluster-ctl gluster peer probe $LOCAL_IPS"
+    echo "   docker exec gluster-ctl gluster peer probe $LOCAL_IP"
 fi
 
 cd "$_PWD"
