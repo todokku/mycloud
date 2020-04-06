@@ -177,7 +177,9 @@ class MqttController {
                     resolve(dataArray);
                     delete this.pendingResponses[requestId];
                 }.bind(this, requestId), 3000);
-                this.client.publish(`${topic}/${requestId}`);
+                this.client.publish(`${topic}/${requestId}`, JSON.stringify({
+                    queryTarget: "taskmanager"
+                }));
             } catch(err) {
                 reject(err);
             }
