@@ -167,7 +167,7 @@ class MqttController {
                     }
                 }.bind(this, requestId), timeout ? timeout : 3000)
             };
-
+            console.log(`/mycloud/k8s/host/query/${targetHostIp}/${taskName}/${requestId}`);
             if(!payload){
                 this.client.publish(`/mycloud/k8s/host/query/${targetHostIp}/${taskName}/${requestId}`, JSON.stringify({
                     queryTarget: "api"
