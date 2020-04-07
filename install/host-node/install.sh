@@ -84,6 +84,25 @@ dependencies () {
 }
 
 collect_informations() {
+
+
+
+    echo "==> Please select the proper Network adapter to use:"
+    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
+    IFACESarrIN=(${IFACES//\n/ })
+    select IFACE in "${IFACESarrIN[@]}"; do 
+        if [ "$IFACE" != "" ]; then
+            break
+        fi
+    done
+
+
+    echo "============> $IFACE"
+
+
+
+
+
     LOCAL_IPS="$(hostname -I)"
     arrIN=(${LOCAL_IPS// / })
     echo "==> Please select the proper LAN IP address for this VM:"
@@ -127,11 +146,16 @@ collect_informations() {
         FSLarrIN=(${FSL//\n/ })
         FSLarrIN=("${FSLarrIN[@]:1}")
 
-        FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $3}')
+        FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $2}')
         FSLSIZEarrIN=(${FSLSIZE//\n/ })
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
 
+        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $9}')
+        FSLMOUNTarrIN=(${FSLMOUNT//\n/})
+        FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
+
         VALID_FS=()
+        VALID_MOUNTS=()
 
         FS_INDEX=0
         for i in "${FSLarrIN[@]}"
@@ -139,19 +163,25 @@ collect_informations() {
         if [[ $i = /dev/* ]]
         then
             VALID_FS+=("$i (${FSLSIZEarrIN[$FS_INDEX]})")
+            VALID_MOUNTS+=("${FSLMOUNTarrIN[$FS_INDEX]}")
         fi
         FS_INDEX=$((FS_INDEX+1))
         done
 
+        MOUNT_INDEX=""
         select VOL_NAME in "${VALID_FS[@]}"; do 
         if [ "$VOL_NAME" != "" ]; then
+            MOUNT_INDEX=$REPLY
             break
         fi
         done
 
+        MOUNT_INDEX=$((MOUNT_INDEX-1))
+
         VOL_FULL_NAME=(${VOL_NAME// / })
         VOL_NAME=(${VOL_FULL_NAME//\// })
 
+        BRICK_MOUNT_PATH="${VALID_MOUNTS[$MOUNT_INDEX]}/bricks"
         GLUSTER_VOLUME="${VOL_NAME[1]}"
     else
         IS_GLUSTER_PEER="false"
@@ -185,13 +215,10 @@ install_core_components() {
     cd $HOME/mycloud/src/host-node/ # Position cmd in src folder
     
     if [ "$IS_GLUSTER_PEER" == "true" ]; then
-        HAS_GLUSTER_CONTAINER=$(docker ps -a | grep "gluster-ctl")
-        if [ "$HAS_GLUSTER_CONTAINER" == "" ]; then
-            mkdir -p $HOME/.mycloud/gluster/etc/glusterfs &> /dev/null
-            mkdir -p $HOME/.mycloud/gluster/var/lib/glusterd &> /dev/null
-            mkdir -p $HOME/.mycloud/gluster/var/log/glusterfs &> /dev/null
-            mkdir -p $HOME/.mycloud/gluster/bricks &> /dev/null
-        fi
+        mkdir -p $HOME/.mycloud/gluster/etc/glusterfs &> /dev/null
+        mkdir -p $HOME/.mycloud/gluster/var/lib/glusterd &> /dev/null
+        mkdir -p $HOME/.mycloud/gluster/var/log/glusterfs &> /dev/null
+        mkdir -p $BRICK_MOUNT_PATH &> /dev/null
     fi
 
     # if [ "$IS_K8S_NODE" == "true" ]; then
@@ -199,19 +226,19 @@ install_core_components() {
 
     VM_BASE=$HOME/mycloud/vm_base
 
-    if [[ $(uname -s) == Darwin ]]; then
-        INET=$(route get 10.10.10.10 | grep 'interface' | tr -s " " | sed -e 's/^[ \t]*//' | cut -d ' ' -f 2)
-    fi
-    if [[ $(uname -s) == Linux ]]; then
-        INET=$(route | grep '^default' | grep -o '[^ ]*$')
-    fi
+    # if [[ $(uname -s) == Darwin ]]; then
+    #     INET=$(route get 10.10.10.10 | grep 'interface' | tr -s " " | sed -e 's/^[ \t]*//' | cut -d ' ' -f 2)
+    # fi
+    # if [[ $(uname -s) == Linux ]]; then
+    #     INET=$(route | grep '^default' | grep -o '[^ ]*$')
+    # fi
 
     sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
     sed -i "s/<DB_PORT>/5432/g" ./env
     sed -i "s/<DB_PASS>/$PW/g" ./env
     sed -i "s/<MOSQUITTO_PORT>/1883/g" ./env
     sed -i "s/<VM_BASE_HOME>/${VM_BASE//\//\\/}/g" ./env
-    sed -i "s/<NET_INTEFACE>/$INET/g" ./env
+    sed -i "s/<NET_INTEFACE>/$IFACE/g" ./env
     sed -i "s/<IS_K8S_NODE>/$IS_K8S_NODE/g" ./env
     sed -i "s/<IS_GLUSTER_PEER>/$IS_GLUSTER_PEER/g" ./env
     sed -i "s/<GLUSTER_VOL>/$GLUSTER_VOLUME/g" ./env
@@ -265,19 +292,19 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
         echo "       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
         echo "       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
         echo "       -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
-        echo "       -v $HOME/.mycloud/gluster/bricks:/bricks:z \\"
+        echo "       -v $BRICK_MOUNT_PATH:/bricks:z \\"
         echo "       -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
         echo "       -d --privileged=true \\"
         echo "       --restart unless-stopped \\"
         echo "       --net=host -v /dev/:/dev \\"
         echo "       --name gluster-ctl \\"
-        echo "       gluster/gluster-centos"
+        echo "       gluster/gluster-centos:gluster4u0_centos7"
     else
         docker run \
             -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
             -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
             -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
-            -v $HOME/.mycloud/gluster/bricks:/bricks:z \
+            -v $BRICK_MOUNT_PATH:/bricks:z \
             -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
             -d --privileged=true \
             --restart unless-stopped \
