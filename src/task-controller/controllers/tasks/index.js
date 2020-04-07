@@ -734,6 +734,7 @@ class TaskController {
      * @param {*} task 
      */
     static async bindVolume(task) {
+        console.log("OHHOOOOOOO");
         task.payload = JSON.parse(task.payload);
         let snapshotData = null;
         if(task.payload[0].params.bindTo == "k8s") {
@@ -744,9 +745,9 @@ class TaskController {
                     "type":"INFO",
                     "step":"BIND_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });
-                console.log("=============> ", task.payload[0].params.volume.type);
+                console.log("OHHOOOOOOO 2");
                 if(task.payload[0].params.volume.type == "gluster") {
                     // snapshotData = await this.takeClusterSnapshot(task.targetId);
                     await TaskRuntimeController.mountGlusterVolumeToClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
