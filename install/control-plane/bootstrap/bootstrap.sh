@@ -122,6 +122,17 @@ docker run -d \
     -v /opt/docker/containers/docker-registry/certs:/certs \
     nginx:1.17.9-alpine
 
+# docker run \
+#     --name mycloud-nginx \
+#     --restart unless-stopped \
+#     --network host \
+#     -v /home/vagrant/.mycloud/nginx/conf.d:/etc/nginx/conf.d:ro \
+#     -v /home/vagrant/.mycloud/nginx/nginx.conf:/etc/nginx/nginx.conf \
+#     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
+#     -v /opt/docker/containers/nginx-registry/auth:/auth \
+#     -v /opt/docker/containers/docker-registry/certs:/certs \
+#     nginx:1.17.9-alpine
+
 # Install Postgres
 docker pull postgres:12.2-alpine
 mkdir -p /home/vagrant/.mycloud/postgres/data
