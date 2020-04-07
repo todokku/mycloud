@@ -46,14 +46,7 @@ class TaskGlusterController {
         // Create gluster volume on all peers
         try {
 
-
-            let resultDDD = await OSController.execSilentCommand(`who`);
-            console.log(resultDDD);
-
-
-
-
-            let result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume create ${volumeName} replica ${gluster_targets.length} ${gluster_targets.map(o => `${o}:/bricks/${volumeName}`).join(' ')} force`);
+            let result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume create ${volumeName} replica ${gluster_targets.length} ${gluster_targets.map(o => `${o}:/bricks/${volumeName}`).join(' ')} force`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
@@ -63,32 +56,32 @@ class TaskGlusterController {
 
         // Start the gluster volume
         try {
-            let result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume start ${volumeName}`);
+            let result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume start ${volumeName}`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
         } catch (error) {
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
             throw error;
         }
 
         // Configure the gluster volume
         try {
-            let result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume set ${volumeName} cluster.min-free-disk 10%`);
+            let result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume set ${volumeName} cluster.min-free-disk 10%`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
-            result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume quota ${volumeName} enable`);
+            result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume quota ${volumeName} enable`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
-            result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume quota ${volumeName} limit-usage / ${size}MB`);
+            result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume quota ${volumeName} limit-usage / ${size}MB`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
         } catch (error) {
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
             throw error;
         }
 
@@ -103,8 +96,8 @@ class TaskGlusterController {
             }
             await DBController.commitTransaction(dbClient);
         } catch (error) {
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
             await DBController.rollbackTransaction(dbClient);
             throw error;
         }
@@ -118,11 +111,11 @@ class TaskGlusterController {
      */
     static async deprovisionGlusterVolume(volumeId, name, secret) {
         let volumeName = name + "-" + secret;
-        await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
+        await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume stop ${volumeName}"`);
         try {
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume delete ${volumeName}"`);
         } catch (error) {
-            await OSController.execSilentCommand(`docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume start ${volumeName}"`);
+            await OSController.execSilentCommand(`sudo docker exec gluster-ctl bash -c "printf 'y\n' | gluster volume start ${volumeName}"`);
             throw error;
         }
         await DBController.deleteGlusterVolume(volumeId);
@@ -145,7 +138,7 @@ class TaskGlusterController {
      */
     static async authorizeGlusterVolumeIps(topicSplit, ip, data) {
         try {
-            let result = await OSController.execSilentCommand(`docker exec gluster-ctl gluster volume set ${data.volumeName} auth.allow ${data.ips.join(',')}`);
+            let result = await OSController.execSilentCommand(`sudo docker exec gluster-ctl gluster volume set ${data.volumeName} auth.allow ${data.ips.join(',')}`);
             if(!(result.find(l => l.indexOf("success") != -1))) {
                 throw new Error(result.join(" ; "));
             }
