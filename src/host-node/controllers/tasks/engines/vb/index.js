@@ -827,11 +827,6 @@ class EngineController {
             let serviceObjs = await this.getK8SResources({ip: node.ip}, ns, "services", [clusterIPServiceName]);
             serviceObjs[0]["PORT(S)"].split(',').forEach(sp => {
                 sp = sp.trim();
-
-
-console.log("=== SP", sp);
-
-
                 let i = sp.indexOf(":");
                 if(i != -1){
                    let map = {
