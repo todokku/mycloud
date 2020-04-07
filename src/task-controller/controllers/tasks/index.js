@@ -746,6 +746,7 @@ class TaskController {
                     "component": "task-controller",
                                         "ts":new Date().toISOString()
                 });
+                console.log("=============> ", task.payload[0].params.volume.type);
                 if(task.payload[0].params.volume.type == "gluster") {
                     // snapshotData = await this.takeClusterSnapshot(task.targetId);
                     await TaskRuntimeController.mountGlusterVolumeToClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
