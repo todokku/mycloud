@@ -84,35 +84,6 @@ dependencies () {
 }
 
 collect_informations() {
-
-
-
-
-
-    # Find the proper column index for this OS
-    FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
-    STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
-    COL_INDEX=0
-    for i in "${STRINGTEST[@]}"
-    do : 
-        echo "====> $i"
-        COL_INDEX=$((COL_INDEX+1))
-        if [[ $i = "Mounted" ]]
-        then
-            TRG_INDEX=$COL_INDEX
-            break
-        fi
-    done
-    
-    echo $COL_INDEX
-
-
-
-
-
-
-
-
     echo "==> Please select the proper Network adapter to use:"
     IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
     IFACESarrIN=(${IFACES//\r/ })
@@ -121,9 +92,6 @@ collect_informations() {
             break
         fi
     done
-
-
-
 
     LOCAL_IPS="$(hostname -I)"
     arrIN=(${LOCAL_IPS// / })
@@ -173,7 +141,20 @@ collect_informations() {
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
 
 
-        
+        # Find the proper column index for this OS
+        FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
+        STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
+        COL_INDEX=0
+        for i in "${STRINGTEST[@]}"
+        do : 
+            echo "====> $i"
+            COL_INDEX=$((COL_INDEX+1))
+            if [[ $i = "Mounted" ]]
+            then
+                TRG_INDEX=$COL_INDEX
+                break
+            fi
+        done
 
 
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $TRG_INDEX}')
@@ -186,20 +167,20 @@ collect_informations() {
         FS_INDEX=0
         for i in "${FSLarrIN[@]}"
         do : 
-        if [[ $i = /dev/* ]]
-        then
-            VALID_FS+=("$i (${FSLSIZEarrIN[$FS_INDEX]})")
-            VALID_MOUNTS+=("${FSLMOUNTarrIN[$FS_INDEX]}")
-        fi
-        FS_INDEX=$((FS_INDEX+1))
+            if [[ $i = /dev/* ]]
+            then
+                VALID_FS+=("$i (${FSLSIZEarrIN[$FS_INDEX]})")
+                VALID_MOUNTS+=("${FSLMOUNTarrIN[$FS_INDEX]}")
+            fi
+            FS_INDEX=$((FS_INDEX+1))
         done
 
         MOUNT_INDEX=""
         select VOL_NAME in "${VALID_FS[@]}"; do 
-        if [ "$VOL_NAME" != "" ]; then
-            MOUNT_INDEX=$REPLY
-            break
-        fi
+            if [ "$VOL_NAME" != "" ]; then
+                MOUNT_INDEX=$REPLY
+                break
+            fi
         done
 
         MOUNT_INDEX=$((MOUNT_INDEX-1))
@@ -209,7 +190,7 @@ collect_informations() {
 
         BRICK_MOUNT_PATH="${VALID_MOUNTS[$MOUNT_INDEX]}/bricks"
 
-echo "BRICK MOUNT=>$BRICK_MOUNT_PATH"
+        echo "BRICK MOUNT=>$BRICK_MOUNT_PATH"
 
         GLUSTER_VOLUME="${VOL_NAME[1]}"
     else
