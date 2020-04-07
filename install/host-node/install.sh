@@ -88,7 +88,7 @@ collect_informations() {
 
 
     echo "==> Please select the proper Network adapter to use:"
-    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
+    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\\n' | awk NF)
     IFACESarrIN=(${IFACES//\n/ })
     select IFACE in "${IFACESarrIN[@]}"; do 
         if [ "$IFACE" != "" ]; then
