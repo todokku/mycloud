@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Start and Enable kubelet service
-echo "[TASK 8] Enable and start kubelet service"
-systemctl enable kubelet 
-systemctl start kubelet 
+# Install Gluster client
+echo "[TASK M.4] Install Gluster engine"
+yum install -y -q centos-release-gluster glusterfs-server
+systemctl disable glusterd
+systemctl stop glusterd

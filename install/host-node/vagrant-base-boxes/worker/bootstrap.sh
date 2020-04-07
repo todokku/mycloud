@@ -11,7 +11,7 @@ yum -y update kernel
 
 # Install docker from Docker-ce repository
 echo "[TASK 1] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 sshpass centos-release-gluster glusterfs-server
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 sshpass
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 
 yum install -y -q docker-ce >/dev/null 
 
@@ -63,22 +63,22 @@ echo "[TASK 7] Install Kubernetes (kubeadm, kubelet and kubectl)"
 yum install -y -q kubeadm kubelet kubectl
 
 # Enable ssh password authentication
-echo "[TASK 9] Enable ssh password authentication"
+echo "[TASK 8] Enable ssh password authentication"
 sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 systemctl reload sshd
 
 # Set Root password
-echo "[TASK 10] Set root password"
+echo "[TASK 9] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
 
 # Install Gluster client
+echo "[TASK 10] Install Gluster engine"
+yum install -y -q centos-release-gluster glusterfs-server
 systemctl disable glusterd
 systemctl stop glusterd
 
-
-
-
-
+# Cleanup
+echo "[TASK 11] Cleanup"
 yum -y install yum-utils
 package-cleanup -y --oldkernels --count=1
 yum -y autoremove

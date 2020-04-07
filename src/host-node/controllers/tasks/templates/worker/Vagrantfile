@@ -15,5 +15,6 @@ Vagrant.configure(2) do |config|
       v.memory = 2048
       v.cpus = 2
     end
+    worker.vm.provision "shell", path: "../../../bootstrap_scripts/k8s/bootstrap_worker.sh"
   end
 end

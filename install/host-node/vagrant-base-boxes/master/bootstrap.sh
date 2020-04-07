@@ -67,19 +67,17 @@ kubeadm config images pull
 systemctl stop kubelet
 
 # Enable ssh password authentication
-echo "[TASK 9] Enable ssh password authentication"
+echo "[TASK 8] Enable ssh password authentication"
 sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 systemctl reload sshd
 
 # Set Root password
-echo "[TASK 10] Set root password"
+echo "[TASK 9] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
 
-# Install docker from Docker-ce repository
-echo "[TASK 11] Install Gluster engine"
-yum install -y -q centos-release-gluster glusterfs-server
-
 # Install Gluster client
+echo "[TASK 10] Install Gluster engine"
+yum install -y -q centos-release-gluster glusterfs-server
 systemctl disable glusterd
 systemctl stop glusterd
 
@@ -91,22 +89,20 @@ kubectl get nodes | grep 'worker.' | awk '{print \$1}' | rev | cut -d. -f1 | rev
 EOT
 chmod +x /home/vagrant/getnodes.sh
 
-echo "[TASK 12] Generate and save cluster join command to /joincluster.sh"
+echo "[TASK 11] Generate and save cluster join command to /joincluster.sh"
 cat <<EOT >> /home/vagrant/gentoken.sh
 #!/bin/bash
 kubeadm token create --print-join-command > /joincluster.sh
 EOT
 chmod +x /home/vagrant/gentoken.sh
 
-echo "[TASK 13] Install third party resources"
+echo "[TASK 12] Install third party resources"
 echo "export PATH=$PATH:/usr/local/bin/" >> /etc/environment
 export PATH=$PATH:/usr/local/bin/
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
-
-
-
-
+# Cleanup
+echo "[TASK 13] Cleanup"
 yum -y install yum-utils
 package-cleanup -y --oldkernels --count=1
 yum -y autoremove

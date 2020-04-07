@@ -45,4 +45,10 @@ su - vagrant -c "kubectl apply -f https://github.com/coreos/flannel/raw/master/D
 sed -i "s/enable-admission-plugins=NodeRestriction/enable-admission-plugins=NodeRestriction,PodPreset/g" /etc/kubernetes/manifests/kube-apiserver.yaml
 sed -i '/- kube-apiserver/a\ \ \ \ - --runtime-config=settings.k8s.io/v1alpha1=true' /etc/kubernetes/manifests/kube-apiserver.yaml
 
+# Install Gluster client
+echo "[TASK M.4] Install Gluster engine"
+yum install -y -q centos-release-gluster glusterfs-server
+systemctl disable glusterd
+systemctl stop glusterd
+
 /home/vagrant/gentoken.sh
