@@ -163,7 +163,7 @@ collect_informations() {
         fi
         COL_INDEX=$((COL_INDEX+1))
         done
-        # echo $TRG_INDEX
+        echo $TRG_INDEX
 
 
 
@@ -280,65 +280,65 @@ install_core_components() {
 collect_informations
 
 # Install dependencies
-dependencies
+# dependencies
 
-if [ "$IS_K8S_NODE" == "true" ]; then
-    # set up private registry
-    authorize_private_registry
-fi
+# if [ "$IS_K8S_NODE" == "true" ]; then
+#     # set up private registry
+#     authorize_private_registry
+# fi
 
-# Clone repo
-pull_git
+# # Clone repo
+# pull_git
 
-# Build vagrant boxes
-if [ "$IS_K8S_NODE" == "true" ]; then
-    build_vagrant_boxes
-fi
+# # Build vagrant boxes
+# if [ "$IS_K8S_NODE" == "true" ]; then
+#     build_vagrant_boxes
+# fi
 
-# Install the core components
-install_core_components
+# # Install the core components
+# install_core_components
 
-echo "[DONE] MyCloud host controller deployed successfully!"
+# echo "[DONE] MyCloud host controller deployed successfully!"
 
-if [ "$IS_GLUSTER_PEER" == "true" ]; then
+# if [ "$IS_GLUSTER_PEER" == "true" ]; then
 
-    # Start the gluster controller
-    if [ "$NEW_DOCKER" == "true" ]; then
-        echo ""
-        echo "==> Since Docker was just installed, you will have to restart your session before starting the cluster-ctl container."
-        echo "    Please log out, and log back in, then execute the following command:"
-        echo ""
-        echo "    docker run \\"
-        echo "       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
-        echo "       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
-        echo "       -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
-        echo "       -v $BRICK_MOUNT_PATH:/bricks:z \\"
-        echo "       -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
-        echo "       -d --privileged=true \\"
-        echo "       --restart unless-stopped \\"
-        echo "       --net=host -v /dev/:/dev \\"
-        echo "       --name gluster-ctl \\"
-        echo "       gluster/gluster-centos:gluster4u0_centos7"
-    else
-        docker run \
-            -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
-            -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
-            -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
-            -v $BRICK_MOUNT_PATH:/bricks:z \
-            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-            -d --privileged=true \
-            --restart unless-stopped \
-            --net=host -v /dev/:/dev \
-            --name gluster-ctl \
-            gluster/gluster-centos:gluster4u0_centos7
-    fi
+#     # Start the gluster controller
+#     if [ "$NEW_DOCKER" == "true" ]; then
+#         echo ""
+#         echo "==> Since Docker was just installed, you will have to restart your session before starting the cluster-ctl container."
+#         echo "    Please log out, and log back in, then execute the following command:"
+#         echo ""
+#         echo "    docker run \\"
+#         echo "       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
+#         echo "       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
+#         echo "       -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
+#         echo "       -v $BRICK_MOUNT_PATH:/bricks:z \\"
+#         echo "       -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
+#         echo "       -d --privileged=true \\"
+#         echo "       --restart unless-stopped \\"
+#         echo "       --net=host -v /dev/:/dev \\"
+#         echo "       --name gluster-ctl \\"
+#         echo "       gluster/gluster-centos:gluster4u0_centos7"
+#     else
+#         docker run \
+#             -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
+#             -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
+#             -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
+#             -v $BRICK_MOUNT_PATH:/bricks:z \
+#             -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+#             -d --privileged=true \
+#             --restart unless-stopped \
+#             --net=host -v /dev/:/dev \
+#             --name gluster-ctl \
+#             gluster/gluster-centos:gluster4u0_centos7
+#     fi
     
-    # Join the gluster network
-    echo ""
-    echo "==> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
-    echo "    PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
-    echo ""
-    echo "    docker exec gluster-ctl gluster peer probe $LOCAL_IP"
-fi
+#     # Join the gluster network
+#     echo ""
+#     echo "==> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
+#     echo "    PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
+#     echo ""
+#     echo "    docker exec gluster-ctl gluster peer probe $LOCAL_IP"
+# fi
 
 cd "$_PWD"
