@@ -150,7 +150,24 @@ collect_informations() {
         FSLSIZEarrIN=(${FSLSIZE//\r/ })
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
 
-        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $9}')
+
+        # Find the proper column index for this OS
+        FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
+        STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
+        COL_INDEX=0
+        for i in "${STRINGTEST[@]}"
+        do : 
+        if [[ $i = "Mounted" ]]
+        then
+            TRG_INDEX=$COL_INDEX
+        fi
+        COL_INDEX=$((COL_INDEX+1))
+        done
+        # echo $TRG_INDEX
+
+
+
+        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $TRG_INDEX}')
         FSLMOUNTarrIN=(${FSLMOUNT//\r/})
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
 
@@ -182,6 +199,9 @@ collect_informations() {
         VOL_NAME=(${VOL_FULL_NAME//\// })
 
         BRICK_MOUNT_PATH="${VALID_MOUNTS[$MOUNT_INDEX]}/bricks"
+
+echo "BRICK MOUNT=>$BRICK_MOUNT_PATH"
+
         GLUSTER_VOLUME="${VOL_NAME[1]}"
     else
         IS_GLUSTER_PEER="false"
