@@ -187,8 +187,6 @@ install_core_components() {
     if [ "$IS_GLUSTER_PEER" == "true" ]; then
         HAS_GLUSTER_CONTAINER=$(docker ps -a | grep "gluster-ctl")
         if [ "$HAS_GLUSTER_CONTAINER" == "" ]; then
-            docker pull gluster/gluster-centos &> /dev/null
-
             mkdir -p $HOME/.mycloud/gluster/etc/glusterfs &> /dev/null
             mkdir -p $HOME/.mycloud/gluster/var/lib/glusterd &> /dev/null
             mkdir -p $HOME/.mycloud/gluster/var/log/glusterfs &> /dev/null
