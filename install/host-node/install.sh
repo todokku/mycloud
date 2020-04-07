@@ -154,8 +154,6 @@ collect_informations() {
                 break
             fi
         done
-
-
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $'"$TRG_INDEX"'}')
         FSLMOUNTarrIN=(${FSLMOUNT//\r/})
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
@@ -187,7 +185,11 @@ collect_informations() {
         VOL_FULL_NAME=(${VOL_NAME// / })
         VOL_NAME=(${VOL_FULL_NAME//\// })
 
-        BRICK_MOUNT_PATH="${VALID_MOUNTS[$MOUNT_INDEX]}/bricks"
+        if [ "${VALID_MOUNTS[$MOUNT_INDEX]}" == "/" ]; then
+            BRICK_MOUNT_PATH="/bricks"
+        else
+            BRICK_MOUNT_PATH="${VALID_MOUNTS[$MOUNT_INDEX]}/bricks"
+        fi
 
         echo "BRICK MOUNT=>$BRICK_MOUNT_PATH"
 
