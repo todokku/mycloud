@@ -88,8 +88,8 @@ collect_informations() {
 
 
     echo "==> Please select the proper Network adapter to use:"
-    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\\n' | awk NF)
-    IFACESarrIN=(${IFACES//\n/ })
+    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
+    IFACESarrIN=(${IFACES//\r/ })
     select IFACE in "${IFACESarrIN[@]}"; do 
         if [ "$IFACE" != "" ]; then
             break
@@ -143,15 +143,15 @@ collect_informations() {
        
         # Select filesystem that is used for Gluster
         FSL=$(df -h | sed 's/|/ /' | awk '{print $1}')
-        FSLarrIN=(${FSL//\n/ })
+        FSLarrIN=(${FSL//\r/ })
         FSLarrIN=("${FSLarrIN[@]:1}")
 
         FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $2}')
-        FSLSIZEarrIN=(${FSLSIZE//\n/ })
+        FSLSIZEarrIN=(${FSLSIZE//\r/ })
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
 
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $9}')
-        FSLMOUNTarrIN=(${FSLMOUNT//\n/})
+        FSLMOUNTarrIN=(${FSLMOUNT//\r/})
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
 
         VALID_FS=()
