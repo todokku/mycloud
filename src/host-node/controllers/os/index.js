@@ -13,18 +13,18 @@ var targz = require('targz');
 
 class OsController {
 
-	/**
-	 * getGatewayIp
-	 */
-	static async getGatewayIp() {
-		let result = null;
-		if(await this.supportsCommand("netstat")){
-			result = await this.execSilentCommand(`netstat -nr | grep "${process.env.DEFAULT_INET_INTERFACE_SHORT}" | awk '{print $2}' | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"`);
-		} else if(await this.supportsCommand("ip")){
-			result = await this.execSilentCommand(`ip route | grep "${process.env.DEFAULT_INET_INTERFACE_SHORT}" | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"`);
-		}
-		return result ? result[0] : null;
-	}
+	// /**
+	//  * getGatewayIp
+	//  */
+	// static async getGatewayIp() {
+	// 	let result = null;
+	// 	if(await this.supportsCommand("netstat")){
+	// 		result = await this.execSilentCommand(`netstat -nr | grep "${process.env.DEFAULT_INET_INTERFACE_SHORT}" | awk '{print $2}' | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"`);
+	// 	} else if(await this.supportsCommand("ip")){
+	// 		result = await this.execSilentCommand(`ip route | grep "${process.env.DEFAULT_INET_INTERFACE_SHORT}" | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"`);
+	// 	}
+	// 	return result ? result[0] : null;
+	// }
 
 	/**
 	 * getIp
@@ -33,13 +33,9 @@ class OsController {
 		if(this.ip){
 			return this.ip;
 		}
-		let result = null;
-		let gatewayIp = await this.getGatewayIp();
-		if(gatewayIp){
-			result = await this.execSilentCommand(`ifconfig ${process.env.DEFAULT_INET_INTERFACE_SHORT} | grep "${gatewayIp.substring(0, gatewayIp.lastIndexOf("."))}" | awk '{print $2}'`);
-			this.ip = result[0];
-		}
-		return result ? result[0] : null;
+		let result = await this.execSilentCommand(`ifconfig ${process.env.DEFAULT_INET_INTERFACE_SHORT} | grep "inet " | awk '{print $2}'`);
+		this.ip = result[0];
+		return this.ip;
 	}
 	
 	/**
