@@ -910,7 +910,7 @@ class EngineController {
             } 
         }   
         else if(r.code == 0 && r.stdout == "n") {
-            r = await this.sshExec(node.ip, `mkdir -p /mnt/${volumeName}`, true);
+            r = await this.sshExec(node.ip, `sudo mkdir -p /mnt/${volumeName}`, true);
             if(r.code != 0) {
                 throw new Error("Could not create mount folder");
             } 
@@ -919,18 +919,18 @@ class EngineController {
             throw new Error("An error occured trying to unmount volume");
         }
 
-        r = await this.sshExec(node.ip, `mount.glusterfs ${glusterIp}:/${volumeName} /mnt/${volumeName}`, true);
+        r = await this.sshExec(node.ip, `sudo mount.glusterfs ${glusterIp}:/${volumeName} /mnt/${volumeName}`, true);
         if(r.code != 0) {
             await this.unmountVolume(node, volumeName, glusterIp);
             throw new Error("Could not mount folded");
         }
 
-        r = await this.sshExec(node.ip, `chown -R vagrant:vagrant /mnt/${volumeName}`, true);
+        r = await this.sshExec(node.ip, `sudo chown -R vagrant:vagrant /mnt/${volumeName}`, true);
         if(r.code != 0) {
             await this.unmountVolume(node, volumeName, glusterIp);
             throw new Error("Could not assign permissions on folder");
         }
-        r = await this.sshExec(node.ip, `echo '${glusterIp}:/${volumeName}   /mnt/${volumeName}  glusterfs _netdev,auto,x-systemd.automount 0 0' | tee -a /etc/fstab`, true);
+        r = await this.sshExec(node.ip, `echo '${glusterIp}:/${volumeName}   /mnt/${volumeName}  glusterfs _netdev,auto,x-systemd.automount 0 0' | sudo tee -a /etc/fstab`, true);
         if(r.code != 0) {
             await this.unmountVolume(node, volumeName, glusterIp);
             throw new Error("Could not update fstab");
@@ -1126,15 +1126,15 @@ class EngineController {
             r = await this.sshExec(node.ip, `mount | grep "${volumeName}"`, true);
             // If volume mounted
             if(r.code == 0 && r.stdout.trim() != "") {
-                await this.sshExec(node.ip, `umount /mnt/${volumeName}`, true);
+                await this.sshExec(node.ip, `sudo umount /mnt/${volumeName}`, true);
             }
             // If also declared in fstab, remove it from there as well
             r = await this.sshExec(node.ip, `cat /etc/fstab | grep "/mnt/${volumeName}"`, true);
             if(r.code == 0 && r.stdout.trim() != "") {
-                await this.sshExec(node.ip, `sed -i '\\|/mnt/${volumeName}|d' /etc/fstab`, true);
+                await this.sshExec(node.ip, `sudo sed -i '\\|/mnt/${volumeName}|d' /etc/fstab`, true);
             }
             // Delete folders
-            await this.sshExec(node.ip, `rm -rf /mnt/${volumeName}`, true);
+            await this.sshExec(node.ip, `sudo rm -rf /mnt/${volumeName}`, true);
         } else if(r.code != 0) {
             throw new Error("An error occured trying to unmount volume");
         }
