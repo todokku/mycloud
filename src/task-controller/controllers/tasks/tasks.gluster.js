@@ -42,11 +42,8 @@ class TaskGlusterController {
      */
     static async provisionVolume(workspaceId, taskId, size, replicas, name, type) {
         let spaceArray = await this.parent.collectDiskSpaceFromGlusterNetwork();
-        console.log("z", spaceArray);
         let allDbHosts = await DBController.getAllGlusterHosts();
-        console.log("e", allDbHosts);
         await TaskGlusterController.registerMissingGlusterHosts(allDbHosts, spaceArray);
-        console.log("spaceArray =>", spaceArray);
         if(spaceArray.length > 1){
             spaceArray = spaceArray.filter(o => o.space > (size + 1024));
             replicas = replicas ? replicas : 2;
