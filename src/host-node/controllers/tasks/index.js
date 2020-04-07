@@ -173,17 +173,13 @@ class TaskController {
      * @param {*} data 
      */
     static async provisionGlusterVolume(topicSplit, ip, data) {
-        console.log(1);
-        
-        console.log(2);
-        try{
+       try{
             let dbHostNode = await DBController.getGlusterHostByIp(ip);
-            console.log(3);
+            console.log("dbHostNode =>", dbHostNode);
             if(!dbHostNode){
                 throw new Error("Could not find Gluster host entry in database");
             }
             await TaskGlusterController.provisionGlusterVolume(data.gluster_targets, data.workspaceId, data.name, data.size, data.type);
-            console.log(4);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "provision gluster volume"

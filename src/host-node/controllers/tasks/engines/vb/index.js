@@ -1211,7 +1211,7 @@ class EngineController {
         await OSController.execSilentCommand(`vboxmanage unregistervm --delete ${name}`);
         let targetFolder = path.join(process.env.VM_BASE_DIR, "workplaces", workspaceId.toString(), `${name.indexOf("master") != -1 ? "master":"worker"}.${name.split(".")[1]}`);
         if (targetFolder && fs.existsSync(targetFolder)) {
-            // await rmfr(targetFolder);
+            await rmfr(targetFolder);
         }    
     }
 

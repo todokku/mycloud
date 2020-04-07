@@ -41,7 +41,6 @@ class TaskGlusterController {
      * @param {*} type 
      */
     static async provisionVolume(workspaceId, taskId, size, replicas, name, type) {
-       
         let spaceArray = await this.parent.collectDiskSpaceFromGlusterNetwork();
         console.log("z", spaceArray);
         let allDbHosts = await DBController.getAllGlusterHosts();
@@ -53,8 +52,6 @@ class TaskGlusterController {
             replicas = replicas ? replicas : 2;
             if(spaceArray.length >= replicas){
                 spaceArray = spaceArray.splice(0, replicas);
-
-                console.log("A");
                 let response = await this.mqttController.queryRequestResponse(spaceArray[0].ip, "provision_gluster_volume", {
                     "taskId": taskId,
                     "gluster_targets": spaceArray.map(o => o.ip),
@@ -62,8 +59,7 @@ class TaskGlusterController {
                     "name": name,
                     "type": type,
                     "size": size
-                }, 60 * 1000 * 15);
-                console.log("B", response);
+                }, 60 * 1000 * 15);               
                 if(response.data.status != 200){
                     const error = new Error(response.data.message);
                     error.code = response.data.status;
