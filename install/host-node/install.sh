@@ -283,7 +283,7 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
             --restart unless-stopped \
             --net=host -v /dev/:/dev \
             --name gluster-ctl \
-            gluster/gluster-centos
+            gluster/gluster-centos:gluster4u0_centos7
     fi
     
     # Join the gluster network
