@@ -406,7 +406,7 @@ class TaskController {
                     "type": "INFO",
                     "step": "PROVISIONING_GLUSTER_VOLUME",
                     "component": "task-controller",
-                                        "ts": new Date().toISOString()
+                    "ts": new Date().toISOString()
                 });
 
                 snapshotData = await this.takeClusterSnapshot(task.targetId);

@@ -44,12 +44,14 @@ class TaskGlusterController {
         let spaceArray = await this.parent.collectDiskSpaceFromGlusterNetwork();
         let allDbHosts = await DBController.getAllGlusterHosts();
         await TaskGlusterController.registerMissingGlusterHosts(allDbHosts, spaceArray);
-
+        console.log("spaceArray =>", spaceArray);
         if(spaceArray.length > 1){
             spaceArray = spaceArray.filter(o => o.space > (size + 1024));
             replicas = replicas ? replicas : 2;
             if(spaceArray.length >= replicas){
                 spaceArray = spaceArray.splice(0, replicas);
+
+                console.log("A");
                 let response = await this.mqttController.queryRequestResponse(spaceArray[0].ip, "provision_gluster_volume", {
                     "taskId": taskId,
                     "gluster_targets": spaceArray.map(o => o.ip),
@@ -58,6 +60,7 @@ class TaskGlusterController {
                     "type": type,
                     "size": size
                 }, 60 * 1000 * 15);
+                console.log("B", response);
                 if(response.data.status != 200){
                     const error = new Error(response.data.message);
                     error.code = response.data.status;
