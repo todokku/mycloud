@@ -164,7 +164,7 @@ collect_informations() {
         fi
         done
         
-
+echo $COL_INDEX
 
 
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $TRG_INDEX}')
