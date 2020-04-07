@@ -156,7 +156,7 @@ collect_informations() {
         done
 
 
-        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $6}')
+        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $'"$TRG_INDEX"'}')
         FSLMOUNTarrIN=(${FSLMOUNT//\r/})
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
 
