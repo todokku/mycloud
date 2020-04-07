@@ -163,8 +163,8 @@ class TaskRuntimeController {
         } catch (error) {
             console.log(6);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
+                status: error.code ? error.code : 500,
+                message: error.message,
                 task: "bind volume"
             }));
         }
