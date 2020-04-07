@@ -553,8 +553,10 @@ class TaskRuntimeController {
         try {
             for(let i=0; i<nodeProfiles.length; i++) {
                 if(!upgradeNodeIds || upgradeNodeIds.indexOf(nodeProfiles[i].node.id) != -1){
+                    console.log("A");
                     this.mqttController.logEvent(socketId, "info", `Mounting Gluster volume for node ${i+1}/${nodeProfiles.length}`);
                     await this.mountK8SNodeGlusterVolume(nodeProfiles[i], volume);
+                    console.log("B");
                     successMounts.push(nodeProfiles[i]);
                 }
             }
@@ -698,10 +700,12 @@ class TaskRuntimeController {
      * @param {*} volume 
      */
     static async mountK8SNodeGlusterVolume(nodeProfile, volume) {
+        console.log("A1", nodeProfile.host.ip);
         let response = await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "mount_gluster_volume", {
             "nodeProfile": nodeProfile,
             "volume": volume
         }, 60 * 1000 * 15);
+        console.log("A2", response);
         if(response.data.status != 200){
             const error = new Error(response.data.message);
             error.code = response.data.status;
