@@ -95,11 +95,12 @@ collect_informations() {
     COL_INDEX=0
     for i in "${STRINGTEST[@]}"
     do : 
-    COL_INDEX=$((COL_INDEX+1))
-    if [[ $i = "Mounted" ]]
-    then
-        TRG_INDEX=$COL_INDEX
-    fi
+        echo "====> $i"
+        COL_INDEX=$((COL_INDEX+1))
+        if [[ $i = "Mounted" ]]
+        then
+            TRG_INDEX=$COL_INDEX
+        fi
     done
     
     echo $COL_INDEX
