@@ -147,7 +147,6 @@ collect_informations() {
         COL_INDEX=0
         for i in "${STRINGTEST[@]}"
         do : 
-            echo "====> $i"
             COL_INDEX=$((COL_INDEX+1))
             if [[ $i = "Mounted" ]]
             then
@@ -157,7 +156,7 @@ collect_informations() {
         done
 
 
-        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $TRG_INDEX}')
+        FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $6}')
         FSLMOUNTarrIN=(${FSLMOUNT//\r/})
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
 
