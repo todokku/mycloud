@@ -22,14 +22,18 @@ dependencies () {
         sudo apt-get update
     fi
 
-    VIRTUALBOX_EXISTS=$(command -v vboxmanage)
-    if [ "$VIRTUALBOX_EXISTS" == "" ]; then
-        sudo apt install virtualbox -y &> /dev/null
+    if [ "$IS_K8S_NODE" == "true" ]; then
+        VIRTUALBOX_EXISTS=$(command -v vboxmanage)
+        if [ "$VIRTUALBOX_EXISTS" == "" ]; then
+            sudo apt install virtualbox -y &> /dev/null
+        fi
     fi
 
-    VAGRANT_EXISTS=$(command -v vagrant)
-    if [ "$VAGRANT_EXISTS" == "" ]; then
-        sudo apt install vagrant -y &> /dev/null
+    if [ "$IS_K8S_NODE" == "true" ]; then
+        VAGRANT_EXISTS=$(command -v vagrant)
+        if [ "$VAGRANT_EXISTS" == "" ]; then
+            sudo apt install vagrant -y &> /dev/null
+        fi
     fi
 
     NODE_EXISTS=$(command -v node)
@@ -50,21 +54,27 @@ dependencies () {
         pm2 set pm2-logrotate:rotateInterval '* * 1 * *'
     fi
 
-    TAR_EXISTS=$(command -v tar)
-    if [ "$TAR_EXISTS" == "" ]; then
-        sudo apt install tar -y &> /dev/null
+    if [ "$IS_K8S_NODE" == "true" ]; then
+        TAR_EXISTS=$(command -v tar)
+        if [ "$TAR_EXISTS" == "" ]; then
+            sudo apt install tar -y &> /dev/null
+        fi
     fi
 
-    SSHPASS_EXISTS=$(command -v sshpass)
-    if [ "$SSHPASS_EXISTS" == "" ]; then
-        sudo apt install sshpass -y &> /dev/null
+    if [ "$IS_K8S_NODE" == "true" ]; then
+        SSHPASS_EXISTS=$(command -v sshpass)
+        if [ "$SSHPASS_EXISTS" == "" ]; then
+            sudo apt install sshpass -y &> /dev/null
+        fi
     fi
 
-    HELM_EXISTS=$(command -v helm)
-    if [ "$HELM_EXISTS" == "" ]; then
-        echo "export PATH=$PATH:/usr/local/bin/" >> sudo /etc/environment
-        export PATH=$PATH:/usr/local/bin/
-        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    if [ "$IS_K8S_NODE" == "true" ]; then
+        HELM_EXISTS=$(command -v helm)
+        if [ "$HELM_EXISTS" == "" ]; then
+            echo "export PATH=$PATH:/usr/local/bin/" >> sudo /etc/environment
+            export PATH=$PATH:/usr/local/bin/
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+        fi
     fi
 
     GIT_EXISTS=$(command -v git)
@@ -221,11 +231,11 @@ install_core_components() {
     # fi
 }
 
-# Install dependencies
-dependencies
-
 # Collect info from user
 collect_informations
+
+# Install dependencies
+dependencies
 
 if [ "$IS_K8S_NODE" == "true" ]; then
     # set up private registry
@@ -236,9 +246,9 @@ fi
 pull_git
 
 # Build vagrant boxes
-# if [ "$IS_K8S_NODE" == "true" ]; then
-#     build_vagrant_boxes
-# fi
+if [ "$IS_K8S_NODE" == "true" ]; then
+    build_vagrant_boxes
+fi
 
 # Install the core components
 install_core_components
