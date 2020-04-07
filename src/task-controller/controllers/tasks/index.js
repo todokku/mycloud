@@ -747,10 +747,10 @@ class TaskController {
                                         "ts":new Date().toISOString()
                 });
                 if(task.payload[0].params.volume.type == "gluster") {
-                    snapshotData = await this.takeClusterSnapshot(task.targetId);
+                    // snapshotData = await this.takeClusterSnapshot(task.targetId);
                     await TaskRuntimeController.mountGlusterVolumeToClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
                     await TaskVolumeController.addVolumeBindingToDb(task.targetId, task.payload[0].params.volume.id, task.payload[0].params.bindTo == "k8s" ? "workspace" : "vm");
-                    await this.cleanUpClusterSnapshot(snapshotData);
+                    // await this.cleanUpClusterSnapshot(snapshotData);
                     this.mqttController.closeEventStream(task.payload[0].socketId);
                 } else if(task.payload[0].params.volume.type == "local") {
                     snapshotData = await this.takeClusterSnapshot(task.targetId);
