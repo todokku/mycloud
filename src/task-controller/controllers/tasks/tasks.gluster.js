@@ -41,11 +41,11 @@ class TaskGlusterController {
      * @param {*} type 
      */
     static async provisionVolume(workspaceId, taskId, size, replicas, name, type) {
-        console.log("z");
+       
         let spaceArray = await this.parent.collectDiskSpaceFromGlusterNetwork();
         console.log("z", spaceArray);
         let allDbHosts = await DBController.getAllGlusterHosts();
-        console.log("z", allDbHosts);
+        console.log("e", allDbHosts);
         await TaskGlusterController.registerMissingGlusterHosts(allDbHosts, spaceArray);
         console.log("spaceArray =>", spaceArray);
         if(spaceArray.length > 1){
