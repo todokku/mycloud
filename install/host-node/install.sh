@@ -100,6 +100,7 @@ collect_informations() {
         if [[ $i = "Mounted" ]]
         then
             TRG_INDEX=$COL_INDEX
+            break
         fi
     done
     
