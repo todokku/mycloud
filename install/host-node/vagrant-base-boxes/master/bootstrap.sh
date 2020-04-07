@@ -9,10 +9,10 @@ EOF
 yum -y update
 yum -y update kernel
 
-# Install docker from Docker-ce repository
-echo "[TASK 1] Install docker container engine"
 
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 sshpass centos-release-gluster glusterfs-server
+# Install docker from Docker-ce repository
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 sshpass
+echo "[TASK 1] Install docker container engine"
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 
 yum install -y -q docker-ce >/dev/null 
 
@@ -75,6 +75,10 @@ systemctl reload sshd
 echo "[TASK 10] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
 
+# Install docker from Docker-ce repository
+echo "[TASK 11] Install Gluster engine"
+yum install -y -q centos-release-gluster glusterfs-server
+
 # Install Gluster client
 systemctl disable glusterd
 systemctl stop glusterd
@@ -87,14 +91,14 @@ kubectl get nodes | grep 'worker.' | awk '{print \$1}' | rev | cut -d. -f1 | rev
 EOT
 chmod +x /home/vagrant/getnodes.sh
 
-echo "[TASK M.4] Generate and save cluster join command to /joincluster.sh"
+echo "[TASK 12] Generate and save cluster join command to /joincluster.sh"
 cat <<EOT >> /home/vagrant/gentoken.sh
 #!/bin/bash
 kubeadm token create --print-join-command > /joincluster.sh
 EOT
 chmod +x /home/vagrant/gentoken.sh
 
-echo "[TASK M.5] Install third party resources"
+echo "[TASK 13] Install third party resources"
 echo "export PATH=$PATH:/usr/local/bin/" >> /etc/environment
 export PATH=$PATH:/usr/local/bin/
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
