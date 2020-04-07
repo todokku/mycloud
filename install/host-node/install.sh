@@ -87,6 +87,30 @@ collect_informations() {
 
 
 
+
+
+    # Find the proper column index for this OS
+    FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
+    STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
+    COL_INDEX=0
+    for i in "${STRINGTEST[@]}"
+    do : 
+    COL_INDEX=$((COL_INDEX+1))
+    if [[ $i = "Mounted" ]]
+    then
+        TRG_INDEX=$COL_INDEX
+    fi
+    done
+    
+    echo $COL_INDEX
+
+
+
+
+
+
+
+
     echo "==> Please select the proper Network adapter to use:"
     IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
     IFACESarrIN=(${IFACES//\r/ })
@@ -95,10 +119,6 @@ collect_informations() {
             break
         fi
     done
-
-
-    echo "============> $IFACE"
-
 
 
 
@@ -151,20 +171,7 @@ collect_informations() {
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
 
 
-        # Find the proper column index for this OS
-        FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
-        STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
-        COL_INDEX=0
-        for i in "${STRINGTEST[@]}"
-        do : 
-        COL_INDEX=$((COL_INDEX+1))
-        if [[ $i = "Mounted" ]]
-        then
-            TRG_INDEX=$COL_INDEX
-        fi
-        done
         
-echo $COL_INDEX
 
 
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $TRG_INDEX}')
