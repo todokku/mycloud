@@ -175,7 +175,6 @@ class TaskController {
     static async provisionGlusterVolume(topicSplit, ip, data) {
        try{
             let dbHostNode = await DBController.getGlusterHostByIp(ip);
-            console.log("dbHostNode =>", dbHostNode);
             if(!dbHostNode){
                 throw new Error("Could not find Gluster host entry in database");
             }

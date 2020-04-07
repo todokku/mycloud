@@ -12,11 +12,12 @@ dependencies () {
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
         sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
-        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
         sudo apt-get update
         sudo apt-get install docker-ce docker-ce-cli containerd.io -y
         sudo usermod -aG docker $USER
+        NEW_DOCKER="true"
     else
         sudo apt-get update
     fi
@@ -61,7 +62,7 @@ dependencies () {
 
     HELM_EXISTS=$(command -v helm)
     if [ "$HELM_EXISTS" == "" ]; then
-        echo "export PATH=$PATH:/usr/local/bin/" >> /etc/environment
+        echo "export PATH=$PATH:/usr/local/bin/" >> sudo /etc/environment
         export PATH=$PATH:/usr/local/bin/
         curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
     fi
@@ -109,14 +110,39 @@ collect_informations() {
     if [ "$IS_GLUSTER_PEER" == "y" ]; then
         IS_GLUSTER_PEER="true"
 
-        echo "==> What filesystem is used for your volume provisionning ('/dev/<NAME>'):"
-        echo "    NOTE: To see the list of available volumes, use the command 'df -h'"
-        echo "    IMPORTANT: Do NOT enter the '/dev/' portion of the filesystem name"
-        read GLUSTER_VOLUME
-        while [[ "$GLUSTER_VOLUME" == "" ]]; do
-            echo "==> Invalide answer, try again:"
-            read GLUSTER_VOLUME
+        echo "==> What filesystem is used for your volume provisionning:"
+       
+        # Select filesystem that is used for Gluster
+        FSL=$(df -h | sed 's/|/ /' | awk '{print $1}')
+        FSLarrIN=(${FSL//\n/ })
+        FSLarrIN=("${FSLarrIN[@]:1}")
+
+        FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $3}')
+        FSLSIZEarrIN=(${FSLSIZE//\n/ })
+        FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
+
+        VALID_FS=()
+
+        FS_INDEX=0
+        for i in "${FSLarrIN[@]}"
+        do : 
+        if [[ $i = /dev/* ]]
+        then
+            VALID_FS+=("$i (${FSLSIZEarrIN[$FS_INDEX]})")
+        fi
+        FS_INDEX=$((FS_INDEX+1))
         done
+
+        select VOL_NAME in "${VALID_FS[@]}"; do 
+        if [ "$VOL_NAME" != "" ]; then
+            break
+        fi
+        done
+
+        VOL_FULL_NAME=(${VOL_NAME// / })
+        VOL_NAME=(${VOL_FULL_NAME//\// })
+
+        GLUSTER_VOLUME="${VOL_NAME[1]}"
     else
         IS_GLUSTER_PEER="false"
     fi
@@ -222,24 +248,42 @@ echo "[DONE] MyCloud host controller deployed successfully!"
 if [ "$IS_GLUSTER_PEER" == "true" ]; then
 
     # Start the gluster controller
-    docker run \
-      -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
-      -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
-      -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
-      -v $HOME/.mycloud/gluster/bricks:/bricks:z \
-      -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-      -d --privileged=true \
-      --restart unless-stopped \
-      --net=host -v /dev/:/dev \
-      --name gluster-ctl \
-      gluster/gluster-centos
-
+    if [ "$NEW_DOCKER" == "true" ]; then
+        echo ""
+        echo "==> Since Docker was just installed, you will have to restart your session before starting the cluster-ctl container."
+        echo "    Please log out, and log back in, then execute the following command:"
+        echo ""
+        echo "    docker run \\"
+        echo "       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
+        echo "       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
+        echo "       -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
+        echo "       -v $HOME/.mycloud/gluster/bricks:/bricks:z \\"
+        echo "       -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
+        echo "       -d --privileged=true \\"
+        echo "       --restart unless-stopped \\"
+        echo "       --net=host -v /dev/:/dev \\"
+        echo "       --name gluster-ctl \\"
+        echo "       gluster/gluster-centos"
+    else
+        docker run \
+            -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
+            -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
+            -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
+            -v $HOME/.mycloud/gluster/bricks:/bricks:z \
+            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+            -d --privileged=true \
+            --restart unless-stopped \
+            --net=host -v /dev/:/dev \
+            --name gluster-ctl \
+            gluster/gluster-centos
+    fi
+    
     # Join the gluster network
     echo ""
-    echo "=> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
-    echo "   PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
+    echo "==> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
+    echo "    PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
     echo ""
-    echo "   docker exec gluster-ctl gluster peer probe $LOCAL_IP"
+    echo "    docker exec gluster-ctl gluster peer probe $LOCAL_IP"
 fi
 
 cd "$_PWD"
