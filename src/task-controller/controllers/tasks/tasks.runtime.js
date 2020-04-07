@@ -541,12 +541,13 @@ class TaskRuntimeController {
             "ips": volumeBindingIps,
             "volumeName": volumeName
         }, 60 * 1000 * 3);
+       
         if(response.data.status != 200){
             const error = new Error(response.data.message);
             error.code = response.data.status;
             throw error;
         }
-    
+       
         // Mount volume on all cluster nodes
         let successMounts = [];
         try {
