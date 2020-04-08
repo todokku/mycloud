@@ -672,33 +672,25 @@ class TaskRuntimeController {
         let ingressConfigMapFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, tmpFolderHash);
         await EngineController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
       
-        
-
-        let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
-
-
-
-        console.log("INGRESS OPEN PORTS =>", ingressYaml.spec.template.spec.containers[0].ports);
-
-        for(let i=0; i<allServices.length; i++){
-            if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
-                let portName = `${allServices[i].externalServiceName}.${allServices[i].namespace}`;
-                let port = allServices[i].virtualPort;
-                // ...
-
-                console.log("A.1 =>", portName);
-                console.log("A.2 =>", port);
-            }
-        }
-
-        // fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
-        // await EngineController.applyK8SYaml(ingressFilePath, null, data.node);
-
-
-
-        // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
-
         try{
+            // Update NGinx ingress deamonset config
+            let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
+            let ingressOpenPorts = [
+                { name: 'http', containerPort: 80, hostPort: 80 },
+                { name: 'https', containerPort: 443, hostPort: 443 }
+            ];
+            for(let i=0; i<allServices.length; i++){
+                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
+                    ingressOpenPorts.push({ name: `${allServices[i].externalServiceName}.${allServices[i].namespace}`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
+                }
+            }
+            ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
+
+            fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
+            // await EngineController.applyK8SYaml(ingressFilePath, null, data.node);
+            // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
+
+            // Update NGinx ingress configmap config
             let configStringArray = [];
             for(let i=0; i<allServices.length; i++){
                 if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
@@ -716,14 +708,19 @@ class TaskRuntimeController {
                 }
             }
 
-            let ingressConfigMapFilePath = "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml";
             let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
-    
-            console.log("ingressConfigMapYaml =>", ingressConfigMapYaml);
             console.log("configStringArray =>", configStringArray);
-    
+
+            ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
+            fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
+
         } catch (error) {
             throw error;
+        } finally {
+            // if(fs.existsSync(ingressFilePath))
+            //     fs.unlinkSync(ingressFilePath);
+            // if(fs.existsSync(ingressConfigMapFilePath))
+            //     fs.unlinkSync(ingressConfigMapFilePath);
         }
     }
 
