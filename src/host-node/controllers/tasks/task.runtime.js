@@ -538,6 +538,7 @@ class TaskRuntimeController {
      * @param {*} data 
      */
     static async updateClusterIngressRules(topicSplit, data) {
+        let backupData = null;
         try {
             let org = await DBController.getOrgForWorkspace(data.node.workspaceId);
             let account = await DBController.getAccountForOrg(org.id);
@@ -545,7 +546,7 @@ class TaskRuntimeController {
             let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId);
 
             let allServices = services.concat(applications);
-            await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
+            backupData = await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
             await this.updateClusterIngressRulesTCP(data, org, account, allServices);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
@@ -553,6 +554,10 @@ class TaskRuntimeController {
             }));
         } catch (error) {
             console.log(error);
+            if(backupData){
+                fs.writeFileSync(backupData.yamlPath, YAML.stringify(backupData.backup));
+                try { await EngineController.applyK8SYaml(backupData.yamlPath, data.ns, data.node); } catch (_e) {}
+            }
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
@@ -633,12 +638,19 @@ class TaskRuntimeController {
             } else {
                 await EngineController.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
             }
+            return {
+                "yamlPath": ingressYamlPath,
+                "backup": backupYamlContent
+            };
         } catch (error) {
-            if(backupYamlContent && backupYamlContent.spec.rules && backupYamlContent.spec.rules.length > 0) {
+            if(backupYamlContent) {
                 fs.writeFileSync(ingressYamlPath, YAML.stringify(backupYamlContent));
                 try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
             }
             throw error;
+        } finally {
+            if(fs.existsSync(ingressYamlPath))
+                fs.unlinkSync(ingressYamlPath);
         }
     }
 
@@ -672,6 +684,8 @@ class TaskRuntimeController {
         let ingressConfigMapFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
         await EngineController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
       
+        let backupIngressConfigMapYaml = null;
+        let backupIngressYaml = null;
         try{
             // Update NGinx ingress configmap config
             let configStringArray = [];
@@ -692,8 +706,7 @@ class TaskRuntimeController {
             }
 
             let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
-
-            console.log("configStringArray =>", configStringArray);
+            backupIngressConfigMapYaml = JSON.parse(JSON.stringify(ingressConfigMapYaml));
 
             ingressConfigMapYaml.data = {};
             ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
@@ -702,6 +715,7 @@ class TaskRuntimeController {
 
             // Update NGinx ingress deamonset config
             let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
+            backupIngressYaml = JSON.parse(JSON.stringify(ingressYaml));
             let ingressOpenPorts = [
                 { name: 'http', containerPort: 80, hostPort: 80 },
                 { name: 'https', containerPort: 443, hostPort: 443 }
@@ -718,12 +732,20 @@ class TaskRuntimeController {
             await EngineController.applyK8SYaml(ingressFilePath, null, data.node);
             // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
         } catch (error) {
+            if(backupIngressConfigMapYaml) {
+                fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(backupIngressConfigMapYaml));
+                try { await EngineController.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
+            }
+            if(backupIngressYaml) {
+                fs.writeFileSync(ingressFilePath, YAML.stringify(backupIngressYaml));
+                try { await EngineController.applyK8SYaml(ingressFilePath, data.ns, data.node); } catch (_e) {}
+            }
             throw error;
         } finally {
-            // if(fs.existsSync(ingressFilePath))
-            //     fs.unlinkSync(ingressFilePath);
-            // if(fs.existsSync(ingressConfigMapFilePath))
-            //     fs.unlinkSync(ingressConfigMapFilePath);
+            if(fs.existsSync(ingressFilePath))
+                fs.unlinkSync(ingressFilePath);
+            if(fs.existsSync(ingressConfigMapFilePath))
+                fs.unlinkSync(ingressConfigMapFilePath);
         }
     }
 
