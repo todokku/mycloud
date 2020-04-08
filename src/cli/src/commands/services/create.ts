@@ -120,6 +120,7 @@ export default class CreateService extends Command {
 					return;
 				}
 
+
 				// console.log(JSON.stringify(result, null, 4));
 				
 				let valideVolumes = result.data.filter((volume: any) => volume.bindings.length == 0 || volume.bindings.find((o: { target: string }) => o.target != "k8s") ? false : true);
@@ -256,8 +257,6 @@ export default class CreateService extends Command {
 					}
 				}
 			}
-
-			console.log(JSON.stringify(apiData, null, 4));
 
 			// Now make the call
 			result = await this.api("services", {

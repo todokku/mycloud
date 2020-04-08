@@ -362,8 +362,8 @@ class TaskVolumeController {
                     if(o.target == "workspace"){
                         return {
                             "target": "k8s",
-                            "services": services.data,
-                            "applications": applications.data
+                            "services": services.data.filter(a => a.volumeId == v.id),
+                            "applications": applications.data.filter(a => a.volumeId == v.id)
                         };
                     } else {
                         // TODO: VMs in the future
