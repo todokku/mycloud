@@ -539,18 +539,14 @@ class TaskRuntimeController {
      */
     static async updateClusterIngressRules(topicSplit, data) {
         try {
-console.log("======== A");
             let org = await DBController.getOrgForWorkspace(data.node.workspaceId);
             let account = await DBController.getAccountForOrg(org.id);
             let services = await DBController.getServicesForWsRoutes(data.node.workspaceId);
             let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId);
 
             let allServices = services.concat(applications);
-            console.log("======== B");
             await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
-            console.log("======== C");
             // await this.updateClusterIngressRulesTCP(data, org, account, allServices);
-            console.log("======== D");
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "update cluster ingress"
