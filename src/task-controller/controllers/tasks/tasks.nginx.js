@@ -73,14 +73,7 @@ class TaskNginxController {
         if(!routeDbList)
             routeDbList = await DBController.getWorkspaceRoutes(workspaceId);
 
-
-
-        console.log(serviceConfig.portConfig);
-
-
-
-
-        if(serviceConfig.portConfig.find(o => o.tcpStream == false)){
+        // if(serviceConfig.portConfig.find(o => o.tcpStream == false)){
             // Update ingress rules on cluster
             let ingressResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_ingress", {
                 "host": masterHost, 
@@ -97,7 +90,7 @@ class TaskNginxController {
                 error.code = ingressResponse.data.status;
                 throw error;
             }
-        }
+        // }
         
         let org = null;
         let account = null;
