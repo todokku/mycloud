@@ -205,6 +205,11 @@ class MqttController {
                     await TaskAppsController.deleteRegistryImages(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/update_cluster_ingress`)) {
+
+                    console.log("AAAAAAAAA 2");
+
+
+
                     await TaskRuntimeController.updateClusterIngressRules(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/update_cluster_pod_presets`)) {

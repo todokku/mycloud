@@ -1,5 +1,5 @@
 const path = require("path");
-console.log("AAAAAAAAA");
+
 global.appRoot = path.resolve(__dirname);
 
 let MqttController = require("./controllers/mqtt/index");
