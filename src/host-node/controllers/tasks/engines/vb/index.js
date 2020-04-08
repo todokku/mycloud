@@ -160,6 +160,33 @@ class EngineController {
     }
 
     /**
+     * fetchFileSsh
+     * @param {*} ip 
+     * @param {*} localPath 
+     * @param {*} targetPath 
+     */
+    static fetchFileSsh(ip, localPath, targetPath) {
+        return new Promise((resolve, reject) => {
+            let ssh = new node_ssh();
+        
+            ssh.connect({
+                host: ip,
+                username: 'root',
+                password: 'vagrant'
+            }).then(function() {
+                ssh.getFile(localPath, targetPath).then(function() {
+                    ssh.dispose();
+                    resolve();
+                }, function(error) {
+                    console.log("err", error);
+                    ssh.dispose();
+                    reject(error);
+                })
+            });
+        });
+    }
+
+    /**
      * feedbackSshExec
      * @param {*} ip 
      * @param {*} command 
