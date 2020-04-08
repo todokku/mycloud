@@ -257,6 +257,8 @@ export default class CreateService extends Command {
 				}
 			}
 
+			console.log(JSON.stringify(apiData, null, 4));
+
 			// Now make the call
 			result = await this.api("services", {
 				method: "create",

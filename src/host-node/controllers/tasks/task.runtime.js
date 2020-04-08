@@ -648,9 +648,6 @@ class TaskRuntimeController {
                 try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
             }
             throw error;
-        } finally {
-            if(fs.existsSync(ingressYamlPath))
-                fs.unlinkSync(ingressYamlPath);
         }
     }
 
