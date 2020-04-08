@@ -685,7 +685,7 @@ class TaskRuntimeController {
                     configStringArray.push(`  server ${targetServiceDnsName};`);
                     configStringArray.push(`}`);
                     configStringArray.push(`server {`);
-                    configStringArray.push(`  ${allServices[i].virtualPort};`);
+                    configStringArray.push(`  listen ${allServices[i].virtualPort};`);
                     configStringArray.push(`  proxy_pass ${upstreamName};`);
                     configStringArray.push(`}`);
                 }
