@@ -709,11 +709,7 @@ class TaskRuntimeController {
             let index = 1;
             for(let i=0; i<allServices.length; i++){
                 if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
-                    let name = allServices[i].externalServiceName;
-                    if(name.length > 12) {
-                        name = name.substring(0, 11);
-                    }
-                    ingressOpenPorts.push({ name: `${index++}.${name}`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
+                    ingressOpenPorts.push({ name: `${index++}xtcp`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
                 }
             }
             ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
