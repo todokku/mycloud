@@ -78,7 +78,7 @@ class DBController {
     static async getServicesForWsRoutes(wsId, ns) {
         let client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT 
+            let query = `SELECT 
                     services."instanceName" as "name",
                     services."externalServiceName",
                     services."namespace",
@@ -95,7 +95,13 @@ class DBController {
                     ON routes."domainId"=domains."id"
                 LEFT JOIN workspaces
                     ON services."workspaceId"=workspaces."id"
-                WHERE services."workspaceId" = $1 AND services."namespace" = $2`, [wsId, ns]);
+                WHERE services."workspaceId" = $1`;
+
+            if(ns) {
+                query += ` AND services."namespace" = $2`;
+            }
+
+            const res = await client.query(query, ns ? [wsId, ns] : [wsId]);
             return res.rows;
         } finally {
             client.release();
@@ -109,7 +115,7 @@ class DBController {
     static async getApplicationsForWsRoutes(wsId, ns) {
         let client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT 
+            let query = `SELECT 
                     applications."name",
                     applications."externalServiceName",
                     applications."namespace",
@@ -126,7 +132,13 @@ class DBController {
                     ON routes."domainId"=domains."id"
                 LEFT JOIN workspaces
                     ON applications."workspaceId"=workspaces."id"
-                WHERE applications."workspaceId" = $1 AND applications."namespace" = $2`, [wsId, ns]);
+                WHERE applications."workspaceId" = $1`;
+
+            if(ns) {
+                query += ` AND applications."namespace" = $2`;
+            }
+
+            const res = await client.query(query, ns ? [wsId, ns] : [wsId]);
             return res.rows;
         } finally {
             client.release();

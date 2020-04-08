@@ -7,6 +7,7 @@ const fs = require('fs');
 const rmfr = require('rmfr');
 const mkdirp = require('mkdirp');
 const _ = require('lodash');
+
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
 // const ssh = new node_ssh();
@@ -537,17 +538,43 @@ class TaskRuntimeController {
      * @param {*} data 
      */
     static async updateClusterIngressRules(topicSplit, data) {
+        try {
+
+            let org = await DBController.getOrgForWorkspace(data.node.workspaceId);
+            let account = await DBController.getAccountForOrg(org.id);
+            let services = await DBController.getServicesForWsRoutes(data.node.workspaceId);
+            let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId);
+
+            let allServices = services.concat(applications);
+
+            await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
+            await this.updateClusterIngressRulesTCP(data, org, account, allServices);
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                status: 200,
+                task: "update cluster ingress"
+            }));
+        } catch (error) {
+            console.log(error);
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                status: error.code ? error.code : 500,
+                message: error.message,
+                task: "update cluster ingress",
+                data: data
+            }));
+        }
+    }
+
+    /**
+     * updateClusterIngressRulesForNsHTTP
+     * @param {*} topicSplit 
+     * @param {*} ip 
+     * @param {*} data 
+     */
+    static async updateClusterIngressRulesForNsHTTP(data, org, account, allServices) {
         let ingressYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, "ingress-rules.yaml"); 
         let backupYamlContent = null;
         try{
-            // Grap DB references
-            let org = await DBController.getOrgForWorkspace(data.node.workspaceId);
-            let account = await DBController.getAccountForOrg(org.id);
-            let services = await DBController.getServicesForWsRoutes(data.node.workspaceId, data.ns);
-            let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId, data.ns);
-
-            let allServices = services.concat(applications);
-            
+            let allNsServices = allServices.filter(o => o.namespace == data.ns);
             // Prepare ingress rules yaml file
             let ingressYaml = YAML.parse(fs.readFileSync(ingressYamlPath, 'utf8'));
             backupYamlContent = JSON.parse(JSON.stringify(ingressYaml));
@@ -556,9 +583,9 @@ class TaskRuntimeController {
 
             // Count available ports for each service
             let baseNamesPortCount = {};
-            for(let i=0; i<allServices.length; i++){
-                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName){
-                    let serverBaseName = `${account.name}-${org.name}-${allServices[i].workspaceName}-${allServices[i].namespace}-${allServices[i].name}`.toLowerCase();
+            for(let i=0; i<allNsServices.length; i++){
+                if(allNsServices[i].serviceType == "ClusterIP" && allNsServices[i].externalServiceName){
+                    let serverBaseName = `${account.name}-${org.name}-${allNsServices[i].workspaceName}-${allNsServices[i].namespace}-${allNsServices[i].name}`.toLowerCase();
                     if(!baseNamesPortCount[serverBaseName]) {
                         baseNamesPortCount[serverBaseName] = 1;
                     } else {
@@ -569,23 +596,23 @@ class TaskRuntimeController {
 
             // Loop over services first
             let allServiceNames = [];
-            for(let i=0; i<allServices.length; i++){
-                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && !allServices[i].tcpStream){
-                    let baseHostPath = `${account.name}-${org.name}-${allServices[i].workspaceName}-${allServices[i].namespace}-${allServices[i].name}`.toLowerCase();
+            for(let i=0; i<allNsServices.length; i++){
+                if(allNsServices[i].serviceType == "ClusterIP" && allNsServices[i].externalServiceName && !allNsServices[i].tcpStream){
+                    let baseHostPath = `${account.name}-${org.name}-${allNsServices[i].workspaceName}-${allNsServices[i].namespace}-${allNsServices[i].name}`.toLowerCase();
                     if(baseNamesPortCount[baseHostPath] > 1){
-                        baseHostPath = `${baseHostPath}-${allServices[i].port}`;
+                        baseHostPath = `${baseHostPath}-${allNsServices[i].port}`;
                     }
 
                     // Create new rule for this service
                     let rule = {
-                        host: `${baseHostPath}${allServices[i].domainName ? `.${allServices[i].domainName}` : ""}`.toLowerCase(),
+                        host: `${baseHostPath}${allNsServices[i].domainName ? `.${allNsServices[i].domainName}` : ""}`.toLowerCase(),
                         http: {
                             paths: [
                                 {
                                     path: "/",
                                     backend: {
-                                        serviceName: allServices[i].externalServiceName,
-                                        servicePort: allServices[i].port
+                                        serviceName: allNsServices[i].externalServiceName,
+                                        servicePort: allNsServices[i].port
                                     }
                                 }
                             ] 
@@ -593,7 +620,7 @@ class TaskRuntimeController {
                     };
                     // Now push it to the rules array
                     ingressYaml.spec.rules.push(rule);
-                    allServiceNames.push(allServices[i].externalServiceName);
+                    allServiceNames.push(allNsServices[i].externalServiceName);
                 }
             }
 
@@ -608,25 +635,174 @@ class TaskRuntimeController {
             } else {
                 await EngineController.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
             }
-            
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "update cluster ingress"
-            }));
         } catch (error) {
-            console.log("ERROR =>", error);
             if(backupYamlContent && backupYamlContent.spec.rules && backupYamlContent.spec.rules.length > 0) {
                 fs.writeFileSync(ingressYamlPath, YAML.stringify(backupYamlContent));
                 try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
             }
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "update cluster ingress",
-                data: data
-            }));
+            throw error;
         }
     }
+
+    /**
+     * updateClusterIngressRulesTCP
+     * @param {*} topicSplit 
+     * @param {*} ip 
+     * @param {*} data 
+     */
+    static async updateClusterIngressRulesTCP(data, org, account, allServices) {
+        let ingressFilePath = "/home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml";
+        let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
+
+
+
+        console.log("INGRESS OPEN PORTS =>", ingressYaml.spec.template.spec.containers[0].ports);
+
+        for(let i=0; i<allServices.length; i++){
+            if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
+                let portName = `${allServices[i].externalServiceName}.${allServices[i].namespace}`;
+                let port = allServices[i].virtualPort;
+                // ...
+
+                console.log("A.1 =>", portName);
+                console.log("A.2 =>", port);
+            }
+        }
+
+        // fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
+        // await EngineController.applyK8SYaml(ingressFilePath, null, data.node);
+
+
+
+        // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
+
+
+
+
+
+
+
+
+
+
+        // let ingressYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, "ingress-rules.yaml"); 
+        // let backupYamlContent = null;
+        try{
+            // Prepare ingress rules yaml file
+            // let ingressYaml = YAML.parse(fs.readFileSync(ingressYamlPath, 'utf8'));
+            // backupYamlContent = JSON.parse(JSON.stringify(ingressYaml));
+
+            // ingressYaml.spec.rules = [];
+
+            // Count available ports for each service
+            // let baseNamesPortCount = {};
+            // for(let i=0; i<allServices.length; i++){
+            //     if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName){
+            //         let serverBaseName = `${account.name}-${org.name}-${allServices[i].workspaceName}-${allServices[i].namespace}-${allServices[i].name}`.toLowerCase();
+            //         if(!baseNamesPortCount[serverBaseName]) {
+            //             baseNamesPortCount[serverBaseName] = 1;
+            //         } else {
+            //             baseNamesPortCount[serverBaseName] = baseNamesPortCount[serverBaseName]+1;
+            //         }
+            //     }
+            // }
+
+            // Loop over services first
+            // let allServiceNames = [];
+            let configStringArray = [];
+            for(let i=0; i<allServices.length; i++){
+                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
+
+                    let upstreamName = `${allServices[i].externalServiceName}.${allServices[i].namespace}-${allServices[i].virtualPort}`;
+                    let targetServiceDnsName = `${allServices[i].externalServiceName}.${allServices[i].namespace}.svc.cluster.local:${allServices[i].port}`;
+
+                    configStringArray.push(`upstream ${upstreamName} {`);
+                    configStringArray.push(`  server ${targetServiceDnsName};`);
+                    configStringArray.push(`}`);
+                    configStringArray.push(`server {`);
+                    configStringArray.push(`  ${allServices[i].virtualPort};`);
+                    configStringArray.push(`  proxy_pass ${upstreamName};`);
+                    configStringArray.push(`}`);
+
+
+                    // let baseHostPath = `${account.name}-${org.name}-${allServices[i].workspaceName}-${allServices[i].namespace}-${allServices[i].name}`.toLowerCase();
+                    // if(baseNamesPortCount[baseHostPath] > 1){
+                    //     baseHostPath = `${baseHostPath}-${allServices[i].port}`;
+                    // }
+
+                    // // Create new rule for this service
+                    // let rule = {
+                    //     host: `${baseHostPath}${allServices[i].domainName ? `.${allServices[i].domainName}` : ""}`.toLowerCase(),
+                    //     http: {
+                    //         paths: [
+                    //             {
+                    //                 path: "/",
+                    //                 backend: {
+                    //                     serviceName: allServices[i].externalServiceName,
+                    //                     servicePort: allServices[i].port
+                    //                 }
+                    //             }
+                    //         ] 
+                    //     }
+                    // };
+                    // Now push it to the rules array
+                    // ingressYaml.spec.rules.push(rule);
+                    // allServiceNames.push(allServices[i].externalServiceName);
+                }
+            }
+
+
+
+            let ingressConfigMapFilePath = "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml";
+            let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
+    
+            console.log("ingressConfigMapYaml =>", ingressConfigMapYaml);
+            console.log("configStringArray =>", configStringArray);
+    
+          
+    
+            // fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
+            // await EngineController.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
+            
+
+
+
+
+
+
+            // Enable websocket capabilities for all services
+            // ingressYaml.metadata.annotations["nginx.org/websocket-services"] = allServiceNames.join(",");
+           
+            // // console.log("=>", YAML.stringify(ingressYaml));
+
+            // if(ingressYaml.spec.rules.length > 0) {
+            //     fs.writeFileSync(ingressYamlPath, YAML.stringify(ingressYaml));
+            //     await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node);
+            // } else {
+            //     await EngineController.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
+            // }
+        } catch (error) {
+            // if(backupYamlContent && backupYamlContent.spec.rules && backupYamlContent.spec.rules.length > 0) {
+            //     fs.writeFileSync(ingressYamlPath, YAML.stringify(backupYamlContent));
+            //     try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
+            // }
+            throw error;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * updateClusterPodPresets

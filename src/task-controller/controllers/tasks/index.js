@@ -332,7 +332,7 @@ class TaskController {
                         "type":"ERROR",
                         "step":"SCALE_UP",
                         "component": "task-controller",
-                                                "message":"No more hosts with sufficient memory available to provision workers on",
+                        "message":"No more hosts with sufficient memory available to provision workers on",
                         "ts":new Date().toISOString()
                     });
                     this.mqttController.client.publish('/mycloud/alert/out_of_resources/k8s_host_memory');
@@ -344,7 +344,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"SCALE_DOWN",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });
                 try{
                     // Need to deprovision workerNodes by "workerNodes.length - updateFlags.scale"
@@ -360,7 +360,7 @@ class TaskController {
                         "type":"INFO",
                         "step":"SCALE_DOWN",
                         "component": "task-controller",
-                                                "ts":new Date().toISOString()
+                        "ts":new Date().toISOString()
                     });
                 } catch(err) {
                     this.mqttController.logEvent(task.payload[0].socketId, "error", "Could not scale down cluster");
@@ -368,7 +368,7 @@ class TaskController {
                         "type":"ERROR",
                         "step":"SCALE_DOWN",
                         "component": "task-controller",
-                                                "message": (err.code ? err.code : "500") + ": " + (err.message ? err.message : "Unexpected error"),
+                        "message": (err.code ? err.code : "500") + ": " + (err.message ? err.message : "Unexpected error"),
                         "ts":new Date().toISOString()
                     });
                 } finally {
@@ -383,7 +383,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"NO_ACTION",
                     "component": "task-controller",
-                                        "message":"as-is / to-be are the same",
+                    "message":"as-is / to-be are the same",
                     "ts":new Date().toISOString()
                 });
             }   
@@ -420,7 +420,7 @@ class TaskController {
                     "type": "INFO",
                     "step": "PROVISIONING_GLUSTER_VOLUME",
                     "component": "task-controller",
-                                        "ts": new Date().toISOString()
+                    "ts": new Date().toISOString()
                 });
             } catch (err) {
                 this.mqttController.logEvent(task.payload[0].socketId, "error", "An error occured while provisionning Gluster volume, rollback");
@@ -432,7 +432,7 @@ class TaskController {
                     "type": "ERROR",
                     "step": "PROVISIONING_GLUSTER_VOLUME",
                     "component": "task-controller",
-                                        "message": err.message ? err.message : "Could not create gluster volume",
+                    "message": err.message ? err.message : "Could not create gluster volume",
                     "ts": new Date().toISOString()
                 });
             } finally {
@@ -448,7 +448,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"PROVISIONNING_PV_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });
 
                 // Create volume DB entry
@@ -459,7 +459,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"PROVISIONNING_PV_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });   
             } catch (error) {
                 console.log("ERROR 4 => ", error);
@@ -469,7 +469,7 @@ class TaskController {
                     "type":"ERROR",
                     "step":"PROVISIONNING_PV_VOLUME",
                     "component": "task-controller",
-                                        "message": error.message,
+                    "message": error.message,
                     "ts":new Date().toISOString()
                 });
             } finally {
@@ -483,7 +483,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"PROVISIONNING_VOLUME",
                 "component": "task-controller",
-                                "message": "Unsupported volume type " + task.payload[0].params.type,
+                "message": "Unsupported volume type " + task.payload[0].params.type,
                 "ts":new Date().toISOString()
             });
             this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -504,7 +504,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"PROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });
 
             // Take cluster snapshot
@@ -536,7 +536,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"PROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             }); 
 
             // await this.cleanUpClusterSnapshot(snapshotData);
@@ -549,7 +549,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"PROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "message": error.message,
+                "message": error.message,
                 "ts":new Date().toISOString()
             });
         } finally {
@@ -571,7 +571,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPROVISIONNING_VOLUME",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });
 
             if(task.payload[0].params.type == "gluster"){
@@ -592,7 +592,7 @@ class TaskController {
                     "type":"ERROR",
                     "step":"DEPROVISIONNING_VOLUME PREFLIGHT CHECKS",
                     "component": "task-controller",
-                                        "message":"Only gluster and local volumes can be deprovisioned",
+                    "message":"Only gluster and local volumes can be deprovisioned",
                     "ts":new Date().toISOString()
                 });
                 this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -602,7 +602,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPROVISIONNING_VOLUME",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });   
         } catch (error) {
             console.log("ERROR 6 => ", error);
@@ -613,7 +613,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"DEPROVISIONNING_VOLUME",
                 "component": "task-controller",
-                                "message":error.message,
+                "message":error.message,
                 "ts":new Date().toISOString()
             });
             this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -638,7 +638,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });
 
             let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(task.payload[0].params.service.workspaceId);
@@ -690,7 +690,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });  
         } catch (error) {
             console.log("ERROR 6 => ", error);
@@ -721,7 +721,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"DEPROVISIONNING_SERVICE",
                 "component": "task-controller",
-                                "message":error.message,
+                "message":error.message,
                 "ts":new Date().toISOString()
             });
         } finally {
@@ -765,7 +765,7 @@ class TaskController {
                         "type":"ERROR",
                         "step":"VOLUME BINDING PREFLIGHT CHECKS",
                         "component": "task-controller",
-                                                "message":"Only gluster & local volumes can be unbound from k8s",
+                        "message":"Only gluster & local volumes can be unbound from k8s",
                         "ts":new Date().toISOString()
                     });
                     this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -776,7 +776,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"BIND_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 }); 
             } catch (error) {
                 console.log(error);
@@ -788,7 +788,7 @@ class TaskController {
                     "type":"ERROR",
                     "step":"BIND_VOLUME",
                     "component": "task-controller",
-                                        "message":error.message,
+                    "message":error.message,
                     "ts":new Date().toISOString()
                 });
                 this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -799,7 +799,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"BIND_VOLUME PREFLIGHT CHECKS",
                 "component": "task-controller",
-                                "message":"VMs are not implemented yet",
+                "message":"VMs are not implemented yet",
                 "ts":new Date().toISOString()
             });
             this.mqttController.logEvent(task.payload[0].socketId, "error", "VMs are not implemented yet");
@@ -821,7 +821,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"UNBIND_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });
 
                 if(task.payload[0].params.volume.type == "gluster") {
@@ -841,7 +841,7 @@ class TaskController {
                         "type":"ERROR",
                         "step":"VOLUME UNBINDING PREFLIGHT CHECKS",
                         "component": "task-controller",
-                                                "message":"Only gluster & local volumes can be unbound from k8s",
+                        "message":"Only gluster & local volumes can be unbound from k8s",
                         "ts":new Date().toISOString()
                     });
                     this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -851,7 +851,7 @@ class TaskController {
                     "type":"INFO",
                     "step":"UNBIND_VOLUME",
                     "component": "task-controller",
-                                        "ts":new Date().toISOString()
+                    "ts":new Date().toISOString()
                 });   
             } catch (error) {
                 if(snapshotData){
@@ -861,7 +861,7 @@ class TaskController {
                     "type":"ERROR",
                     "step":"VOLUME UNBINDING",
                     "component": "task-controller",
-                                        "message":error.message,
+                    "message":error.message,
                     "ts":new Date().toISOString()
                 });
                 this.mqttController.closeEventStream(task.payload[0].socketId);
@@ -872,7 +872,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"VOLUME UNBINDING PREFLIGHT CHECKS",
                 "component": "task-controller",
-                                "message":"VMs are not implemented yet",
+                "message":"VMs are not implemented yet",
                 "ts":new Date().toISOString()
             });
             this.mqttController.logEvent(task.payload[0].socketId, "error", "VMs are not implemented yet");
@@ -891,7 +891,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPLOY_IMAGE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });
 
             await TaskAppsController.buildImage(task.payload[0].socketId, task.targetId, task.payload[0].params.appZipPath, task.payload[0].params.image, task.payload[0].params.version);
@@ -900,7 +900,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DEPLOY_IMAGE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });   
         } catch (error) {
             console.log("ERROR 6 => ", error);
@@ -908,7 +908,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"DEPLOY_IMAGE",
                 "component": "task-controller",
-                                "message":error.message,
+                "message":error.message,
                 "ts":new Date().toISOString()
             });
         } finally {
@@ -927,7 +927,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DELETE_IMAGE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });
 
             await TaskAppsController.deleteImage(task.targetId, task.payload[0].params.image);
@@ -936,7 +936,7 @@ class TaskController {
                 "type":"INFO",
                 "step":"DELETE_IMAGE",
                 "component": "task-controller",
-                                "ts":new Date().toISOString()
+                "ts":new Date().toISOString()
             });   
         } catch (error) {
             console.log("ERROR 6 => ", error);
@@ -944,7 +944,7 @@ class TaskController {
                 "type":"ERROR",
                 "step":"DELETE_IMAGE",
                 "component": "task-controller",
-                                "message":error.message,
+                "message":error.message,
                 "ts":new Date().toISOString()
             });
         }
