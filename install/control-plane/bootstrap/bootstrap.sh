@@ -179,6 +179,7 @@ docker run -d \
     -e API_SYSADMIN_PASSWORD=$API_SYSADMIN_PASSWORD \
     -e REGISTRY_IP=$REGISTRY_IP \
     -e CRYPTO_KEY=YDbxyG16Q6ujlCpjXH2Pq7nPAtJF66jLGwx4RYkHqhY= \
+    -e ENABLE_NGINX_STREAM_DOMAIN_NAME=false \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
 
@@ -196,6 +197,7 @@ docker run -d \
     -e DHCP_MASK=$DHCP_MASK \
     -e NGINX_HOST_IP=$NGINX_HOST_IP \
     -e DHCP_RESERVED=$DHCP_RESERVED \
+    -e ENABLE_NGINX_STREAM_DOMAIN_NAME=false \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9

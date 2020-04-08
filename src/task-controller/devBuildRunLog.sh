@@ -18,6 +18,7 @@ docker run -d \
     -e MOSQUITTO_IP=192.168.0.98 \
     -e DHCP_MASK=192.168.0 \
     -e NGINX_HOST_IP=192.168.0.98 \
+    -e ENABLE_NGINX_STREAM_DOMAIN_NAME=false \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9

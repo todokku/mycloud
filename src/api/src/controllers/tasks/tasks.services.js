@@ -33,13 +33,6 @@ class TaskServiceController {
      * @param {*} params 
      */
     static async installService(data, params) {
-
-
-
-        console.log("SOCKET ID =>", data.socketId);
-
-
-
         let r = await this.parent._precheckWorkspaceReadyNotBussy(data.workspaceId, params);
         if(r.code){
             return r;
@@ -215,7 +208,7 @@ class TaskServiceController {
                     };
                     routeData.domainNameUrl = null;
                     
-                    if(service.domainName) {
+                    if(service.domainName && process.env.ENABLE_NGINX_STREAM_DOMAIN_NAME == "true"){
                         if(service.tcpStream) {
                             routeData.domainNameUrl = {
                                 url: `${account.name}-${org.name}-${workspace.name}-${service.namespace}-${service.name}-${service.virtualPort}.${service.domainName}`.toLowerCase(),
