@@ -706,9 +706,14 @@ class TaskRuntimeController {
                 { name: 'http', containerPort: 80, hostPort: 80 },
                 { name: 'https', containerPort: 443, hostPort: 443 }
             ];
+            let index = 1;
             for(let i=0; i<allServices.length; i++){
                 if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
-                    ingressOpenPorts.push({ name: `${allServices[i].externalServiceName}.${allServices[i].namespace}`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
+                    let name = allServices[i].externalServiceName;
+                    if(name.length > 12) {
+                        name = name.substring(0, 11);
+                    }
+                    ingressOpenPorts.push({ name: `${index++}.${name}`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
                 }
             }
             ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
