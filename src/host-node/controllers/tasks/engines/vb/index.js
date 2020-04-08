@@ -138,7 +138,7 @@ class EngineController {
      * @param {*} localPath 
      * @param {*} targetPath 
      */
-    static copySsh(ip, localPath, targetPath) {
+    static pushFileSsh(ip, localPath, targetPath) {
         return new Promise((resolve, reject) => {
             let ssh = new node_ssh();
         
@@ -734,7 +734,7 @@ class EngineController {
      */
     static async applyK8SYaml(yamlFilePath, ns, node) {
         try {
-            await this.copySsh(node.ip, yamlFilePath, `/root/${path.basename(yamlFilePath)}`);
+            await this.pushFileSsh(node.ip, yamlFilePath, `/root/${path.basename(yamlFilePath)}`);
             // Wait untill kubectl answers for 100 seconds max
             let attempts = 0;
             let success = false;
@@ -826,7 +826,7 @@ class EngineController {
         }
 
         let helmChartTargetPath = `/root/${path.basename(chartTarFilePath)}`;
-        await this.copySsh(node.ip, chartTarFilePath, helmChartTargetPath);
+        await this.pushFileSsh(node.ip, chartTarFilePath, helmChartTargetPath);
         await _sleep(1000);
 
         // Execute HELM command
@@ -1308,7 +1308,7 @@ class EngineController {
         let zipPath = path.join("/root", path.basename(tmpZipFile));
         let folderPath = path.join(path.join("/root", folderName));
        
-        await this.copySsh(node.ip, tmpZipFile, zipPath);
+        await this.pushFileSsh(node.ip, tmpZipFile, zipPath);
 
         await this.sshExec(node.ip, `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`);
 
