@@ -587,7 +587,7 @@ class NGinxController {
             for(let i=0; i<routesProfiles.length; i++){
                 if(routesProfiles[i].tcpStream) {   
                     // Create workspace upstream
-                    let upstreamName = `us-${accName}-${orgName}-${workspaceName}-${routesProfiles[i].instanceName}-${routesProfiles[i].ns}-${routesProfiles[i].virtualPort}`.toLowerCase();
+                    let upstreamName = `us-${accName}-${orgName}-${workspaceName}-${routesProfiles[i].ns}-${routesProfiles[i].instanceName}-${routesProfiles[i].virtualPort}`.toLowerCase();
 
                     // Remove previous upstream server for workspace
                     if(config.nginx.upstream){
@@ -617,7 +617,7 @@ class NGinxController {
                         }
                     });
 
-                    let serverBaseName = `${accName}-${orgName}-${workspaceName}-${routesProfiles[i].instanceName}-${routesProfiles[i].ns}-${routesProfiles[i].virtualPort}`.toLowerCase();
+                    let serverBaseName = `${accName}-${orgName}-${workspaceName}-${routesProfiles[i].ns}-${routesProfiles[i].instanceName}-${routesProfiles[i].virtualPort}`.toLowerCase();
                     // Now add server block(s) for this service / app
                     this.addTcpServerBlock(
                         routesProfiles[i].localIp,
