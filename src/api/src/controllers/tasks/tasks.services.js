@@ -232,7 +232,7 @@ class TaskServiceController {
                 }
                 return routeData;
             });
-            dbService.internalDns = `${dbService.instanceName}.${dbService.namespace}.svc.cluster.local`;
+            dbService.internalDns = `${dbService.externalServiceName}.${dbService.namespace}.svc.cluster.local`;
             dbService.appVersion = targetService.appVersion;
             
             return dbService;
