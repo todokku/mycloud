@@ -710,7 +710,7 @@ class TaskRuntimeController {
 
             let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
             console.log("configStringArray =>", configStringArray);
-
+            ingressConfigMapYaml.data = {};
             ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
             fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
 
