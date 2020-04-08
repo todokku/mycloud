@@ -134,7 +134,6 @@ class TaskRuntimeController {
      * @param {*} data 
      */
     static async mountK8SNodeGlusterVolume(topicSplit, ip, data) {
-        console.log(1);
         let volumeName = data.volume.name + "-" + data.volume.secret;
         let volumeGlusterHosts = null;
         try {
@@ -142,9 +141,7 @@ class TaskRuntimeController {
             if(volumeGlusterHosts.length == 0){
                 throw new Error("The volume does not have any gluster peers");
             }
-            console.log(2);
         } catch (err) {
-            console.log(3);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: err.code ? err.code : 500,
                 message: err.message,
@@ -155,14 +152,11 @@ class TaskRuntimeController {
         
         try {
             await EngineController.mountGlusterVolume(data.nodeProfile.node, volumeName, volumeGlusterHosts[0].ip);
-            console.log(4);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "bind volume"
             }));
-            console.log(5);
         } catch (error) {
-            console.log(6);
             console.log(error);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,

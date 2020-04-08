@@ -272,7 +272,6 @@ class MqttController {
      * @param {*} timeout 
      */
     static queryRequestResponse(targetHost, task, payload, timeout) {
-        console.log(`Publishing to /mycloud/k8s/host/query/${targetHost}/${task}/`);
         return new Promise((resolve, reject) => {
             let requestId = null;
             while(requestId == null){

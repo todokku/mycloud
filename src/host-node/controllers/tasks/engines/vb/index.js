@@ -1020,7 +1020,6 @@ class EngineController {
      * @param {*} formatDisk 
      */
     static async mountLocalVolume(node, volumeName, portIndex) {
-        console.log("MOUNTING =>", `/mnt/${volumeName}`);
         let r = await this.sshExec(node.ip, `test -d "/mnt/${volumeName}" && echo "y" || echo "n"`, true);
         if(r.code == 0 && r.stdout == "y") {
             r = await this.sshExec(node.ip, `mount | grep "${volumeName}"`, true);
@@ -1147,26 +1146,20 @@ class EngineController {
      * @param {*} volumeName 
      */
     static async unmountVolume(node, volumeName) {
-        console.log("UNMOUNTING VOLUME " + volumeName);
         let r = await this.sshExec(node.ip, `test -d "/mnt/${volumeName}" && echo "y" || echo "n"`, true);
         if(r.code == 0 && r.stdout == "y") {
             r = await this.sshExec(node.ip, `mount | grep "${volumeName}"`, true);
-            console.log("OUT=>", r);
             // If volume mounted
             if(r.code == 0 && r.stdout.trim() != "") {
-                r = await this.sshExec(node.ip, `sudo umount /mnt/${volumeName}`, true);
-                console.log("OUT=>", r);
+                await this.sshExec(node.ip, `sudo umount /mnt/${volumeName}`, true);
             }
             // If also declared in fstab, remove it from there as well
             r = await this.sshExec(node.ip, `cat /etc/fstab | grep "/mnt/${volumeName}"`, true);
-            console.log("OUT=>", r);
             if(r.code == 0 && r.stdout.trim() != "") {
-                r = await this.sshExec(node.ip, `sudo sed -i '\\|/mnt/${volumeName}|d' /etc/fstab`, true);
-                console.log("OUT=>", r);
+                await this.sshExec(node.ip, `sudo sed -i '\\|/mnt/${volumeName}|d' /etc/fstab`, true);
             }
             // Delete folders
-            r = await this.sshExec(node.ip, `sudo rm -rf /mnt/${volumeName}`, true);
-            console.log("OUT=>", r);
+            await this.sshExec(node.ip, `sudo rm -rf /mnt/${volumeName}`, true);
         } else if(r.code != 0) {
             throw new Error("An error occured trying to unmount volume");
         }

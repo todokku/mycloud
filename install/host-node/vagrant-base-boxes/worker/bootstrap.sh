@@ -71,11 +71,11 @@ systemctl reload sshd
 echo "[TASK 9] Set root password"
 echo "kubeadmin" | passwd --stdin vagrant
 
-# Install Gluster client
-echo "[TASK 10] Install Gluster engine"
-yum install -y -q centos-release-gluster glusterfs-server
-systemctl disable glusterd
-systemctl stop glusterd
+# # Install Gluster client
+# echo "[TASK 10] Install Gluster engine"
+# yum install -y -q centos-release-gluster glusterfs-server
+# systemctl disable glusterd
+# systemctl stop glusterd
 
 # Cleanup
 echo "[TASK 11] Cleanup"
