@@ -163,6 +163,7 @@ class TaskRuntimeController {
             console.log(5);
         } catch (error) {
             console.log(6);
+            console.log(error);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
