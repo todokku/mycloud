@@ -6,6 +6,7 @@ _PWD="$(pwd)"
 cd $_DIR
 
 distro() {
+    echo "HERE 2"
     # Determine OS platform
     UNAME=$(uname | tr "[:upper:]" "[:lower:]")
     # If Linux, try to determine specific distribution
@@ -21,11 +22,12 @@ distro() {
             fi
         fi
     fi
+    echo "HERE 3"
     # For everything else (or if above failed), just use generic identifier
     [ "$DISTRO" == "" ] && export DISTRO=$UNAME
     unset UNAME
 
-echo "DISTRO IS => $DISTRO"
+    echo "DISTRO IS => $DISTRO"
 
     if [ "$DISTRO" == "ubuntu" ]; then
         MAJ_V=$(lsb_release -sr | cut -d '.' -f1)
@@ -385,6 +387,8 @@ install_core_components() {
     fi
     # fi
 }
+
+echo "HERE 1"
 
 # Figure out what distro we are running
 distro
