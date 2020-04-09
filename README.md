@@ -4,9 +4,9 @@
 
 MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed on any Intel/AMD 64 bit based hardware components. It is based on Kubernetes at it's core, providing organizations and teams with isolated clusters and a collection of managed services to be deployed. Some of MyCloud's features are:
 
-- Multi tenancy, private cloud PaaS solution (Accounts => Organizations => Workspaces (dedicated K8S clusters) => Namespaces)
+- From the ground up multi-tenant private cloud PaaS solution (Accounts => Organizations => Workspaces (1 workspace = 1 dedicated K8S cluster))
 - Provision managed core services such as various databases, messaging brokers and other services for each tenant
-- Scale your tenant cluster for HA use cases
+- Easily scale your tenant cluster for HA use cases
 - Manage your images with a private docker registry
 - Manage storage and volumes independantly for each tenant
 - Provides a distributed storage solution based on GlusterFS
@@ -16,16 +16,17 @@ MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed
 
 One could ask why go through the hassle of building such a complex solution if one could simply create an account on AWS, Microsoft, GCP or any other cloud provider out there?  
 In my current company which I will not name here, it was decided to build a private cloud platform (IaaS & PaaS) that is 100% hosted on the company intranet, completely disconnected from the internet and from the ground up. This is mainly because of the very high demand in safeguarding company data. This lead to a developement effort a couple of years ago to build such a platform, effort that I am not part of, but that I am patiently waiting for in order to conduct our private day to day cloud business. It turnes out that building such a platform is far more complex that anticipated, which got me wondering why that is.  
-Out of curiosity, I decided to play arrount with the idea of building a private PaaS cloud myself during my spare time, initially just for learning purposes to try and understand what is involved here. One thing lead to another and I realized that I have reached a point in my learning endavour that could actually have value to companies that need to undergo the same type of effort for the same reasons mentioned above. 
+Out of curiosity, I decided to play arrount with the idea of building a private PaaS cloud myself during my spare time, initially just for learning purposes to try and understand what is involved here. One thing lead to another and I realized that I have reached a point in my learning endavour that could actually have value to companies that need to undergo the same type of effort for the same reasons mentioned above.  
+  
 This is why today I am opening up this work to the opensource community, or as a source of insiration, or as a base to build their own private PaaS platform. Let's not forget that I am alone building this at the moment, and the amount of work required to pull this off is huge! The code base is still very fragile in terms of stability, there are currently no tests written (remember, this started as a learning experience, tests were not my priority given the time at my disposal), and there are still alot of features that need to be implemented. That said, I think there is currently enougth here to bring this to you guys as a preview. At some point, it would be great if other people could join the project, and contribute to it's developement to get things to move forward quicker. If you are interested, please drop me an email (mdundek@gmail.com).
 
 ## Install
 
-The overall architectufe of the solution looks like the following:
+The overall architecture of the solution looks like the following:
 
 ![MyCloud PaaS Component diagram](./resources/component-diagram.png)
 
-> The above diagram is an example setup. For testing purposes, you can install the "Controller Plane" and one "Host Node" on a single machine. 
+> The above diagram is an example setup. For testing purposes, you can install the "Control Plane" and one "Host Node" on a single machine. 
 > For a production environement, you should deploy the "Controller Plane" on a dedicated machine, and a minimum of 2 "Host Nodes", each on it's own machine.
 >
 > I tested MyCloud on Ubuntu 18.04, as well as CentOS / RedHat 7 & 8.
