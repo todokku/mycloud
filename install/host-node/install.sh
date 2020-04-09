@@ -25,6 +25,8 @@ distro() {
     [ "$DISTRO" == "" ] && export DISTRO=$UNAME
     unset UNAME
 
+echo "DISTRO IS => $DISTRO"
+
     if [ "$DISTRO" == "ubuntu" ]; then
         MAJ_V=$(lsb_release -sr | cut -d '.' -f1)
         if [ "$MAJ_V" != "18" ] && [ "$MAJ_V" != "19" ] && [ "$MAJ_V" != "20" ] && [ "$MAJ_V" != "21" ]; then
