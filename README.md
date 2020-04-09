@@ -16,6 +16,8 @@ MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed
 
 # Install
 
+![MyCloud PaaS Component diagram](./resources/component-diagram.png)
+
 ## Install the Host-node
 
 > IMPORTANT: Since the host-node controller uses VirtualBox in order to manage tennant environements, it is not possible to install the host-node controller inside a VirtualBox VM itself.
