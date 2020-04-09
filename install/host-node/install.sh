@@ -209,11 +209,8 @@ collect_informations() {
     if [ "$DISTRO" == "ubuntu" ]; then
         IFACES=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
     elif [ "$DISTRO" == "redhat" ]; then
-        echo "HERE I AM"
-        IFACES=$(nmcli device status | cut -d ' ' -f1)
-        echo "IFACES 1 $IFACES"
-        unset IFACES[1]
-        echo "IFACES 2 $IFACES"
+        _IFACES=$(nmcli device status | cut -d ' ' -f1)
+        IFACES=("${_IFACES[@]:1}")
     fi
 
     readarray -t IFACESarrIN <<<"$IFACES"
@@ -263,12 +260,12 @@ collect_informations() {
        
         # Select filesystem that is used for Gluster
         FSL=$(df -h | sed 's/|/ /' | awk '{print $1}')
-        readarray -t FSLarrIN <<<"$FSL"
-        FSLarrIN=("${FSLarrIN[@]:1}")
+        readarray -t _FSLarrIN <<<"$FSL"
+        FSLarrIN=("${_FSLarrIN[@]:1}")
 
         FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $2}')
-        readarray -t FSLSIZEarrIN <<<"$FSLSIZE"
-        FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
+        readarray -t _FSLSIZEarrIN <<<"$FSLSIZE"
+        FSLSIZEarrIN=("${_FSLSIZEarrIN[@]:1}")
 
         # Find the proper column index for this OS
         FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
@@ -284,8 +281,8 @@ collect_informations() {
             fi
         done
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $'"$TRG_INDEX"'}')
-        readarray -t FSLMOUNTarrIN <<<"$FSLMOUNT"
-        FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
+        readarray -t _FSLMOUNTarrIN <<<"$FSLMOUNT"
+        FSLMOUNTarrIN=("${_FSLMOUNTarrIN[@]:1}")
 
         VALID_FS=()
         VALID_MOUNTS=()
