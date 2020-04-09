@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Update environment file
+cat >>/etc/environment<<EOF
+LANG=en_US.utf-8
+LC_ALL=en_US.utf-8
+EOF
+
 _DIR="$(cd "$(dirname "$0")" && pwd)"
 _PWD="$(pwd)"
 
@@ -394,11 +400,32 @@ install_core_components() {
     else
         pm2 restart mycloud-host-node
     fi
-    # fi
 }
+
+
 
 # Figure out what distro we are running
 distro
+
+echo "==> This script will install the following components (if not already present):"
+echo ""
+echo "- Docker"
+echo "- Vagrant"
+echo "- VirtualBox"
+echo "- Git"
+echo "- NodeJS (and PM2)"
+echo "- MyCloud 'host-node' git repo and the gluster docker image"
+echo ""
+echo "==> Do you wish to continue (y/n)?:"
+read CONTINUE_INSTALL
+while [[ "$CONTINUE_INSTALL" != 'y' ]] && [[ "$CONTINUE_INSTALL" != 'n' ]]; do
+    echo "==> Invalide answer, try again (y/n)?:"
+    read CONTINUE_INSTALL
+done
+if [ "$CONTINUE_INSTALL" == "n" ]; then
+    exit 0
+fi
+echo ""
 
 # Collect info from user
 collect_informations
