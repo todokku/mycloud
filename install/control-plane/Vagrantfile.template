@@ -17,14 +17,14 @@ Vagrant.configure(2) do |config|
     mycloud.vm.network "public_network", ip: "<VM_IP>", bridge: "#$default_network_interface"
     mycloud.vm.provider "virtualbox" do |v|
       v.name = "mycloud.base"
-      v.memory = 2048
-      v.cpus = 2
+      v.memory = <VB_MEMORY>
+      v.cpus = <VB_CPUS>
 
       if ! File.exist?(disk)
         v.customize ['createhd',
                       '--filename', disk,
                       '--format', 'VDI',
-                      '--size', 10 * 1024]              
+                      '--size', <REGISTRY_SIZE> * 1024]              
       
 
         v.customize [ 'storageattach', :id,  

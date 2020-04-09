@@ -248,12 +248,13 @@ collect_informations() {
     IFACE="${FINAL_IFACES[$IFACE_IP_INDEX]}"
     LOCAL_IP="${FINAL_IPS[$IFACE_IP_INDEX]}"
 
+    echo ""
     echo "==> Please enter the control-plane VM IP:"
     read MASTER_IP  
-
+    echo ""
     echo "==> Please enter the PostgreSQL database password:"
     read PW  
-
+    echo ""
     echo "==> Is this host serving as a K8S cluster node (y/n)?:"
     read IS_K8S_NODE
     while [[ "$IS_K8S_NODE" != 'y' ]] && [[ "$IS_K8S_NODE" != 'n' ]]; do
@@ -265,7 +266,7 @@ collect_informations() {
     else
         IS_K8S_NODE="false"
     fi
-
+    echo ""
     echo "==> Is this host serving as a Gluster peer (y/n)?:"
     read IS_GLUSTER_PEER
     while [[ "$IS_GLUSTER_PEER" != 'y' ]] && [[ "$IS_GLUSTER_PEER" != 'n' ]]; do
@@ -274,7 +275,7 @@ collect_informations() {
     done
     if [ "$IS_GLUSTER_PEER" == "y" ]; then
         IS_GLUSTER_PEER="true"
-
+        echo ""
         echo "==> What filesystem is used for your volume provisionning:"
        
         # Select filesystem that is used for Gluster
@@ -397,8 +398,9 @@ install_core_components() {
     if [ "$HOST_NODE_DEPLOYED" == "" ]; then
         npm i
         pm2 start index.js --watch --name mycloud-host-node --time
-    else
-        pm2 restart mycloud-host-node
+        pm2 startup
+        sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp $(eval echo ~$USER)
+        pm2 save
     fi
 }
 
@@ -414,7 +416,7 @@ echo "- Vagrant"
 echo "- VirtualBox"
 echo "- Git"
 echo "- NodeJS (and PM2)"
-echo "- MyCloud 'host-node' git repo and the gluster docker image"
+echo "- MyCloud git repo and the gluster docker image"
 echo ""
 echo "==> Do you wish to continue (y/n)?:"
 read CONTINUE_INSTALL
