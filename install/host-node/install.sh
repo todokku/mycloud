@@ -442,9 +442,9 @@ fi
 pull_git
 
 # Build vagrant boxes
-if [ "$IS_K8S_NODE" == "true" ]; then
-    build_vagrant_boxes
-fi
+# if [ "$IS_K8S_NODE" == "true" ]; then
+#     build_vagrant_boxes
+# fi
 
 # Install the core components
 install_core_components

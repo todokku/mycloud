@@ -10,3 +10,16 @@ MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed
 - Provides a distributed storage solution based on Gluster
 - Self service using CLI command line
 - 
+
+
+
+
+# Install
+
+## Install the Host-node
+
+> IMPORTANT: Since the host-node controller uses VirtualBox in order to manage tennant environements, it is not possible to install the host-node controller inside a VirtualBox VM itself.
+
+```
+bash <(curl https://raw.githubusercontent.com/mdundek/mycloud/master/install/host-node/install.sh)
+```
