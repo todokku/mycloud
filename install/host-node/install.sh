@@ -212,19 +212,8 @@ collect_informations() {
         echo "HERE I AM"
         IFACES=$(nmcli device status | cut -d ' ' -f1)
         echo "IFACES $IFACES"
-        IFACES=("${IFACES[@]:1}")
+        unset IFACES[0]
         echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        echo "IFACES $IFACES"
-        
     fi
 
     readarray -t IFACESarrIN <<<"$IFACES"
