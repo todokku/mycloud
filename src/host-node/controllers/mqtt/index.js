@@ -6,6 +6,7 @@ shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 
 const TaskRuntimeController = require('../tasks/task.runtime');
 const TaskGlusterController = require('../tasks/task.gluster');
+const TaskVolumeController = require('../tasks/task.volume');
 const TaskServicesController = require('../tasks/task.services');
 const TaskAppsController = require('../tasks/task.apps');
 
@@ -90,125 +91,125 @@ class MqttController {
                     }));
                 }
                 else if(topic.startsWith(`${queryBase}/deploy_k8s_cluster`)){
-                    await TaskController.deployWorkspaceCluster(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskController.requestDeployWorkspaceCluster(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/provision_gluster_volume`)){
-                    await TaskController.provisionGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskGlusterController.requestProvisionGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/take_node_snapshot`)){
-                    await TaskController.takeNodeSnapshot(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskController.requestTakeNodeSnapshot(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/restore_node_snapshot`)){
                     await TaskController.restoreNodeSnapshot(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_node_snapshot`)){
-                    await TaskController.deleteNodeSnapshot(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskController.requestDeleteNodeSnapshot(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deprovision_gluster_volume`)){
-                    await TaskController.deprovisionGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskGlusterController.requestDeprovisionGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/detatch_local_volume_from_vm`)){
-                    await TaskRuntimeController.detatchLocalVolumeFromVM(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskVolumeController.requestDetatchLocalVolumeFromVM(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_local_volume`)){
-                    await TaskRuntimeController.deleteLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskVolumeController.requestDeleteLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deprovision_pvc`)){
-                    await TaskRuntimeController.removeK8SPersistantVolumeClaim(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestRemoveK8SPersistantVolumeClaim(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deprovision_pv`)){
-                    await TaskRuntimeController.removeK8SPersistantVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestRemoveK8SPersistantVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_gluster_volume_dir`)){
                     let data = JSON.parse(message.toString())
-                    await TaskGlusterController.deleteDeprovisionnedGlusterDir(data.name, data.secret);
+                    await TaskGlusterController.requestDeleteDeprovisionnedGlusterDir(data.name, data.secret);
                 }
                 else if(topic.startsWith(`${queryBase}/mount_gluster_volume`)){
-                    await TaskRuntimeController.mountK8SNodeGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskGlusterController.requestMountK8SNodeGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/attach_local_volume_to_vm`)){
-                    await TaskRuntimeController.attachLocalVolumeToVM(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskVolumeController.requestAttachLocalVolumeToVM(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/get_k8s_resources`)){
-                    await TaskRuntimeController.getK8sResources(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestGetK8sResources(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/get_k8s_resource_values`)){
-                    await TaskRuntimeController.getK8SResourceValues(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestGetK8SResourceValues(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/create_k8s_resource`)){
-                    await TaskController.createK8SResource(topicSplit, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestCreateK8SResource(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/unmount_gluster_volume`)){
-                    await TaskRuntimeController.unmountK8SNodeGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskGlusterController.requestUnmountK8SNodeGlusterVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/unmount_local_volume`)){
-                    await TaskRuntimeController.unmountK8SNodeLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskVolumeController.requestUnmountK8SNodeLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/mount_local_volume`)){
-                    await TaskRuntimeController.mountK8SNodeLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskVolumeController.requestMountK8SNodeLocalVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_workspace_file`)){
-                    await TaskRuntimeController.deleteWorkspaceFile(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskController.requestDeleteWorkspaceFile(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/set_gluster_authorized_ips`)){
-                    await TaskGlusterController.authorizeGlusterVolumeIps(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskGlusterController.requestAuthorizeGlusterVolumeIps(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deploy_k8s_persistant_volume_claim`)){ // Order matters here
-                    await TaskRuntimeController.deployK8SPersistantVolumeClaim(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestDeployK8SPersistantVolumeClaim(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deploy_k8s_persistant_volume`)){
-                    await TaskRuntimeController.deployK8SPersistantVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestDeployK8SPersistantVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/deploy_k8s_service`)){
-                    await TaskRuntimeController.deployK8SService(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskServicesController.requestDeployK8SService(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/create_pv_directory`)){
-                    await TaskRuntimeController.createServicePvDir(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskServicesController.requestCreateServicePvDir(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_k8s_service`)){
-                    await TaskRuntimeController.deleteK8SService(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskServicesController.requestDeleteK8SService(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/remove_k8s_all_pv_for_volume`)){
-                    await TaskRuntimeController.removeK8SAllPvForVolume(topicSplit, this.ip, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestRemoveK8SAllPvForVolume(topicSplit, this.ip, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/detatch_worker`)) { // Expects response
-                    await TaskRuntimeController.detatch_worker(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestDetatchWorker(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/deprovision_worker`)) { // Expects response
-                    await TaskRuntimeController.deprovision_worker(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestDeprovisionWorker(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/deprovision_master`)) { // Expects response
                     await TaskRuntimeController.deprovision_master(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/provision_worker`)) { // Expects response
-                    await TaskRuntimeController.provision_worker(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestProvisionWorker(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/taint_master`)) { // Expects response
-                    await TaskRuntimeController.taint_master(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestTaintMaster(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/untaint_master`)) { // Expects response
-                    await TaskRuntimeController.untaint_master(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestUntaintMaster(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_config`)) {
-                    await TaskRuntimeController.grabMasterConfigFile(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestGrabMasterConfigFile(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_state`)) {
-                    await TaskRuntimeController.get_k8s_state(topicSplit, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestGetK8sState(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/build_publish_k8s_image`)) {
-                    await TaskAppsController.buildPublishImage(topicSplit, JSON.parse(message.toString()));
+                    await TaskAppsController.requestBuildPublishImage(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/list_org_registry_images`)) {
-                    await TaskAppsController.getOrgRegistryImages(topicSplit, JSON.parse(message.toString()));
+                    await TaskAppsController.requestGetOrgRegistryImages(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/delete_k8s_image`)) {
-                    await TaskAppsController.deleteRegistryImages(topicSplit, JSON.parse(message.toString()));
+                    await TaskAppsController.requestDeleteRegistryImages(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/update_cluster_ingress`)) {
-                    await TaskRuntimeController.updateClusterIngressRules(topicSplit, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestUpdateClusterIngressRules(topicSplit, JSON.parse(message.toString()));
                 }
                 else if(topic.startsWith(`${queryBase}/update_cluster_pod_presets`)) {
-                    await TaskRuntimeController.updateClusterPodPresets(topicSplit, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestUpdateClusterPodPresets(topicSplit, JSON.parse(message.toString()));
                 }
                 
             } catch (error) {

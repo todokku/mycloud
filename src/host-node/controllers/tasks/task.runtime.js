@@ -1,17 +1,27 @@
+const TaskGlusterController = require('./task.gluster');
+const TaskServicesController = require('./task.services');
+const TaskVolumeController = require('./task.volume');
+const TaskAppsController = require('./task.apps');
+
 const OSController = require("../os/index");
 const DBController = require("../db/index");
 const shortid = require('shortid');
 const path = require('path');
 const YAML = require('yaml');
 const fs = require('fs');
-const rmfr = require('rmfr');
-const mkdirp = require('mkdirp');
-const _ = require('lodash');
-
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
 // const ssh = new node_ssh();
 let EngineController;
+
+// Sleep promise for async
+let _sleep = (duration) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
+}
 
 class TaskRuntimeController {
     
@@ -29,59 +39,38 @@ class TaskRuntimeController {
     }
 
     /**
-     * deployWorkspaceCluster
-     */
-    static async deployWorkspaceCluster(socketId, ip, workspaceId) {
-        let result = null;
-        try {
-            let dbHostNode = await DBController.getK8SHostByIp(ip);
-            let org = await DBController.getOrgForWorkspace(workspaceId);
-            let rPass = this.parent.decrypt(org.registryPass, org.bcryptSalt);
-
-            if(!dbHostNode){
-                throw new Error("Could not find K8SHost in database");
-            }
-
-            result = await EngineController.deployNewCluster(dbHostNode, workspaceId, org.registryUser, rPass, (eventMessage) => {
-                this.mqttController.logEvent(socketId, "info", eventMessage);
-            });
-
-            await DBController.createK8SMasterNode(result.nodeIp, result.nodeHostname, result.workspaceId, result.hostId, result.hash);
-        } catch (err) {
-            this.mqttController.logEvent(socketId, "error", "An error occured while deploying Cluster, rollback");
-            // The deploy finished, error occured during DB update. Need to roolback everything
-            if(result){
-                try{
-                    let created = await EngineController.vmExists(`master.${result.hash}`);
-                    if(created){
-                        await EngineController.stopDeleteVm(`master.${result.hash}`, workspaceId);
-                    }
-                    
-                    if(result.leasedIp){
-                        this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
-                            leasedIp: result.leasedIp
-                        }));
-                    }
-                } catch(_err) {
-                    // TODO: Log rollback error
-                    console.log(_err);
-                }
-            }
-
-            throw err;
-        }
-    }
-
-    /**
-     * getK8sResources
+     * requestCreateK8SResource
      * @param {*} ip 
      * @param {*} data 
      */
-    static async getK8sResources(topicSplit, ip, data) {
+    static async requestCreateK8SResource(topicSplit, data) {
+        try{
+            await this.kubectl(`kubectl create ${data.type} ${data.name}${data.ns ? " --namespace=" + data.ns : ""}`, data.node);
+
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                status: 200,
+                task: "create k8s resource"
+            }));
+        } catch (_error) {
+            console.log(_error);
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                status: _error.code ? _error.code : 500,
+                message: _error.message,
+                task: "create k8s resource"
+            }));
+        }   
+    }
+
+    /**
+     * requestGetK8sResources
+     * @param {*} ip 
+     * @param {*} data 
+     */
+    static async requestGetK8sResources(topicSplit, ip, data) {
         try{
             let resourceResponses = {};
             for(let i=0; i<data.targets.length; i++) {
-                let result = await EngineController.getK8SResources(
+                let result = await this.getK8SResources(
                     data.node, 
                     data.ns, 
                     data.targets[i], 
@@ -106,13 +95,13 @@ class TaskRuntimeController {
     }
 
     /**
-     * getK8SResourceValues
+     * requestGetK8SResourceValues
      * @param {*} ip 
      * @param {*} data 
      */
-    static async getK8SResourceValues(topicSplit, ip, data) {
+    static async requestGetK8SResourceValues(topicSplit, ip, data) {
         try{
-            let result = await EngineController.getK8SResourceValues(data.node, data.ns, data.target, data.targetName, data.jsonpath);
+            let result = await this.getK8SResourceValues(data.node, data.ns, data.target, data.targetName, data.jsonpath);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "get k8s resource values",
@@ -127,412 +116,41 @@ class TaskRuntimeController {
             }));
         }
     }
-    
-    /**
-     * mountK8SNodeGlusterVolume
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async mountK8SNodeGlusterVolume(topicSplit, ip, data) {
-        let volumeName = data.volume.name + "-" + data.volume.secret;
-        let volumeGlusterHosts = null;
-        try {
-            volumeGlusterHosts = await DBController.getGlusterHostsByVolumeId(data.volume.id);
-            if(volumeGlusterHosts.length == 0){
-                throw new Error("The volume does not have any gluster peers");
-            }
-        } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
-                task: "bind volume"
-            }));
-            return;
-        }
-        
-        try {
-            await EngineController.mountGlusterVolume(data.nodeProfile.node, volumeName, volumeGlusterHosts[0].ip);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "bind volume"
-            }));
-        } catch (error) {
-            console.log(error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "bind volume"
-            }));
-        }
-    }
 
     /**
-     * attachLocalVolumeToVM
-     * @param {*} ip 
+     * requestGetK8sState
+     * @param {*} topicSplit 
      * @param {*} data 
      */
-    static async attachLocalVolumeToVM(topicSplit, ip, data) {
-        let volumeName = data.volume.name + "-" + data.volume.secret
+    static async requestGetK8sState(topicSplit, data) {
         try {
-
-            let nextPortIndex = await EngineController.getNextSATAPortIndex(data.nodeProfile.node.hostname);
-            if(nextPortIndex == null){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                    status: 500,
-                    message: "No more port indexes available",
-                    task: "bind volume"
-                }));
-                return;
-            }
-
-            await DBController.setVolumePortIndex(data.volume.id, nextPortIndex);
-            // try {
-            await EngineController.attachLocalVolumeToVM(data.workspaceId, data.nodeProfile.node, volumeName, data.volume.size, nextPortIndex);
-            // } catch (_e) {
-            //     // await DBController.setVolumePortIndex(data.volume.id, null);
-            //     throw _e;
-            // }
+            let stateData = await this.getK8SState(data.node);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
-                task: "bind volume"
-            }));
-        } catch (error) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "bind volume"
-            }));
-        }
-    }
-
-    /**
-     * unmountK8SNodeGlusterVolume
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async unmountK8SNodeGlusterVolume(topicSplit, ip, data) {
-        let volumeName = data.volume.name + "-" + data.volume.secret;
-        try {
-            let volumeGlusterHosts = await DBController.getGlusterHostsByVolumeId(data.volume.id);
-            if(volumeGlusterHosts.length == 0){
-                throw new Error("The volume does not have any gluster peers");
-            }
-            await EngineController.unmountVolume(data.nodeProfile.node, volumeName);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "unbind volume",
-                data: data
+                task: "getK8SState",
+                nodeType: "master",
+                state: stateData,
+                node: data.node
             }));
         } catch (err) {
+            console.log(err);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
-                task: "unbind volume",
-                data: data
+                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
+                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
+                task: "getK8SState",
+                nodeType: "master",
+                node: data.node
             }));
         }
     }
 
     /**
-     * detatchLocalVolumeFromVM
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async detatchLocalVolumeFromVM(topicSplit, ip, data) {
-        try {
-            let volume = await DBController.getVolume(data.volumeId);
-            if(volume.portIndex == null){
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                    status: 200,
-                    task: "detatch volume"
-                }));
-                return;
-            }
-            
-            await EngineController.detatchLocalK8SVolume(data.node, volume.portIndex, data.delDiskFile, data.skipRestart);
-
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "detatch volume",
-                data: data
-            }));
-        } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
-                task: "detatch volume",
-                data: data
-            }));
-        }
-    }
-
-    /**
-     * deleteLocalVolume
+     * requestUpdateClusterIngressRules
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async deleteLocalVolume(topicSplit, ip, data) {
-        try {
-            let volume = await DBController.getVolume(data.volumeId);
-            let volumeName = volume.name + "-" + volume.secret;
-            await EngineController.cleanUpDeletedVolume(data.node, volumeName);
-
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "delete local volume",
-                data: data
-            }));
-        } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
-                task: "delete local volume",
-                data: data
-            }));
-        }
-    }
-
-    /**
-     * unmountK8SNodeLocalVolume
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async unmountK8SNodeLocalVolume(topicSplit, ip, data) {
-        try {
-             await EngineController.unmountVolume(data.nodeProfile.node, data.volumeMountName);
-             
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                 status: 200,
-                 task: "unbind volume",
-                 data: data
-             }));
-        } catch (err) {
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                 status: err.code ? err.code : 500,
-                 message: err.message,
-                 task: "unbind volume",
-                 data: data
-             }));
- 
-        }
-     }
-
-    /**
-     * mountK8SNodeLocalVolume
-     * @param {*} topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async mountK8SNodeLocalVolume(topicSplit, ip, data) {
-        try {
-             await EngineController.mountLocalVolume(data.node, data.mountFolderName, data.volume.portIndex);
-             
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                 status: 200,
-                 task: "mount volume",
-                 data: data
-             }));
-         } catch (err) {
-             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                 status: err.code ? err.code : 500,
-                 message: err.message,
-                 task: "mount volume",
-                 data: data
-             }));
-         }
-    }
-
-    /**
-     * deleteWorkspaceFile
-     * @param {*} topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async deleteWorkspaceFile(topicSplit, ip, data) {
-        let tFile = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, data.fileName);
-        try {
-            await OSController.execSilentCommand(`rm -rf ${tFile}`);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "delete file",
-                data: data
-            }));
-        } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: err.code ? err.code : 500,
-                message: err.message,
-                task: "delete file",
-                data: data
-            }));
-        }
-    }
-
-    /**
-     * deployK8SPersistantVolume
-     * @param {*} topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async deployK8SPersistantVolume(topicSplit, ip, data) {
-        try {
-            let pvTemplate = YAML.parse(fs.readFileSync(path.join(__dirname, "k8s_templates/persistant-volume.yaml"), 'utf8'));
-
-            pvTemplate.metadata.name = data.pvName;
-            pvTemplate.metadata.labels.app  = data.pvName;
-            pvTemplate.spec.capacity.storage = `${data.size}Mi`;
-            pvTemplate.spec.local.path = `/mnt/${data.volume.name}-${data.volume.secret}/${data.subFolderName}`;
-            pvTemplate.spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0].values = data.hostnames;
-    
-            let yamlTmpPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.workspaceId.toString(), data.node.hostname, `pv.yml`);
-            fs.writeFileSync(yamlTmpPath, YAML.stringify(pvTemplate));
-
-           
-            let r = await EngineController.sshExec(data.node.ip, `mkdir -p ${pvTemplate.spec.local.path}`, true);
-            if(r.code != 0) {
-                console.log(r);
-                throw new Error("Could not create folders");
-            } 
-
-            await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "deploy persistant volume",
-                data: data
-            }));
-        } catch (error) {
-            console.log("ERROR 2 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "deploy persistant volume",
-                data: data
-            }));
-        }
-    }
-
-    /**
-     * createServicePvDir
-     * @param {
-     * } topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async createServicePvDir(topicSplit, ip, data) {
-        try {
-            let r = await EngineController.sshExec(data.node.ip, `mkdir -p /mnt/${data.volume.name}-${data.volume.secret}/${data.subFolderName}`, true);
-            if(r.code != 0) {
-                console.log(r);
-                throw new Error("Could not create folders");
-            } 
-  
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "deploy persistant volume",
-                data: data
-            }));
-        } catch (error) {
-            console.log("ERROR 2 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "deploy persistant volume",
-                data: data
-            }));
-        }
-    }
-
-    /**
-     * deployK8SService
-     * @param {*} topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async deployK8SService(topicSplit, ip, data) {
-        let tmpFolderHash = null;
-        while(tmpFolderHash == null){
-            tmpFolderHash = shortid.generate();
-            if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
-                tmpFolderHash = null;
-            }
-        }
-        
-        let chartTmpFolder = path.join(process.env.VM_BASE_DIR, "workplaces", data.workspaceId.toString(), data.node.hostname, tmpFolderHash);
-        try {
-            let response = await this.mqttController.queryRequestResponse("api", "get_chart_binary", {
-                "service": data.serviceLabel,
-                "version": data.service.version
-            });
-            if(response.data.status != 200){
-                throw new Error("Could not get chart binary");
-            }  
-            
-            let tarTmpPath = path.join(chartTmpFolder, data.service.chartFile);
-            
-            let tmp_working_dir = null;
-            if(data.overwriteConfigFileContent) {
-                tmp_working_dir = path.join(chartTmpFolder, "_decompressed");
-                mkdirp.sync(tmp_working_dir);
-                tarTmpPath = path.join(tmp_working_dir, data.service.chartFile);
-                
-                await OSController.writeBinaryToFile(tarTmpPath, response.data.data);
-                await OSController.untar(tarTmpPath, true);
-
-                let configOverwrite = YAML.parse(data.overwriteConfigFileContent);
-
-                let filesInDir = fs.readdirSync(tmp_working_dir);
-                if(filesInDir.length == 1 && fs.existsSync(path.join(tmp_working_dir, data.serviceLabel))){
-                    // Modify chart
-                    let valuesFilePath = path.join(tmp_working_dir, data.serviceLabel, "values.yaml");
-                    let serviceValues = YAML.parse(fs.readFileSync(valuesFilePath, 'utf8'));
-                    const _serviceValues = _.merge(serviceValues, configOverwrite);
-                    fs.writeFileSync(valuesFilePath, YAML.stringify(_serviceValues));
-
-                    await OSController.tar(path.join(tmp_working_dir, data.serviceLabel), tarTmpPath);
-                } else {
-                    // Modify chart
-                    let valuesFilePath = path.join(tmp_working_dir, "values.yaml");
-                    let serviceValues = YAML.parse(fs.readFileSync(valuesFilePath, 'utf8'));
-                    const _serviceValues = _.merge(serviceValues, configOverwrite);
-                    fs.writeFileSync(valuesFilePath, YAML.stringify(_serviceValues));
-
-                    await OSController.tar(tmp_working_dir, tarTmpPath);
-                }
-            } else {
-                tarTmpPath = path.join(chartTmpFolder, data.service.chartFile);
-                await OSController.writeBinaryToFile(tarTmpPath, response.data.data);
-            }
-           
-            let result = await EngineController.deployHelmService(data.serviceInstanceName, data.ns, data.serviceParams, data.node, tarTmpPath, data.clusterIPServiceName);   
-            
-            if(tmp_working_dir){
-                await rmfr(tmp_working_dir);
-            }
-            
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "deploy service",
-                data: result
-            }));
-        } catch (error) {
-            console.log("ERROR 9 =>", error);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: error.code ? error.code : 500,
-                message: error.message,
-                task: "deploy service"
-            }));
-        } finally {
-            OSController.rmrf(chartTmpFolder);
-        }
-    }
-
-    /**
-     * updateClusterIngressRules
-     * @param {*} topicSplit 
-     * @param {*} ip 
-     * @param {*} data 
-     */
-    static async updateClusterIngressRules(topicSplit, data) {
+    static async requestUpdateClusterIngressRules(topicSplit, data) {
         let backupData = null;
         try {
             let org = await DBController.getOrgForWorkspace(data.node.workspaceId);
@@ -551,7 +169,7 @@ class TaskRuntimeController {
             console.log(error);
             if(backupData){
                 fs.writeFileSync(backupData.yamlPath, YAML.stringify(backupData.backup));
-                try { await EngineController.applyK8SYaml(backupData.yamlPath, data.ns, data.node); } catch (_e) {}
+                try { await this.applyK8SYaml(backupData.yamlPath, data.ns, data.node); } catch (_e) {}
             }
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
@@ -629,9 +247,9 @@ class TaskRuntimeController {
 
             if(ingressYaml.spec.rules.length > 0) {
                 fs.writeFileSync(ingressYamlPath, YAML.stringify(ingressYaml));
-                await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node);
+                await this.applyK8SYaml(ingressYamlPath, data.ns, data.node);
             } else {
-                await EngineController.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
+                await this.deleteK8SResource(data.node, data.ns, "ingress", "workspace-ingress");
             }
             return {
                 "yamlPath": ingressYamlPath,
@@ -640,7 +258,7 @@ class TaskRuntimeController {
         } catch (error) {
             if(backupYamlContent) {
                 fs.writeFileSync(ingressYamlPath, YAML.stringify(backupYamlContent));
-                try { await EngineController.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
+                try { await this.applyK8SYaml(ingressYamlPath, data.ns, data.node); } catch (_e) {}
             }
             throw error;
         }
@@ -663,7 +281,7 @@ class TaskRuntimeController {
         }
         
         let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
-        await EngineController.fetchFileSsh(data.node.ip, ingressFilePath, "/home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml");
+        await OSController.fetchFileSsh(data.node.ip, ingressFilePath, "/home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml");
         
         // Get configmap nginx ingress template
         tmpFolderHash = null;
@@ -674,7 +292,7 @@ class TaskRuntimeController {
             }
         }
         let ingressConfigMapFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
-        await EngineController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
+        await OSController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
       
         let backupIngressConfigMapYaml = null;
         let backupIngressYaml = null;
@@ -703,7 +321,7 @@ class TaskRuntimeController {
             ingressConfigMapYaml.data = {};
             ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
             fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
-            await EngineController.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
+            await this.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
 
             // Update NGinx ingress deamonset config
             let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
@@ -721,16 +339,16 @@ class TaskRuntimeController {
             ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
 
             fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
-            await EngineController.applyK8SYaml(ingressFilePath, null, data.node);
+            await this.applyK8SYaml(ingressFilePath, null, data.node);
             // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
         } catch (error) {
             if(backupIngressConfigMapYaml) {
                 fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(backupIngressConfigMapYaml));
-                try { await EngineController.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
+                try { await this.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
             }
             if(backupIngressYaml) {
                 fs.writeFileSync(ingressFilePath, YAML.stringify(backupIngressYaml));
-                try { await EngineController.applyK8SYaml(ingressFilePath, data.ns, data.node); } catch (_e) {}
+                try { await this.applyK8SYaml(ingressFilePath, data.ns, data.node); } catch (_e) {}
             }
             throw error;
         } finally {
@@ -741,27 +359,13 @@ class TaskRuntimeController {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * updateClusterPodPresets
+     * requestUpdateClusterPodPresets
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async updateClusterPodPresets(topicSplit, data) {
+    static async requestUpdateClusterPodPresets(topicSplit, data) {
         try{
             let response = await this.mqttController.queryRequestResponse("api", "get_services_config", {});
             if(response.data.status != 200){
@@ -792,7 +396,7 @@ class TaskRuntimeController {
 
                             let secretResolvedName = secretName.split("${instance-name}").join(data.allServices[i].name);
                             
-                            let output = await EngineController.getK8SResourceValues(data.node, data.ns, "secret", secretResolvedName, `{.data.${secretParamName}}`, true);   
+                            let output = await this.getK8SResourceValues(data.node, data.ns, "secret", secretResolvedName, `{.data.${secretParamName}}`, true);   
                             if(output.length == 1 && output[0].length > 0){
                                 SERVICE_VCAPS[envName] = output[0];
                             }
@@ -802,18 +406,18 @@ class TaskRuntimeController {
                 VCAPS[data.allServices[i].serviceName].push(SERVICE_VCAPS);
             }
           
-            let ppTemplate = YAML.parse(fs.readFileSync(path.join(__dirname, "k8s_templates/pod-preset.yaml"), 'utf8'));
+            let ppTemplate = YAML.parse(fs.readFileSync(path.join(process.cwd(), "resources", "k8s_templates/pod-preset.yaml"), 'utf8'));
             ppTemplate.spec.env[0].value = JSON.stringify(VCAPS);
           
             let yamlTmpPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `pp.yml`);
             fs.writeFileSync(yamlTmpPath, YAML.stringify(ppTemplate));
            
             try {
-                let existingPp = await EngineController.getK8SResources(data.node, data.ns, "podpreset", ["ws-vcap"]);   
+                let existingPp = await this.getK8SResources(data.node, data.ns, "podpreset", ["ws-vcap"]);   
                 if(existingPp.length == 1){
-                    await EngineController.deleteK8SResource(data.node, data.ns, "podpreset", "ws-vcap");
+                    await this.deleteK8SResource(data.node, data.ns, "podpreset", "ws-vcap");
                 }
-                await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);
+                await this.applyK8SYaml(yamlTmpPath, data.ns, data.node);
                 
                 this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
@@ -836,56 +440,56 @@ class TaskRuntimeController {
     }
 
     /**
-     * deleteK8SService
+     * requestDeployK8SPersistantVolume
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async deleteK8SService(topicSplit, ip, data) {
+    static async requestDeployK8SPersistantVolume(topicSplit, ip, data) {
         try {
-            let volume = null;
-            if(data.service.dedicatedPvc && data.service.dedicatedPvc.length > 0){
-                volume = await DBController.getVolume(data.service.volumeId);
-            }
-            // Delete helm service
-            await EngineController.deleteHelmService(data.service.instanceName, data.service.namespace, data.node);   
-            // Delete persistent volume claim
-            if(data.service.dedicatedPvc && data.service.dedicatedPvc.length > 0){
-                await EngineController.removePersistantVolumeClaim(data.service.dedicatedPvc, data.service.namespace, data.node);
-                await EngineController.removePersistantVolume(data.service.dedicatedPv, data.service.namespace, data.node);  
-                if(volume){       
-                    let r = await EngineController.sshExec(data.node.ip, `rm -rf /mnt/${volume.name}-${volume.secret}/srv-${data.service.instanceName}`, true);
-                    if(r.code != 0) {
-                        console.log(r);
-                        throw new Error("Could not delete service folder");
-                    } 
-                }
-            }
+            let pvTemplate = YAML.parse(fs.readFileSync(path.join(process.cwd(), "resources", "k8s_templates", "persistant-volume.yaml"), 'utf8'));
 
+            pvTemplate.metadata.name = data.pvName;
+            pvTemplate.metadata.labels.app  = data.pvName;
+            pvTemplate.spec.capacity.storage = `${data.size}Mi`;
+            pvTemplate.spec.local.path = `/mnt/${data.volume.name}-${data.volume.secret}/${data.subFolderName}`;
+            pvTemplate.spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0].values = data.hostnames;
+    
+            let yamlTmpPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.workspaceId.toString(), data.node.hostname, `pv.yml`);
+            fs.writeFileSync(yamlTmpPath, YAML.stringify(pvTemplate));
+
+            let r = await OSController.sshExec(data.node.ip, `mkdir -p ${pvTemplate.spec.local.path}`, true);
+            if(r.code != 0) {
+                console.log(r);
+                throw new Error("Could not create folders");
+            } 
+
+            await this.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
-                task: "delete service"
+                task: "deploy persistant volume",
+                data: data
             }));
         } catch (error) {
-            console.log("ERROR 10 =>", error);
+            console.log("ERROR 2 =>", error);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: error.code ? error.code : 500,
                 message: error.message,
-                task: "delete service",
+                task: "deploy persistant volume",
                 data: data
             }));
         }
     }
 
     /**
-     * deployK8SPersistantVolumeClaim
+     * requestDeployK8SPersistantVolumeClaim
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async deployK8SPersistantVolumeClaim(topicSplit, ip, data) {
+    static async requestDeployK8SPersistantVolumeClaim(topicSplit, ip, data) {
         try {
-            let pvcTemplate = YAML.parse(fs.readFileSync(path.join(__dirname, "k8s_templates/pvc-local.yaml"), 'utf8'));
+            let pvcTemplate = YAML.parse(fs.readFileSync(path.join(process.cwd(), "resources", "k8s_templates", "pvc-local.yaml"), 'utf8'));
 
             pvcTemplate.metadata.name = `${data.pvcName}`;
             pvcTemplate.spec.selector.matchLabels.app = `${data.pvName}`;
@@ -894,7 +498,7 @@ class TaskRuntimeController {
             // console.log(YAML.stringify(pvcTemplate));
             let yamlTmpPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.workspaceId.toString(), data.node.hostname, `pvc.yml`);
             fs.writeFileSync(yamlTmpPath, YAML.stringify(pvcTemplate));
-            await EngineController.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
+            await this.applyK8SYaml(yamlTmpPath, data.ns, data.node);     
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "deploy persistant volume claim",
@@ -912,14 +516,14 @@ class TaskRuntimeController {
     }
 
     /**
-     * removeK8SAllPvForVolume
+     * requestRemoveK8SAllPvForVolume
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async removeK8SAllPvForVolume(topicSplit, ip, data) {
+    static async requestRemoveK8SAllPvForVolume(topicSplit, ip, data) {
         try {
-            let r = await EngineController.sshExec(data.node.ip, `ls /mnt/${data.volume.name}-${data.volume.secret}`, true);
+            let r = await OSController.sshExec(data.node.ip, `ls /mnt/${data.volume.name}-${data.volume.secret}`, true);
             if(r.code != 0) {
                 console.log(r);
                 throw new Error("Could not list folders");
@@ -932,16 +536,16 @@ class TaskRuntimeController {
             for(let i=0; i<volumeDirs.length; i++) {
                 console.log("Removing PV =>", `${volumeDirs[i]}-pv`);
                 if(data.ns && data.ns == "*") {
-                    let allPvs = await EngineController.getK8SResources(data.node, "*", "pv");
+                    let allPvs = await this.getK8SResources(data.node, "*", "pv");
                     for(let y=0; y<allPvs.length; y++) {
                         if(allPvs[y].NAME == `${volumeDirs[i]}-pv`){
-                            await EngineController.removePersistantVolume(`${volumeDirs[i]}-pv`, allPvs[y].NAMESPACE ? allPvs[y].NAMESPACE : "default", data.node);
+                            await this.removePersistantVolume(`${volumeDirs[i]}-pv`, allPvs[y].NAMESPACE ? allPvs[y].NAMESPACE : "default", data.node);
                         }
                     }
                 } else {
-                    await EngineController.removePersistantVolume(`${volumeDirs[i]}-pv`, data.ns, data.node);
+                    await this.removePersistantVolume(`${volumeDirs[i]}-pv`, data.ns, data.node);
                 }
-                await EngineController.sshExec(data.node.ip, `rm -rf /mnt/${data.volume.name}-${data.volume.secret}/${volumeDirs[i]}`, true);
+                await OSController.sshExec(data.node.ip, `rm -rf /mnt/${data.volume.name}-${data.volume.secret}/${volumeDirs[i]}`, true);
             }
 
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
@@ -960,14 +564,14 @@ class TaskRuntimeController {
     }
 
     /**
-     * removeK8SPersistantVolumeClaim
+     * requestRemoveK8SPersistantVolumeClaim
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async removeK8SPersistantVolumeClaim(topicSplit, ip, data) {
+    static async requestRemoveK8SPersistantVolumeClaim(topicSplit, ip, data) {
         try {
-            await EngineController.removePersistantVolumeClaim(data.pvcName, data.ns, data.node);     
+            await this.removePersistantVolumeClaim(data.pvcName, data.ns, data.node);     
             
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
@@ -985,15 +589,15 @@ class TaskRuntimeController {
     }
 
     /**
-     * removeK8SPersistantVolume
+     * requestRemoveK8SPersistantVolume
      * @param {*} topicSplit 
      * @param {*} ip 
      * @param {*} data 
      */
-    static async removeK8SPersistantVolume(topicSplit, ip, data) {
+    static async requestRemoveK8SPersistantVolume(topicSplit, ip, data) {
         try {
-            await EngineController.removePersistantVolume(data.pvName, data.ns, data.node);     
-            let r = await EngineController.sshExec(data.node.ip, `rm -rf /mnt/${data.volume.name}-${data.volume.secret}/${data.subFolderName}`, true);
+            await this.removePersistantVolume(data.pvName, data.ns, data.node);     
+            let r = await OSController.sshExec(data.node.ip, `rm -rf /mnt/${data.volume.name}-${data.volume.secret}/${data.subFolderName}`, true);
             if(r.code != 0) {
                 console.log(r);
                 throw new Error("Could not delete folders");
@@ -1015,227 +619,286 @@ class TaskRuntimeController {
     }
 
     /**
-     * detatch_worker
-     * @param {*} topicSplit 
-     * @param {*} payload 
-     */
-    static async detatch_worker(topicSplit, payload) {
-        try {
-            await EngineController.detatchWorker(payload.masterNode, payload.workerNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "detatch",
-                nodeType: "worker",
-                node: payload.workerNode
-            }));
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "detatch",
-                nodeType: "worker",
-                node: payload.workerNode
-            }));
-        }
-    }
-
-    /**
-     * deprovision_worker
-     * @param {*} topicSplit 
-     * @param {*} payload 
-     */
-    static async deprovision_worker(topicSplit, payload) {
-        try {
-            let exists = await EngineController.vmExists(payload.workerNode.hostname);
-            if(exists){
-                await EngineController.stopDeleteVm(payload.workerNode.hostname, payload.workerNode.workspaceId);
-
-                this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
-                    leasedIp: payload.workerNode.ip
-                }));
-                
-                await DBController.deleteK8SWorkerNode(payload.workerNode.id);
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                    status: 200,
-                    task: "deprovision",
-                    nodeType: "worker",
-                    node: payload.workerNode
-                }));
-            } else {
-                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                    status: 404,
-                    task: "deprovision",
-                    nodeType: "worker",
-                    node: payload.workerNode
-                }));
-            }
-        } catch (err) {
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "deprovision",
-                nodeType: "worker",
-                node: payload.workerNode
-            }));
-        }
-    }
-
-    /**
-     * provision_worker
-     * @param {*} topicSplit 
-     * @param {*} payload 
-     */
-    static async provision_worker(topicSplit, payload) {
-        let result = null;
-        let dbId = null;
-        try {
-            let org = await DBController.getOrgForWorkspace(payload.masterNode.workspaceId);
-            let rPass = this.parent.decrypt(org.registryPass, org.bcryptSalt);
-
-            result = await EngineController.deployWorker(topicSplit, payload, org.registryUser, rPass);
-            dbId = await DBController.createK8SWorkerNode(result.nodeIp, result.nodeHostname, result.workspaceId, result.hostId, result.hash);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                hash: result.hash,
-                task: "provision",
-                nodeType: "worker",
-                k8sNodeId: dbId
-            }));
-        } catch (err) {
-            // The deploy finished, error occured during DB update. Need to roolback everything
-            if(result){
-                try{
-                    let created = await EngineController.vmExists(`worker.${result.hash}`);
-                    if(created){
-                        await EngineController.stopDeleteVm(`worker.${result.hash}`, result.workspaceId);
-                    }
-                    
-                    if(result.leasedIp){
-                        this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
-                            leasedIp: result.leasedIp
-                        }));
-                    }
-                } catch(_err) {
-                    // TODO: Log rollback error
-                    console.log(_err);
-                }
-            }
-            if(dbId != null) {
-                await DBController.deleteK8SWorkerNode(dbId);
-            }
-
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "provision",
-                nodeType: "worker"
-            }));
-        }
-    }
-
-    /**
-     * taint_master
-     * @param {*} topicSplit 
-     * @param {*} payload 
-     */
-    static async taint_master(topicSplit, payload) {
-        try {
-            await EngineController.taintMaster(payload.masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "taintMaster",
-                nodeType: "master",
-                node: payload.masterNode
-            }));
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "taintMaster",
-                nodeType: "master",
-                node: payload.masterNode
-            }));
-        }
-    }
-
-    /**
-     * untaint_master
-     * @param {*} topicSplit 
-     * @param {*} payload 
-     */
-    static async untaint_master(topicSplit, payload) {
-        try {
-            await EngineController.untaintMaster(payload.masterNode);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "untaintMaster",
-                nodeType: "master",
-                node: payload.masterNode
-            }));
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "untaintMaster",
-                nodeType: "master",
-                node: payload.masterNode
-            }));
-        }
-    }
-
-    /**
      * grabConfigFile
      * @param {*} masterIp 
      * @param {*} workspaceId 
      */
-    static async grabMasterConfigFile(topicSplit, data) {
-        try {
-            let tmpConfigFilePath = await EngineController.grabMasterConfigFile(data.node.ip, data.node.workspaceId);
-            let _b = fs.readFileSync(tmpConfigFilePath);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                config: _b.toString('base64')
-            }));
-            fs.unlinkSync(tmpConfigFilePath);
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "grabMasterConfigFile",
-                nodeType: "master"
-            }));
+    static async grabMasterConfigFile(masterIp, workspaceId) {
+        let hash = null;
+        while(hash == null){
+            hash = shortid.generate().toLowerCase();
+            if(hash.indexOf("$") != -1 || hash.indexOf("@") != -1){
+                hash = null;
+            }
+        }
+        let tmpFileName = path.join(process.env.VM_BASE_DIR, "workplaces", workspaceId.toString(), `${hash}.conf`);
+        await OSController.fetchFileSsh(masterIp, '/etc/kubernetes/admin.conf', tmpFileName);
+
+        return tmpFileName;
+    }
+
+    /**
+     * deleteK8SResource
+     * @param {*} masterNode 
+     * @param {*} resource 
+     * @param {*} name 
+     */
+    static async deleteK8SResource(masterNode, ns, resource, name) {
+        await OSController.sshExec(masterNode.ip, `kubectl delete ${resource} ${name}${ns ? " --namespace=" + ns : ""}`, true, true);
+    }
+
+    /**
+     * detatchWorker
+     * @param {*} masterNode 
+     * @param {*} workerNode 
+     */
+    static async detatchWorker(masterNode, workerNode) {
+        await OSController.sshExec(masterNode.ip, `kubectl drain ${workerNode.hostname} --ignore-daemonsets --delete-local-data`);
+        await OSController.sshExec(masterNode.ip, `kubectl delete node ${workerNode.hostname}`);
+    }
+
+    /**
+     * taintMaster
+     * @param {*} masterNode 
+     */
+    static async taintMaster(masterNode) {
+        await OSController.sshExec(masterNode.ip, `kubectl taint nodes ${masterNode.hostname} ${masterNode.hostname}=DoNotSchedulePods:NoExecute`);
+    }
+
+    /**
+     * untaintMaster
+     * @param {*} masterNode
+     */
+    static async untaintMaster(masterNode) {
+        await OSController.sshExec(masterNode.ip, `kubectl taint nodes ${masterNode.hostname} ${masterNode.hostname}:NoExecute-`);
+    }
+
+    /**
+     * getK8SResources
+     * @param {*} masterNode 
+     * @param {*} resourceName 
+     */
+    static async getK8SResources(masterNode, ns, resourceName, resourceLabels, jsonOutput) {
+        let nsString = "";
+        if(ns == "*"){
+            nsString = " --all-namespaces";
+        } else if(ns){
+            nsString = " --namespace=" + ns;
+        }
+        let cmd = `kubectl get ${resourceName}`;
+        if(resourceLabels) {
+            cmd += ` ${resourceLabels.join(' ')}`;
+        }
+        cmd = `${cmd}${nsString}${jsonOutput ? " -o=json":""}`;
+        
+        let r = await OSController.sshExec(masterNode.ip, cmd, true);
+       
+        if(r.code != 0) {
+            if(resourceLabels && resourceLabels.length == 1 && r.stderr.indexOf("Error from server (NotFound):") != -1){
+                return [];
+            } else {
+                console.log(r);
+                throw new Error("Could not get resources on cluster");
+            }
+        } 
+
+        if(jsonOutput){
+            return JSON.parse(r.stdout);
+        } else {
+            if(r.stdout.toLowerCase().indexOf("no resources found") != -1){
+                return [];
+            }
+
+            let responses = [];
+            let headers = [];
+            r.stdout.split("\n").forEach((line, i) => {
+                if(i == 0) {
+                    let _hNames = line.split("  ").filter(o => o.length > 0);
+                    _hNames.forEach((n, z) => {
+                        if(z == 0){
+                            headers.push({"name": n.trim(), "pos": line.indexOf(`${n.trim()} `)});
+                        } 
+                        else if((z+1) == _hNames.length){
+                            headers.push({"name": n.trim(), "pos": line.indexOf(` ${n.trim()}`)-1});
+                        }
+                        else {
+                            headers.push({"name": n.trim(), "pos": line.indexOf(` ${n.trim()} `)-1});
+                        }
+                    });
+                } else {
+                    let pos = 0;
+                    let lineData = {};
+                    for(let y=0; y<headers.length; y++){
+                        if(y+1 == headers.length){
+                            lineData[headers[y].name] = line.substring(pos).trim();
+                        } else {
+                            lineData[headers[y].name] = line.substring(pos, headers[y+1].pos).trim();
+                            pos = headers[y+1].pos;
+                        }
+                    }
+                    responses.push(lineData);
+                }
+            });
+            return responses;
         }
     }
 
     /**
-     * get_k8s_state
-     * @param {*} topicSplit 
-     * @param {*} data 
+     * getK8SResourceValues
+     * @param {*} masterNode 
+     * @param {*} ns 
+     * @param {*} resourceName 
+     * @param {*} resourceLabel 
+     * @param {*} jsonPath 
+     * @param {*} doBase64Decode 
      */
-    static async get_k8s_state(topicSplit, data) {
-        try {
-            let stateData = await EngineController.getK8SState(data.node);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                task: "getK8SState",
-                nodeType: "master",
-                state: stateData,
-                node: data.node
-            }));
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "getK8SState",
-                nodeType: "master",
-                node: data.node
-            }));
+    static async getK8SResourceValues(masterNode, ns, resourceName, resourceLabel, jsonPath, doBase64Decode) {
+        let nsString = "";
+        if(ns == "*"){
+            nsString = " --all-namespaces";
+        } else if(ns){
+            nsString = " --namespace=" + ns;
         }
+
+        let cmd = `kubectl get ${resourceName} ${resourceLabel}${nsString} -o=jsonpath="${jsonPath}"${doBase64Decode ? " | base64 --decode":""}`;
+        
+        let r = await OSController.sshExec(masterNode.ip, cmd, true);
+        if(r.code != 0) {
+            console.log(r);
+            throw new Error("Could not get resources on cluster");
+        } 
+        if(r.stdout.toLowerCase().indexOf("no resources found") != -1){
+            return null;
+        }
+
+        return r.stdout.split("\n");
+    }
+
+    /**
+     * applyK8SYaml
+     * @param {*} yamlFilePath 
+     * @param {*} node 
+     */
+    static async applyK8SYaml(yamlFilePath, ns, node) {
+        try {
+            await OSController.pushFileSsh(node.ip, yamlFilePath, `/root/${path.basename(yamlFilePath)}`);
+            // Wait untill kubectl answers for 100 seconds max
+            let attempts = 0;
+            let success = false;
+            while(!success && attempts <= 30){
+                await _sleep(1000 * 5);
+                
+                let r = await OSController.sshExec(node.ip, `kubectl apply -f /root/${path.basename(yamlFilePath)}${ns ? " --namespace=" + ns:""}`, true);
+                if(r.code == 0) {
+                    success = true;
+                } else {
+                    if(r.stderr.indexOf("6443 was refused") != -1 || r.stderr.indexOf("handshake timeout") != -1){
+                        attempts++;
+                    } else {
+                        console.log("applyK8SYaml =>", JSON.stringify(r, null, 4));
+                        attempts = 31; // Jump out of loop
+                    }            
+                }
+            }
+            if(!success){
+                throw new Error("Could not apply yaml resource on cluster");
+            }
+        } finally {
+            await OSController.sshExec(node.ip, `rm -rf /root/${path.basename(yamlFilePath)}`, true);
+        }
+    }
+
+    /**
+     * kubectl
+     * @param {*} command 
+     * @param {*} node 
+     */
+    static async kubectl(command, node) {
+        // Wait untill kubectl answers for 100 seconds max
+        let attempts = 0;
+        let success = false;
+        while(!success && attempts <= 30){
+            await _sleep(1000 * 5);
+            
+            let r = await OSController.sshExec(node.ip, command, true);
+            if(r.code == 0) {
+                success = true;
+            } else {
+                if(r.stderr.indexOf("6443 was refused") != -1){
+                    attempts++;
+                } else {
+                    console.log(JSON.stringify(r, null, 4));
+                    attempts = 31; // Jump out of loop
+                }            
+            }
+        }
+        if(!success){
+            throw new Error("Could not execute command: " + command);
+        }
+    }
+
+    /**
+     * removePersistantVolume
+     * @param {*} pvName 
+     * @param {*} node 
+     */
+    static async removePersistantVolume(pvName, ns, node, ignoreErrors) {
+        try {
+            await OSController.waitUntilUp(node.ip);
+            let r = await OSController.sshExec(node.ip, `kubectl get pv ${pvName}${ns ? " --namespace="+ns : ""}`, true);
+            if(!ignoreErrors && r.code != 0) {
+                console.log(r);
+                throw new Error("Could not delete PV on cluster");
+            } 
+            if(r.code == 0 && r.stdout.toLowerCase().indexOf("no resources found") == -1){
+                await this.kubectl(`kubectl patch pv ${pvName}${ns ? " --namespace="+ns : ""} -p '{"metadata": {"finalizers": null}}'`, node);
+                await this.kubectl(`kubectl delete pv ${pvName}${ns ? " --namespace="+ns : ""} --grace-period=0 --force`, node);
+            }
+        } catch (error) {
+            console.log(JSON.stringify(error, null, 4));
+            throw new Error("Could not delete PV on cluster");
+        }
+    }
+
+    /**
+     * removePersistantVolumeClaim
+     * @param {*} pvcName 
+     * @param {*} node 
+     */
+    static async removePersistantVolumeClaim(pvcName, ns, node) {
+        try {
+            await OSController.waitUntilUp(node.ip);
+            let r = await OSController.sshExec(node.ip, `kubectl get pvc ${pvcName}${ns ? " --namespace=" + ns:""}`, true);
+            if(r.code != 0) {
+                throw new Error("Could not delete PVC on cluster");
+            } 
+            if(r.stdout.toLowerCase().indexOf("no resources found") == -1){
+                await this.kubectl(`kubectl delete pvc ${pvcName}${ns ? " --namespace=" + ns:""}`, node);
+            }            
+        } catch (error) {
+            console.log(JSON.stringify(error, null, 4));
+            throw new Error("Could not delete PVC on cluster");
+        }
+    }
+
+    /**
+     * getK8SState
+     * @param {*} masterNode 
+     */
+    static async getK8SState(masterNode) {
+        let nodeStates = await OSController.sshExec(masterNode.ip, `kubectl get nodes -o wide`);
+        let lines = nodeStates.split("\n");
+        lines.shift();
+        return lines.map(l => {
+            return (l.split(" ").filter(o => o.length > 0).map(o => o.replace("\r", "")));
+        }).map(lArray => {
+            return {
+                "name": lArray[0],
+                "type": (lArray[2].toLowerCase() == "master" ? "master" : "worker"),
+                "state": lArray[1],
+                "ip": lArray[5]
+            }
+        });
     }
 }
 TaskRuntimeController.ip = null;

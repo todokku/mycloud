@@ -8,8 +8,16 @@ const chmodr = require('chmodr');
 const shell = require('shelljs');
 const mkdirp = require('mkdirp');
 var targz = require('targz');
+const node_ssh = require('node-ssh');
 
-
+// Sleep promise for async
+let _sleep = (duration) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
+}
 
 class OsController {
 
@@ -58,12 +66,12 @@ class OsController {
 			default:
 				throw new Error("Invalide scale " + scale);
 		}
-	  }
+	}
 	  
-	  /**
-	   * getGlusterVolumeCount
-	   */
-	  static async getGlusterVolumeCount() {
+	/**
+	 * getGlusterVolumeCount
+	 */
+	static async getGlusterVolumeCount() {
 		let result = await this.execSilentCommand(`docker exec gluster-ctl gluster volume list`);
 		result = result.filter(o => o != "No volumes present in cluster");
 		return result.length;
@@ -242,6 +250,186 @@ class OsController {
 			}
 		});
 	}
+
+	/**
+     * pushFileSsh
+     * @param {*} ip 
+     * @param {*} localPath 
+     * @param {*} targetPath 
+     */
+    static pushFileSsh(ip, localPath, targetPath) {
+        return new Promise((resolve, reject) => {
+            let ssh = new node_ssh();
+        
+            ssh.connect({
+                host: ip,
+                username: 'root',
+                password: 'vagrant'
+            }).then(function() {
+                ssh.putFile(localPath, targetPath).then(function() {
+                    ssh.dispose();
+                    resolve();
+                }, function(error) {
+                    console.log("err", error);
+                    ssh.dispose();
+                    reject(error);
+                })
+            });
+        });
+    }
+
+    /**
+     * fetchFileSsh
+     * @param {*} ip 
+     * @param {*} localPath 
+     * @param {*} targetPath 
+     */
+    static fetchFileSsh(ip, localPath, targetPath) {
+        return new Promise((resolve, reject) => {
+            let ssh = new node_ssh();
+        
+            ssh.connect({
+                host: ip,
+                username: 'root',
+                password: 'vagrant'
+            }).then(function() {
+                ssh.getFile(localPath, targetPath).then(function() {
+                    ssh.dispose();
+                    resolve();
+                }, function(error) {
+                    console.log("err", error);
+                    ssh.dispose();
+                    reject(error);
+                })
+            });
+        });
+    }
+
+    /**
+     * feedbackSshExec
+     * @param {*} ip 
+     * @param {*} command 
+     */
+    static feedbackSshExec(ip, command, cb) {
+        console.log(`SSH Command (${ip}): ", ${command}`);
+        return new Promise((resolve, reject) => {
+            let ssh = new node_ssh();
+        
+            ssh.connect({
+                host: ip,
+                username: 'root',
+                password: 'vagrant'
+            }).then(function() {
+                try {
+                    let sploit = command.split(' ');
+                    let cmd = sploit.shift();
+                    ssh.exec(cmd, sploit, {
+                        onStdout(chunk) {
+                            cb(chunk.toString('utf8'));
+                        },
+                        onStderr(chunk) {
+                            cb(null, chunk.toString('utf8'));
+                            ssh.dispose();
+                            reject(new Error(chunk.toString('utf8')));
+                        }
+                    }).then(function(result) {
+                        resolve();
+                    });
+                } catch (error) {
+                    ssh.dispose();
+                    reject(error);
+                }
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * sshExec
+     * @param {*} ip 
+     * @param {*} command 
+     */
+    static sshExec(ip, command, inline, ignoreStderr) {
+        console.log(`SSH Command (${ip}): ", ${command}`);
+        return new Promise((resolve, reject) => {
+            let ssh = new node_ssh();
+        
+            ssh.connect({
+                host: ip,
+                username: 'root',
+                password: 'vagrant'
+            }).then(function() {
+                try {
+                    if(Array.isArray(command)){
+                        let _cmdAsync = (_cmd) => {
+                            return new Promise((_resolve, _reject) => {
+                                ssh.execCommand(_cmd, {}).then(function(result) {
+                                    _resolve(result);
+                                })
+                            });
+                        }
+                        (async() => {
+                            let result = [];
+                            for(let i=0; i<command.length; i++){
+                                let _r = await _cmdAsync(command[i]);
+                                result.push(_r);
+                                if(!ignoreStderr && _r.stderr && _r.stderr.length > 0){
+                                    i = command.length; // Jump out
+                                }
+                            }
+                            ssh.dispose();
+                            resolve(result);
+                        })();
+                    } else {
+                        if(!inline){
+                            let sploit = command.split(' ');
+                            let cmd = sploit.shift();
+                            ssh.exec(cmd, sploit, { stream: 'stdout', options: { pty: true } }).then((result) => {
+                                ssh.dispose();
+                                resolve(result);
+                            });
+                        } else {
+                            ssh.execCommand(command, {}).then(function(result) {
+                                ssh.dispose();
+                                resolve(result);
+                            })
+                        }
+                    }
+                } catch (error) {
+                    ssh.dispose();
+                    reject(error);
+                }
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * waitUntilUp
+     * @param {*} ip 
+     */
+    static async waitUntilUp(ip) {
+        // Wait untill VM is back up and running
+        let isOnline = false;
+        let attempts = 0;
+        
+        while(!isOnline && attempts <= 20){
+            await _sleep(1000 * 5);
+            try {
+                let r = await this.sshExec(ip, `ls -l`, true);
+                if(r.code == 0) {
+                    isOnline = true;
+                } else {
+                    attempts++;
+                }
+            } catch (_e) {
+                attempts++;
+            }
+        }
+        return isOnline;
+    }
 }
 
 module.exports = OsController;
