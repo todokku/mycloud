@@ -205,12 +205,15 @@ dependencies () {
 }
 
 collect_informations() {
-    echo "==> Please select the proper Network adapter to use: $DISTRO"
+    echo "==> Please select the proper Network adapter to use:"
     if [ "$DISTRO" == "ubuntu" ]; then
         IFACES=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
     elif [ "$DISTRO" == "redhat" ]; then
+        echo "HERE I AM"
         IFACES=$(nmcli device status | cut -d ' ' -f1)
+        echo "IFACES $IFACES"
         IFACES=("${IFACES[@]:1}")
+        echo "IFACES $IFACES"
     fi
 
     readarray -t IFACESarrIN <<<"$IFACES"
@@ -384,12 +387,8 @@ install_core_components() {
     # fi
 }
 
-echo "HERE 1"
-
 # Figure out what distro we are running
 distro
-
-echo "DISTRO IS => $DISTRO"
 
 # Collect info from user
 collect_informations
