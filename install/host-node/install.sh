@@ -214,6 +214,17 @@ collect_informations() {
         echo "IFACES $IFACES"
         IFACES=("${IFACES[@]:1}")
         echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        echo "IFACES $IFACES"
+        
     fi
 
     readarray -t IFACESarrIN <<<"$IFACES"
