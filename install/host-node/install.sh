@@ -211,9 +211,9 @@ collect_informations() {
     elif [ "$DISTRO" == "redhat" ]; then
         echo "HERE I AM"
         IFACES=$(nmcli device status | cut -d ' ' -f1)
-        echo "IFACES $IFACES"
-        unset IFACES[0]
-        echo "IFACES $IFACES"
+        echo "IFACES 1 $IFACES"
+        unset IFACES[1]
+        echo "IFACES 2 $IFACES"
     fi
 
     readarray -t IFACESarrIN <<<"$IFACES"
