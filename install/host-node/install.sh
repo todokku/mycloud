@@ -5,43 +5,149 @@ _PWD="$(pwd)"
 
 cd $_DIR
 
+distro() {
+    # Determine OS platform
+    UNAME=$(uname | tr "[:upper:]" "[:lower:]")
+    # If Linux, try to determine specific distribution
+    if [ "$UNAME" == "linux" ]; then
+        # If available, use LSB to identify distribution
+        if [ -f /etc/lsb-release -o -d /etc/lsb-release.d ]; then
+            export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'// | tr '[:upper:]' '[:lower:]')
+        # Otherwise, use release info file
+        else
+            export DISTRO=$(ls -d /etc/[A-Za-z]*[_-][rv]e[lr]* | grep -v "lsb" | cut -d'/' -f3 | cut -d'-' -f1 | cut -d'_' -f1 | tr '[:upper:]' '[:lower:]')
+            if [[ $DISTRO == *"redhat"* || $DISTRO == *"centos"* ]]; then
+                DISTRO="redhat"
+            fi
+        fi
+    fi
+    # For everything else (or if above failed), just use generic identifier
+    [ "$DISTRO" == "" ] && export DISTRO=$UNAME
+    unset UNAME
+
+    if [ "$DISTRO" == "ubuntu" ]; then
+        MAJ_V=$(lsb_release -sr | cut -d '.' -f1)
+        if [ "$MAJ_V" != "18" ] && [ "$MAJ_V" != "19" ] && [ "$MAJ_V" != "20" ] && [ "$MAJ_V" != "21" ]; then
+            echo "Unsupported Ubuntu version. This script only works on Ubuntu >= 18.04 - 20.X"
+            exit 1
+        fi
+    elif [ "$DISTRO" == "redhat" ]; then
+        MAJ_V_7=$(cat /etc/os-release | grep "VERSION=\"7")
+        MAJ_V_8=$(cat /etc/os-release | grep "VERSION=\"8")
+        MAJ_V_9=$(cat /etc/os-release | grep "VERSION=\"9") # Being proactive
+        if [ "$MAJ_V_7" != "" ]; then
+            MAJ_V="7"
+        elif [ "$MAJ_V_8" != "" ]; then
+            MAJ_V="8"
+        elif [ "$MAJ_V_9" != "" ]; then
+            MAJ_V="9"
+        else
+            echo "Unsupported RedHat / CentOS version. This script only works on versions >= 7"
+            exit 1
+        fi
+    else
+        echo "Unsupported OS. This script only works on Ubuntu >= 18.04, RedHat >= 7 and CentOS >= 7"
+        exit 1
+    fi
+}
+
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
-    # apt-get update -y
+
+    if [ "$DISTRO" == "ubuntu" ]; then
+        sudo apt-get update -y
+    elif [ "$DISTRO" == "redhat" ]; then
+        if [ "$MAJ_V" == "7" ]; then
+            sudo yum update -y
+        elif [ "$MAJ_V" == "8" ]; then
+            sudo dnf -y update --nobest
+        fi
+    fi
+
+    WGET_EXISTS=$(command -v wget)
+    if [ "$WGET_EXISTS" == "" ]; then
+        if [ "$DISTRO" == "ubuntu" ]; then
+           sudo apt-get install -y wget
+        elif [ "$DISTRO" == "redhat" ]; then
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum install -y wget
+            elif [ "$MAJ_V" == "8" ]; then
+                sudo dnf -y install wget
+            fi
+        fi
+    fi
 
     DOCKER_EXISTS=$(command -v docker)
     if [ "$DOCKER_EXISTS" == "" ]; then
-        sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        sudo apt-get update
-        sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+        if [ "$DISTRO" == "ubuntu" ]; then
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+        elif [ "$DISTRO" == "redhat" ]; then
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum install -y -q yum-utils device-mapper-persistent-data lvm2 git
+                sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 
+                sudo yum install -y -q docker-ce
+            elif [ "$MAJ_V" == "8" ]; then
+               sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+               sudo dnf install -y docker-ce --nobest
+            fi
+        fi
         sudo usermod -aG docker $USER
         NEW_DOCKER="true"
-    else
-        sudo apt-get update
     fi
 
     if [ "$IS_K8S_NODE" == "true" ]; then
         VIRTUALBOX_EXISTS=$(command -v vboxmanage)
         if [ "$VIRTUALBOX_EXISTS" == "" ]; then
-            sudo apt install virtualbox -y &> /dev/null
+            if [ "$DISTRO" == "ubuntu" ]; then
+                sudo apt-get install virtualbox -y &> /dev/null
+            elif [ "$DISTRO" == "redhat" ]; then
+                if [ "$MAJ_V" == "7" ]; then
+                    sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
+                    rm -rf ./VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
+                elif [ "$MAJ_V" == "8" ]; then
+                    sudo dnf -y install https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
+                    rm -rf ./VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
+                fi
+                sudo usermod -aG vboxusers $USER
+            fi
         fi
     fi
 
     if [ "$IS_K8S_NODE" == "true" ]; then
         VAGRANT_EXISTS=$(command -v vagrant)
         if [ "$VAGRANT_EXISTS" == "" ]; then
-            sudo apt install vagrant -y &> /dev/null
+            if [ "$DISTRO" == "ubuntu" ]; then
+                sudo apt-get install vagrant -y &> /dev/null
+            elif [ "$DISTRO" == "redhat" ]; then
+                if [ "$MAJ_V" == "7" ]; then
+                    sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
+                elif [ "$MAJ_V" == "8" ]; then
+                    sudo dnf -y install https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
+                fi
+            fi
         fi
     fi
 
     NODE_EXISTS=$(command -v node)
     if [ "$NODE_EXISTS" == "" ]; then
-        curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh &> /dev/null
-        sudo bash nodesource_setup.sh &> /dev/null
-        sudo apt install nodejs -y &> /dev/null
-        rm -rf nodesource_setup.sh &> /dev/null
+        if [ "$DISTRO" == "ubuntu" ]; then
+            curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh &> /dev/null
+            sudo bash nodesource_setup.sh &> /dev/null
+            sudo apt-get install nodejs -y &> /dev/null
+            rm -rf nodesource_setup.sh &> /dev/null
+        elif [ "$DISTRO" == "redhat" ]; then
+            curl -sL https://rpm.nodesource.com/setup_12.x | sudo -E bash -
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum install -y nodejs
+            elif [ "$MAJ_V" == "8" ]; then
+                sudo dnf -y install nodejs
+            fi
+            sudo yum install -y gcc-c++ make
+        fi
     fi
 
     PM2_EXISTS=$(command -v pm2)
@@ -57,36 +163,57 @@ dependencies () {
     if [ "$IS_K8S_NODE" == "true" ]; then
         TAR_EXISTS=$(command -v tar)
         if [ "$TAR_EXISTS" == "" ]; then
-            sudo apt install tar -y &> /dev/null
+            if [ "$DISTRO" == "ubuntu" ]; then
+                sudo apt-get install tar -y &> /dev/null
+            elif [ "$DISTRO" == "redhat" ]; then
+                if [ "$MAJ_V" == "7" ]; then
+                    sudo yum install -y tar
+                elif [ "$MAJ_V" == "8" ]; then
+                    sudo dnf -y install tar
+                fi
+            fi
         fi
     fi
 
     if [ "$IS_K8S_NODE" == "true" ]; then
         SSHPASS_EXISTS=$(command -v sshpass)
         if [ "$SSHPASS_EXISTS" == "" ]; then
-            sudo apt install sshpass -y &> /dev/null
-        fi
-    fi
-
-    if [ "$IS_K8S_NODE" == "true" ]; then
-        HELM_EXISTS=$(command -v helm)
-        if [ "$HELM_EXISTS" == "" ]; then
-            echo "export PATH=$PATH:/usr/local/bin/" >> sudo /etc/environment
-            export PATH=$PATH:/usr/local/bin/
-            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            if [ "$DISTRO" == "ubuntu" ]; then
+                sudo apt-get install sshpass -y &> /dev/null
+            elif [ "$DISTRO" == "redhat" ]; then
+                if [ "$MAJ_V" == "7" ]; then
+                    sudo yum install -y sshpass
+                elif [ "$MAJ_V" == "8" ]; then
+                    sudo dnf -y install sshpass
+                fi
+            fi
         fi
     fi
 
     GIT_EXISTS=$(command -v git)
     if [ "$GIT_EXISTS" == "" ]; then
-        sudo apt install git -y &> /dev/null
+        if [ "$DISTRO" == "ubuntu" ]; then
+            sudo apt-get install git -y &> /dev/null
+        elif [ "$DISTRO" == "redhat" ]; then
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum install -y git
+            elif [ "$MAJ_V" == "8" ]; then
+                sudo dnf -y install git
+            fi
+        fi
     fi
 }
 
 collect_informations() {
     echo "==> Please select the proper Network adapter to use:"
-    IFACES=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
-    IFACESarrIN=(${IFACES//\r/ })
+    if [ "$DISTRO" == "ubuntu" ]; then
+        IFACES=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
+    elif [ "$DISTRO" == "redhat" ]; then
+        IFACES=$(nmcli device status | cut -d ' ' -f1)
+        IFACES=("${IFACES[@]:1}")
+    fi
+
+    readarray -t IFACESarrIN <<<"$IFACES"
     select IFACE in "${IFACESarrIN[@]}"; do 
         if [ "$IFACE" != "" ]; then
             break
@@ -133,13 +260,12 @@ collect_informations() {
        
         # Select filesystem that is used for Gluster
         FSL=$(df -h | sed 's/|/ /' | awk '{print $1}')
-        FSLarrIN=(${FSL//\r/ })
+        readarray -t FSLarrIN <<<"$FSL"
         FSLarrIN=("${FSLarrIN[@]:1}")
 
         FSLSIZE=$(df -h | sed 's/|/ /' | awk '{print $2}')
-        FSLSIZEarrIN=(${FSLSIZE//\r/ })
+        readarray -t FSLSIZEarrIN <<<"$FSLSIZE"
         FSLSIZEarrIN=("${FSLSIZEarrIN[@]:1}")
-
 
         # Find the proper column index for this OS
         FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
@@ -155,7 +281,7 @@ collect_informations() {
             fi
         done
         FSLMOUNT=$(df -h | sed 's/|/ /' | awk '{print $'"$TRG_INDEX"'}')
-        FSLMOUNTarrIN=(${FSLMOUNT//\r/})
+        readarray -t FSLMOUNTarrIN <<<"$FSLMOUNT"
         FSLMOUNTarrIN=("${FSLMOUNTarrIN[@]:1}")
 
         VALID_FS=()
@@ -235,13 +361,6 @@ install_core_components() {
 
     VM_BASE=$HOME/mycloud/vm_base
 
-    # if [[ $(uname -s) == Darwin ]]; then
-    #     INET=$(route get 10.10.10.10 | grep 'interface' | tr -s " " | sed -e 's/^[ \t]*//' | cut -d ' ' -f 2)
-    # fi
-    # if [[ $(uname -s) == Linux ]]; then
-    #     INET=$(route | grep '^default' | grep -o '[^ ]*$')
-    # fi
-
     sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
     sed -i "s/<DB_PORT>/5432/g" ./env
     sed -i "s/<DB_PASS>/$PW/g" ./env
@@ -265,14 +384,17 @@ install_core_components() {
     # fi
 }
 
+# Figure out what distro we are running
+distro
+
 # Collect info from user
 collect_informations
 
-Install dependencies
+# Install dependencies
 dependencies
 
+# configure private registry
 if [ "$IS_K8S_NODE" == "true" ]; then
-    # set up private registry
     authorize_private_registry
 fi
 
@@ -298,34 +420,34 @@ if [ "$IS_GLUSTER_PEER" == "true" ]; then
         echo "    Please log out, and log back in, then execute the following command:"
         echo ""
         echo "    docker run \\"
+        echo "       -d --privileged=true \\"
+        echo "       --restart unless-stopped \\"
+        echo "       --net=host -v /dev/:/dev \\"
         echo "       -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \\"
         echo "       -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \\"
         echo "       -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \\"
         echo "       -v $BRICK_MOUNT_PATH:/bricks:z \\"
         echo "       -v /sys/fs/cgroup:/sys/fs/cgroup:ro \\"
-        echo "       -d --privileged=true \\"
-        echo "       --restart unless-stopped \\"
-        echo "       --net=host -v /dev/:/dev \\"
         echo "       --name gluster-ctl \\"
         echo "       gluster/gluster-centos:gluster4u0_centos7"
     else
         docker run \
+            -d --privileged=true \
+            --restart unless-stopped \
+            --net=host -v /dev/:/dev \
             -v $HOME/.mycloud/gluster/etc/glusterfs:/etc/glusterfs:z \
             -v $HOME/.mycloud/gluster/var/lib/glusterd:/var/lib/glusterd:z \
             -v $HOME/.mycloud/gluster/var/log/glusterfs:/var/log/glusterfs:z \
             -v $BRICK_MOUNT_PATH:/bricks:z \
             -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-            -d --privileged=true \
-            --restart unless-stopped \
-            --net=host -v /dev/:/dev \
             --name gluster-ctl \
             gluster/gluster-centos:gluster4u0_centos7
     fi
     
     # Join the gluster network
     echo ""
-    echo "==> To add this Gluster peer to the network, execute the following command ON THE MASTER GLUSTER peer host:"
-    echo "    PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this network"
+    echo "==> To add this Gluster peer to the Gluster network, execute the following command ON ANY OTHER GLUSTER peer host:"
+    echo "    PLEASE NOTE: This is only necessary if this is NOT the first Gluster node for this Gluster network"
     echo ""
     echo "    docker exec gluster-ctl gluster peer probe $LOCAL_IP"
 fi
