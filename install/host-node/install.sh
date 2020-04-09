@@ -208,12 +208,12 @@ collect_informations() {
     echo "==> Please select the proper Network adapter to use:"
     if [ "$DISTRO" == "ubuntu" ]; then
         IFACES=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
+        readarray -t IFACESarrIN <<<"$IFACES"
     elif [ "$DISTRO" == "redhat" ]; then
-        _IFACES=$(nmcli device status | cut -d ' ' -f1)
-        IFACES=("${_IFACES[@]:1}")
+        IFACES=$(nmcli device status | cut -d ' ' -f1)
+        readarray -t _IFACESarrIN <<<"$IFACES"
+        IFACESarrIN=("${_IFACESarrIN[@]:1}")
     fi
-
-    readarray -t IFACESarrIN <<<"$IFACES"
     select IFACE in "${IFACESarrIN[@]}"; do 
         if [ "$IFACE" != "" ]; then
             break
