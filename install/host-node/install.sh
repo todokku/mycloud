@@ -205,7 +205,7 @@ dependencies () {
 }
 
 collect_informations() {
-    echo "==> Please select the proper Network adapter to use:"
+    echo "==> Please select the proper Network adapter to use: $DISTRO"
     if [ "$DISTRO" == "ubuntu" ]; then
         IFACES=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
     elif [ "$DISTRO" == "redhat" ]; then
