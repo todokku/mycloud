@@ -214,20 +214,33 @@ collect_informations() {
         readarray -t _IFACESarrIN <<<"$IFACES"
         IFACESarrIN=("${_IFACESarrIN[@]:1}")
     fi
-    select IFACE in "${IFACESarrIN[@]}"; do 
-        if [ "$IFACE" != "" ]; then
+
+    LOCAL_IPS="$(hostname -I)"
+    LOCAL_IPSarrIN=(${LOCAL_IPS// / })
+
+    FINAL_IPS_IFACES=()
+    FINAL_IPS=()
+    FINAL_IFACES=()
+    for iface in "${IFACESarrIN[@]}"; do :
+        for ip in "${LOCAL_IPSarrIN[@]}"; do :
+            IP_MATCH=$(ip addr show $iface | grep $ip)
+            if [ "$IP_MATCH" != "" ]; then
+                FINAL_IPS+=("$ip")
+                FINAL_IFACES+=("$iface")
+                FINAL_IPS_IFACES+=("$iface ($ip)")
+            fi
+        done
+    done
+
+    select IFACE_IP_COMBO in "${FINAL_IPS_IFACES[@]}"; do
+        if [ "$IFACE_IP_COMBO" != "" ]; then
+            IFACE_IP_INDEX=$((REPLY-1))
             break
         fi
     done
 
-    LOCAL_IPS="$(hostname -I)"
-    arrIN=(${LOCAL_IPS// / })
-    echo "==> Please select the proper LAN IP address for this VM:"
-    select LOCAL_IP in "${arrIN[@]}"; do 
-    if [ "$LOCAL_IP" != "" ]; then
-        break
-    fi
-    done
+    IFACE="${FINAL_IFACES[$IFACE_IP_INDEX]}"
+    LOCAL_IP="${FINAL_IPS[$IFACE_IP_INDEX]}"
 
     echo "==> Please enter the control-plane VM IP:"
     read MASTER_IP  
@@ -271,7 +284,7 @@ collect_informations() {
         FSLMOUNT_STRINGTEST=$(df -h | sed 's/|/ /')
         STRINGTEST=(${FSLMOUNT_STRINGTEST[@]})
         COL_INDEX=0
-        for i in "${STRINGTEST[@]}"
+        for i in "${[@]}"
         do : 
             COL_INDEX=$((COL_INDEX+1))
             if [[ $i = "Mounted" ]]
