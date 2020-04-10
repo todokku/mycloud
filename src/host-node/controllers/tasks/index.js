@@ -316,31 +316,6 @@ class TaskController {
     }
 
     /**
-     * requestGrabMasterConfigFile
-     * @param {*} masterIp 
-     * @param {*} workspaceId 
-     */
-    static async requestGrabMasterConfigFile(topicSplit, data) {
-        try {
-            let tmpConfigFilePath = await TaskRuntimeController.grabMasterConfigFile(data.node.ip, data.node.workspaceId);
-            let _b = fs.readFileSync(tmpConfigFilePath);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: 200,
-                config: _b.toString('base64')
-            }));
-            fs.unlinkSync(tmpConfigFilePath);
-        } catch (err) {
-            console.log(err);
-            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
-                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
-                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
-                task: "grabMasterConfigFile",
-                nodeType: "master"
-            }));
-        }
-    }
-
-    /**
      * decrypt
      * @param {*} pass 
      * @param {*} salt 

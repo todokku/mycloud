@@ -10,11 +10,7 @@ MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed
 - Manage your images with a private docker registry
 - Manage storage and volumes independantly for each tenant
 - Provides a distributed storage solution based on GlusterFS
-- Self service using CLI command line
-
-MyCloud is written in `NodeJS`. The main reasons for this is that NodeJS is an event loop based language, making multithreading easy using async tasks. Almost everything in MyCloud uses async calls to instruct tasks on the various components on different machines over MQTT and having to deal with threads directly can be quiet a developement overhead. This is a domain that NodeJS shines because of it's loop based runtime that hides this from the developer through non-blocking async await features.  
-NodeJS is also very popular amongst developers, making is easier to find potential people to help out and join the dev team that is composed of only myself at the moment.  
-It is true that languages such as `Go` have a better performance footprint, but MyCloud PaaS is not intended to run as a public clouds with hundrets of thousands of users, so NodeJS will do just fine here.  
+- Self service using CLI command line 
 
 ## Motivations
 

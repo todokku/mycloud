@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const rmfr = require('rmfr');
 const mkdirp = require('mkdirp');
+const os = require("os");
 
 // Sleep promise for async
 let _sleep = (duration) => {
@@ -307,6 +308,7 @@ class EngineController {
             let IF_NAME = "<IF_NAME>";
             let STATIC_IP = "<STATIC_IP>";
             let REGISTRY_IP = "<REGISTRY_IP>";
+            let CPUS = "<CPUS>";
 
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
@@ -320,6 +322,9 @@ class EngineController {
                 }
                 while(l.indexOf(REGISTRY_IP) != -1){
                     l = `${l.substring(0, l.indexOf(REGISTRY_IP))}${process.env.REGISTRY_IP}${l.substring(l.indexOf(REGISTRY_IP)+13)}`;
+                }
+                while(l.indexOf(CPUS) != -1){
+                    l = `${l.substring(0, l.indexOf(CPUS))}${os.cpus().length}${l.substring(l.indexOf(CPUS)+6)}`;
                 }
                 return l;
             });
@@ -442,6 +447,8 @@ class EngineController {
             let WS_ID = "<WS_ID>";
             let IF_NAME = "<IF_NAME>";
             let STATIC_IP = "<STATIC_IP>";
+            let CPUS = "<CPUS>";
+
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
                     l = `${l.substring(0, l.indexOf(WS_ID))}${hash}${l.substring(l.indexOf(WS_ID)+7)}`;
@@ -451,6 +458,9 @@ class EngineController {
                 }
                 while(l.indexOf(STATIC_IP) != -1){
                     l = `${l.substring(0, l.indexOf(STATIC_IP))}${leasedIp ? ', ip: "'+leasedIp+'"' : ""}${l.substring(l.indexOf(STATIC_IP)+11)}`;
+                }
+                while(l.indexOf(CPUS) != -1){
+                    l = `${l.substring(0, l.indexOf(CPUS))}${os.cpus().length}${l.substring(l.indexOf(CPUS)+6)}`;
                 }
                 return l;
             });

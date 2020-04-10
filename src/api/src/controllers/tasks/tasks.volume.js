@@ -137,7 +137,6 @@ class TaskVolumeController {
             // Make sure this volume is not already bound to this workspace cluster
             let volumleBindings = await this.app.service("volume-bindings").find({
                 "query": {
-                    // "volumeId": r.data[0].id,
                     "target": "workspace",
                     "targetId": data.workspaceId
                 },
@@ -314,13 +313,6 @@ class TaskVolumeController {
             return r;
         }
     
-        // let k8sPersistedVolumes = await this.getPersistedVolumes(workspaceId, {"ns": "*"}, params);
-        // if(k8sPersistedVolumes.code != 200){
-        //     return { "code": k8sPersistedVolumes.code };
-        // }
-
-        // console.log(JSON.stringify(k8sPersistedVolumes, null, 4));
-
         let volumes = await this.app.service("volumes").find({
             "query": {
                 "workspaceId": workspaceId

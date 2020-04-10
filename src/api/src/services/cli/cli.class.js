@@ -1,4 +1,3 @@
-// const { NotFound, Unprocessable } = require('@feathersjs/errors');
 const TaskController = require('../../controllers/tasks/index');
 const TaskRuntimeController = require("../../controllers/tasks/tasks.runtime");
 const TaskVolumeController = require("../../controllers/tasks/tasks.volume");
@@ -9,7 +8,6 @@ const TaskDomainsController = require("../../controllers/tasks/tasks.domains");
 const TaskCertificatesController = require("../../controllers/tasks/tasks.certificates");
 const TaskNamespaceController = require("../../controllers/tasks/tasks.ns");
 const TaskPvcController = require("../../controllers/tasks/tasks.pvc");
-// const MQTTController = require('../../controllers/mqtt/index');
 
 /* eslint-disable no-unused-vars */
 exports.Cli = class Cli {
@@ -169,10 +167,7 @@ exports.Cli = class Cli {
 				}
 			case "install_service":
 				try {
-					return await TaskServiceController.installService(
-						data.params,
-						params
-					);
+					return await TaskServiceController.installService(data.params, params);
 				} catch (error) {
 					console.log(error);
 					return {"code": error.code};
@@ -212,7 +207,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
 			case "delete_registry_images":
 				try {
 					return await TaskApplicationsController.deleteOrgRegistryImage(data.params.workspaceId, data.params.image, params);
@@ -220,7 +214,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
 			case "list_domains":
 				try {
 					return await TaskDomainsController.listDomains(data.params.organizationId, params);
@@ -242,7 +235,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
 			case "list_certificates":
 				try {
 					return await TaskCertificatesController.listCertificates(data.params.organizationId, params);
@@ -264,7 +256,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
 			case "list_routes":
 				try {
 					return await TaskRoutesController.listRoutes(data.params.workspaceId, params);
@@ -286,7 +277,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
 			case "list_applications":
 				try {
 					return await TaskApplicationsController.listApplications(data.params.workspaceId, params);
@@ -308,11 +298,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
-
-
-
-
 			case "create_namespace":
 				try {
 					return await TaskNamespaceController.createNamespace(data.params, params);
@@ -334,11 +319,6 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-
-
-
-
-
 			case "create_pvc":
 				try {
 					return await TaskPvcController.createPVC(data.params, params);

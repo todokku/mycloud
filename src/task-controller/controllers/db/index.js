@@ -586,7 +586,7 @@ class DBController {
     static async getVolumesForK8SCluster(wId) {
         let client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1`, [wId]);
+            const res = await client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1 ORDER BY "portIndex" ASC`, [wId]);
             return res.rows;
         } finally {
             client.release();

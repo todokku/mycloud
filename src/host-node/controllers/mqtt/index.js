@@ -191,7 +191,7 @@ class MqttController {
                     await TaskController.requestUntaintMaster(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_config`)) {
-                    await TaskController.requestGrabMasterConfigFile(topicSplit, JSON.parse(message.toString()));
+                    await TaskRuntimeController.requestGrabMasterConfigFile(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/get_k8s_state`)) {
                     await TaskRuntimeController.requestGetK8sState(topicSplit, JSON.parse(message.toString()));

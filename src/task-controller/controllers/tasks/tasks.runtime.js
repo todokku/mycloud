@@ -515,8 +515,6 @@ class TaskRuntimeController {
                 let successMounts = [];
                 try {
                     let boundVolumes = volumes.filter(v => volumeBindings.find(vb => vb.volumeId == v.id) );
-                    boundVolumes.sort((a, b) => (a.portIndex > b.portIndex) ? 1 : -1); // Make sure we are sorting by port index
-
                     for(let y=0; y<boundVolumes.length; y++){
                         let targetV = boundVolumes[y];
                         if(targetV.type == "gluster"){
