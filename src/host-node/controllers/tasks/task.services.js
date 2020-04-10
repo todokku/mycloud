@@ -5,14 +5,14 @@ const TaskAppsController = require('./task.apps');
 
 const OSController = require("../os/index");
 const DBController = require("../db/index");
+
 const shortid = require('shortid');
+shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 const path = require('path');
-const YAML = require('yaml');
 const fs = require('fs');
+const YAML = require('yaml');
 const rmfr = require('rmfr');
 const mkdirp = require('mkdirp');
-const _ = require('lodash');
-shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
 // const ssh = new node_ssh();
 let EngineController;
@@ -37,7 +37,7 @@ class TaskServicesController {
 
         // Prepare the environment scripts
         if(process.env.CLUSTER_ENGINE == "virtualbox") {
-            EngineController = require("./engines/vb/index");
+            EngineController = require("../engines/virtualbox/index");
         }
     }
 

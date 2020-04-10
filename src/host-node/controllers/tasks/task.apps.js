@@ -5,12 +5,12 @@ const TaskVolumeController = require('./task.volume');
 
 const OSController = require("../os/index");
 const DBController = require("../db/index");
+
 const shortid = require('shortid');
+shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 const path = require('path');
 const fs = require('fs');
 const extract = require('extract-zip');
-shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
-
 
 // const ssh = new node_ssh();
 let EngineController;
@@ -26,7 +26,7 @@ class TaskAppsController {
 
         // Prepare the environment scripts
         if(process.env.CLUSTER_ENGINE == "virtualbox") {
-            EngineController = require("./engines/vb/index");
+            EngineController = require("../engines/virtualbox/index");
         }
     }
 

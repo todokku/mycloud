@@ -6,11 +6,12 @@ const TaskAppsController = require('./task.apps');
 
 const OSController = require("../os/index");
 const DBController = require("../db/index");
+
 const shortid = require('shortid');
+shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
 // const ssh = new node_ssh();
 let EngineController;
@@ -28,7 +29,7 @@ class TaskController {
             this.ip = await OSController.getIp();
 
             if(process.env.CLUSTER_ENGINE == "virtualbox") {
-                EngineController = require("./engines/vb/index");
+                EngineController = require("../engines/virtualbox/index");
             }
             await EngineController.init(this.mqttController);
 

@@ -7,7 +7,6 @@ const ncp = require('ncp').ncp;
 const chmodr = require('chmodr');
 const shell = require('shelljs');
 const mkdirp = require('mkdirp');
-var targz = require('targz');
 const node_ssh = require('node-ssh');
 
 // Sleep promise for async
@@ -228,22 +227,6 @@ class OsController {
 					} else {
 						reject(new Error(stderr && stderr.trim().length > 0 ? stderr : "An error occured"));
 					}
-				});
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	/**
-	 * supportsCommand
-	 * @param {*} command 
-	 */
-	static async supportsCommand(command) {
-		return new Promise((resolve, reject) => {
-			try {
-				shell.exec(`command -v ${command}`, {silent:true}, function(code, stdout, stderr) {
-					resolve(code == 0);
 				});
 			} catch (error) {
 				reject(error);

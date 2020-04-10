@@ -3,9 +3,8 @@ const TaskGlusterController = require('./task.gluster');
 const TaskServicesController = require('./task.services');
 const TaskAppsController = require('./task.apps');
 
+const OSController = require("../os/index");
 const DBController = require("../db/index");
-const shortid = require('shortid');
-shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
 let portLetterMap = {
     1: 'b',
@@ -44,7 +43,7 @@ class TaskVolumeController {
 
         // Prepare the environment scripts
         if(process.env.CLUSTER_ENGINE == "virtualbox") {
-            EngineController = require("./engines/vb/index");
+            EngineController = require("../engines/virtualbox/index");
         }
     }
 

@@ -1,11 +1,11 @@
-const OSController = require('../../../os/index');
-const path = require('path');
-const mkdirp = require('mkdirp');
-const rmfr = require('rmfr');
-const fs = require('fs');
+const OSController = require("../os/index");
+
 const shortid = require('shortid');
-const YAML = require('yaml');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
+const path = require('path');
+const fs = require('fs');
+const rmfr = require('rmfr');
+const mkdirp = require('mkdirp');
 
 // Sleep promise for async
 let _sleep = (duration) => {
