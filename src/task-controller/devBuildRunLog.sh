@@ -14,7 +14,7 @@ docker run -d \
     --network host \
     -e DB_HOST=192.168.0.97 \
     -e DB_USER=postgres \
-    -e DB_PASS=password \
+    -e DB_PASS=postgrespass \
     -e MOSQUITTO_IP=192.168.0.97 \
     -e DHCP_MASK=192.168.0 \
     -e NGINX_HOST_IP=192.168.0.97 \

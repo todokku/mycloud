@@ -15,7 +15,7 @@ docker run -d \
     -e DB_HOST=192.168.0.97 \
     -e NGINX_HOST_IP=192.168.0.97 \
     -e DB_USER=postgres \
-    -e DB_PASS=password \
+    -e DB_PASS=postgrespass \
     -e MOSQUITTO_IP=192.168.0.97 \
     -e API_SYSADMIN_USER=mdundek@gmail.com \
     -e API_SYSADMIN_PASSWORD=li14ebe14 \

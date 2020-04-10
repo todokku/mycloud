@@ -85,7 +85,7 @@ sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_
 systemctl reload sshd
 
 echo "[TASK 12] Install solution components"
-su - vagrant -c '
+
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
 mkdir -p /opt/docker/containers/docker-registry/certs
@@ -97,6 +97,8 @@ printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.registry.com\nmycloud@myc
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nregistry.mycloud.org\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
     -keyout /opt/docker/containers/docker-registry/certs/nginx-registry.key \
     -out /opt/docker/containers/docker-registry/certs/nginx-registry.crt
+
+su - vagrant -c '
 docker pull registry:2.7.1
 docker run -d \
     --name docker-registry \
@@ -148,8 +150,10 @@ mkdir -p /home/vagrant/.mycloud/mosquitto/config
 mkdir -p /home/vagrant/.mycloud/mosquitto/data
 mkdir -p /home/vagrant/.mycloud/mosquitto/log
 touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
+'
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 chown 1883:1883 /home/vagrant/.mycloud/mosquitto/log -R
+su - vagrant -c '
 docker run -d \
     --name mycloud-mosquitto \
     --restart unless-stopped \
@@ -162,7 +166,7 @@ docker run -d \
 
 # Run API server
 su - vagrant -c '
-mkdir cd /home/vagrant/mycloud/tmp \
+mkdir /home/vagrant/mycloud/tmp \
 cd /home/vagrant/mycloud/src/api \
 docker run -d \
     --name mycloud-api \

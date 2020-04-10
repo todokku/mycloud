@@ -158,9 +158,6 @@ collect_informations() {
         exit 1
     fi
     echo ""
-    echo "==> How many CPU cores can you assign to the control plane VM:"
-    read VB_CPUS
-    echo ""
     echo "==> How many GB can you give to the Docker-Registry in total:"
     read REGISTRY_SIZE
     
@@ -169,6 +166,10 @@ collect_informations() {
 install_core_components() {
     cd $HOME/mycloud/install/control-plane
 
+    if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "redhat" ]; then
+        VB_CPUS=$(nproc)
+    fi
+    
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
