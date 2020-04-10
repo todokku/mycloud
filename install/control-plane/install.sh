@@ -124,10 +124,11 @@ dependencies () {
 
 pull_git() {
     echo "[INIT] Pulling repo from GIT..."
-    if [ ! -d "$HOME/mycloud" ] 
-    then
+    if [ ! -d "$HOME/mycloud" ]; then
         mkdir $HOME/mycloud
         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
+    else
+        $HOME/mycloud && git pull
     fi
 }
 
