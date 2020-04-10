@@ -276,6 +276,10 @@ class OsController {
                 username: 'root',
                 password: 'vagrant'
             }).then(function() {
+
+				console.log(localPath);
+				console.log(targetPath);
+
                 ssh.getFile(localPath, targetPath).then(function() {
                     ssh.dispose();
                     resolve();
