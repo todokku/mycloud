@@ -98,6 +98,14 @@ printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nregistry.mycloud.org\nmycloud@myc
     -keyout /opt/docker/containers/docker-registry/certs/nginx-registry.key \
     -out /opt/docker/containers/docker-registry/certs/nginx-registry.crt
 
+mkdir -p /home/vagrant/.mycloud/postgres/data
+mkdir -p /home/vagrant/.mycloud/mosquitto/config
+mkdir -p /home/vagrant/.mycloud/mosquitto/data
+mkdir -p /home/vagrant/.mycloud/mosquitto/log
+chown -R vagrant: /home/vagrant/.mycloud
+
+su - vagrant -c 'mkdir /home/vagrant/mycloud/tmp'
+
 su - vagrant -c '
 docker pull registry:2.7.1
 docker run -d \
@@ -132,7 +140,6 @@ docker run -d \
 # Install Postgres
 su - vagrant -c '
 docker pull postgres:12.2-alpine
-mkdir -p /home/vagrant/.mycloud/postgres/data
 docker run -d \
     --name mycloud-postgresql \
     --restart unless-stopped \
@@ -146,9 +153,6 @@ docker run -d \
 # Install Mosquitto
 su - vagrant -c '
 docker pull eclipse-mosquitto:1.6
-mkdir -p /home/vagrant/.mycloud/mosquitto/config
-mkdir -p /home/vagrant/.mycloud/mosquitto/data
-mkdir -p /home/vagrant/.mycloud/mosquitto/log
 touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 '
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
@@ -166,8 +170,7 @@ docker run -d \
 
 # Run API server
 su - vagrant -c '
-mkdir /home/vagrant/mycloud/tmp \
-cd /home/vagrant/mycloud/src/api \
+cd /home/vagrant/mycloud/src/api
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \

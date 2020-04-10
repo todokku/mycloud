@@ -54,7 +54,8 @@ bash <(curl https://raw.githubusercontent.com/mdundek/mycloud/master/install/con
 The script will ask for some base configuration values. Provide a static IP for the controller plane VM on the target network that MyCloud will be running on, user credentials to set up and VM sizing parameters.  
 Some steps require sudo, at which point the script will ask for your credentials.
 
-> NOTE: It is currently not possible to deploy the various MyCloud components on separate networks. The controll-plane and the host-nodes all have to be deployed on the same network (xxx.xxx.xxx.2-249). This gives you enougth addresses for over ~200 K8S Cluster VMs in total for all your tenants, given that your network can handle the traffic of course.
+> NOTE: It is currently not possible to deploy the various MyCloud components on separate networks. The controll-plane and the host-nodes all have to be deployed on the same network (xxx.xxx.xxx.2-249). This gives you enougth addresses for over ~200 K8S Cluster VMs in total for all your tenants, given that your network can handle the traffic of course.  
+> If you need to overcome this limitation, you could install multiple instances of MyCloud PaaS, each on a separate network. 
 
 ### Install the Host-node
 

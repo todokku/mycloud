@@ -160,7 +160,6 @@ collect_informations() {
     echo ""
     echo "==> How many GB can you give to the Docker-Registry in total:"
     read REGISTRY_SIZE
-    
 }
 
 install_core_components() {
@@ -169,7 +168,7 @@ install_core_components() {
     if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "redhat" ]; then
         VB_CPUS=$(nproc)
     fi
-    
+
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
