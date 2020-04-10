@@ -226,8 +226,8 @@ export default class CreateService extends Command {
 						message: 'Do you want to bind this service to an existing domain?',
 						type: 'list',
 						choices: [
-							{ name: "Yes", value: true },
-							{ name: "No", value: false }
+							{ name: "No", value: false },
+							{ name: "Yes", value: true }
 						]
 					}]);
 					if(bindDomain.domainChoice){

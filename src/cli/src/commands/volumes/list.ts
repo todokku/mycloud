@@ -18,6 +18,7 @@ export default class Volumes extends Command {
 		let result = await this.api("volume", {
 			method: "list"
 		});
+		
 		if(result.code == 200){
 			if(result.data.length > 0){
 				let tree = cli.tree();
@@ -30,8 +31,8 @@ export default class Volumes extends Command {
 						o.bindings.forEach(b => {
 							let bindingName = `${chalk.blue('Binding:')} ${b.target}`;
 							tree.nodes[volName].insert(bindingName);
-
-							if(b.services.length == 0 && b.services.applications.length == 0){
+							
+							if(b.services.length == 0 && b.applications.length == 0){
 								tree.nodes[volName].nodes[bindingName].insert(`- No claims -`);
 							}
 
@@ -45,7 +46,6 @@ export default class Volumes extends Command {
 								tree.nodes[volName].nodes[bindingName].insert(nodeName);
 							});							
 						});
-						
 					} else {
 						tree.nodes[volName].insert(`- No bindings -`);
 					}

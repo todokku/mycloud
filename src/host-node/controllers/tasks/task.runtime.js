@@ -628,7 +628,7 @@ class TaskRuntimeController {
             }
         }
         let tmpFileName = path.join(process.env.VM_BASE_DIR, "workplaces", workspaceId.toString(), `${hash}.conf`);
-        await OSController.fetchFileSsh(masterIp, '/etc/kubernetes/admin.conf', tmpFileName);
+        await OSController.fetchFileSsh(masterIp, tmpFileName, '/etc/kubernetes/admin.conf');
 
         return tmpFileName;
     }
