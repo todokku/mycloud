@@ -205,7 +205,6 @@ done
 if [ "$CONTINUE_INSTALL" == "n" ]; then
     exit 0
 fi
-echo ""
 
 # Collect info from user
 collect_informations
