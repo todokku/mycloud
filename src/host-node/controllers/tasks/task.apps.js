@@ -1,8 +1,3 @@
-const TaskRuntimeController = require('./task.runtime');
-const TaskGlusterController = require('./task.gluster');
-const TaskServicesController = require('./task.services');
-const TaskVolumeController = require('./task.volume');
-
 const OSController = require("../os/index");
 const DBController = require("../db/index");
 

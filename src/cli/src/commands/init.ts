@@ -1,8 +1,8 @@
 import {flags} from '@oclif/command'
-import Command from '../../base'
+import Command from '../base'
 import cli from 'cli-ux'
 
-export default class JoinMcServer extends Command {
+export default class Init extends Command {
     static description = 'specify a MyCloud API target server'
 
 	static flags = {
@@ -17,7 +17,7 @@ export default class JoinMcServer extends Command {
 	 * run
 	 */
 	async run() {
-		const {flags} = this.parse(JoinMcServer)
+		const {flags} = this.parse(Init)
 		let params = {
 			host: ""
 		}

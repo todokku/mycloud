@@ -1,6 +1,6 @@
 # MyCloud-PaaS - A private cloud PaaS platform
 
-## About
+## What is MyCloud-PaaS
 
 MyCloud-PaaS is a open source, multi-tenant cloud platform that can be installed on any Intel/AMD 64 bit based hardware components. It is based on Kubernetes at it's core, providing organizations and teams with isolated clusters and a collection of managed services to be deployed. Some of MyCloud's features are:
 
@@ -20,7 +20,12 @@ Out of curiosity, I decided to play arrount with the idea of building a private 
   
 This is why today I am opening up this work to the opensource community, as a source of insiration, or as a base to build their own private PaaS cloud platform. Let's not forget that I am alone building this at the moment, and the amount of work required to pull this off is huge! The code base is still very fragile in terms of stability, there are currently no tests written (remember, this started as a learning experience, tests were not my priority given the time at my disposal), and there are still alot of features that need to be implemented. That said, I think there is currently enougth here to bring this to you guys as a preview. At some point, it would be great if other people could join the project, and contribute to it's developement to get things to move forward quicker. If you are interested, please drop me an email (mdundek@gmail.com).
 
-## Install
+## Please note
+
+As mentioned above, this is a work in progress and is by no means ready for production at this point. The foundation is there, but it is lacking security features and code stabilization.  
+Also, there is no Web UI at the moment to manage MyCLoud-PaaS, everything is done with the MyCloud (mc) command line interface. A WebUI will come later once the CLI is stable and complete.
+
+## Install all components
 
 The overall architecture of the solution looks like the following:
 
@@ -46,7 +51,8 @@ To install the control plane, run the following command in your terminal:
 bash <(curl https://raw.githubusercontent.com/mdundek/mycloud/master/install/control-plane/install.sh)
 ```
 
-The script will ask for some base configuration values. Provide a static IP for the controller plane VM on the target network that MyCloud will be running on, user credentials to set up and VM sizing parameters.
+The script will ask for some base configuration values. Provide a static IP for the controller plane VM on the target network that MyCloud will be running on, user credentials to set up and VM sizing parameters.  
+Some steps require sudo, at which point the script will ask for your credentials.
 
 > NOTE: It is currently not possible to deploy the various MyCloud components on separate networks. The controll-plane and the host-nodes all have to be deployed on the same network (xxx.xxx.xxx.2-249). This gives you enougth addresses for over ~200 K8S Cluster VMs in total for all your tenants, given that your network can handle the traffic of course.
 
@@ -63,3 +69,14 @@ The Host Node controllers will also take care of scaling up or down your Kuberne
 ```
 bash <(curl https://raw.githubusercontent.com/mdundek/mycloud/master/install/host-node/install.sh)
 ```
+
+
+
+### Install the CLI
+
+
+
+## Getting started
+
+Once you have installed the "control plane" and at least one "host-node" according to the instructions from section [Install all components](#install-all-components), including the CLI on any machine on your network.  
+

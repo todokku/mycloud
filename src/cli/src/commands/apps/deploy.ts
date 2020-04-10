@@ -105,7 +105,7 @@ export default class Deploy extends Command {
 					}).filter((volume: any) => volume.remainingCapacity > 1);
 	
 					if(valideVolumes.length == 0){
-						return this.logError("You do not have any volumes provisioned with sufficient remain. Please provision and bind a new volume to your cluster first and try again.");
+						return this.logError("You do not have any volumes provisioned with sufficient remaining space. Please provision and bind a new volume to your cluster first and try again.");
 					}
 
 						// Select target service version

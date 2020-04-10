@@ -21,7 +21,7 @@ export default class Login extends Command {
 			password: ""
 		}
 		
-		params.accountName = await cli.prompt('What is the name of your organiation');
+		params.accountName = await cli.prompt('What is the name of your company');
 		params.email = await cli.prompt('Specify a user email address for the account owner');
 		params.password = await cli.prompt('Specify a password for this account')
 		
