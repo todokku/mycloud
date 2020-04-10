@@ -37,7 +37,7 @@ class TaskController {
         TaskRoutesController.init(this, app, mqttController);
         TaskNamespaceController.init(this, app, mqttController);
         TaskPvcController.init(this, app, mqttController);
-        this.services = YAML.parse(fs.readFileSync("/usr/src/app/data/mc_services/available.yml", 'utf8'));
+        this.services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
     }
 
     /**

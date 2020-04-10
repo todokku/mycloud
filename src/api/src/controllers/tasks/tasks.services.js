@@ -15,7 +15,7 @@ class TaskServiceController {
         this.parent = parent;
         this.app = app;
         this.mqttController = mqttController;
-        this.services = YAML.parse(fs.readFileSync("/usr/src/app/data/mc_services/available.yml", 'utf8'));
+        this.services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
     }
 
     /**
@@ -23,7 +23,7 @@ class TaskServiceController {
      * @param {*} params 
      */
     static async getAvailableServices(params) {
-        let services = YAML.parse(fs.readFileSync("/usr/src/app/data/mc_services/available.yml", 'utf8'));
+        let services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
         return { "code": 200, data: services }
     }
 

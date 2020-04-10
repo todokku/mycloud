@@ -180,6 +180,7 @@ docker run -d \
     -e REGISTRY_IP=$REGISTRY_IP \
     -e CRYPTO_KEY=YDbxyG16Q6ujlCpjXH2Pq7nPAtJF66jLGwx4RYkHqhY= \
     -e ENABLE_NGINX_STREAM_DOMAIN_NAME=false \
+    -e MC_SERVICES_DIR=/usr/src/app/data/mc_services \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
 

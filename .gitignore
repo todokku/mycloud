@@ -8,3 +8,4 @@ install/.vagrant
 **/test.sh
 tmp
 vm_base
+**/_tmp

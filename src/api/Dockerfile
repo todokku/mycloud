@@ -36,6 +36,7 @@ ENV API_SYSADMIN_USER=mycloudadmin
 ENV API_SYSADMIN_PASSWORD=mycloudpass
 
 ENV APP_TMP_DIR=/usr/src/app/data/tmp
+ENV MC_SERVICES_DIR=/usr/src/app/data/mc_services
 
 EXPOSE 3030
 EXPOSE 3000

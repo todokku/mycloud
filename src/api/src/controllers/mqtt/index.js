@@ -33,7 +33,7 @@ class MqttController {
             this.online = false;
         });
 
-        this.services = YAML.parse(fs.readFileSync("/usr/src/app/data/mc_services/available.yml", 'utf8'));
+        this.services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
         this.client.on('message', this._processIncommingMessage.bind(this));
     }
 
