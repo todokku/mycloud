@@ -12,12 +12,12 @@ docker run -d \
     --name mycloud-ctrl \
     --restart unless-stopped \
     --network host \
-    -e DB_HOST=192.168.0.98 \
+    -e DB_HOST=192.168.0.97 \
     -e DB_USER=postgres \
-    -e DB_PASS=postgremcpass \
-    -e MOSQUITTO_IP=192.168.0.98 \
+    -e DB_PASS=password \
+    -e MOSQUITTO_IP=192.168.0.97 \
     -e DHCP_MASK=192.168.0 \
-    -e NGINX_HOST_IP=192.168.0.98 \
+    -e NGINX_HOST_IP=192.168.0.97 \
     -e ENABLE_NGINX_STREAM_DOMAIN_NAME=false \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \

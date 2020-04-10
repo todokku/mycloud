@@ -52,8 +52,9 @@ echo "[TASK 6] Install sshpass"
 yum install -q -y sshpass
 
 echo "[TASK 7] Prepare environement & clone mycloud"
-mkdir /home/vagrant/mycloud
-git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud
+
+su - vagrant -c "mkdir /home/vagrant/mycloud"
+su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud"
 
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
@@ -84,6 +85,7 @@ sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_
 systemctl reload sshd
 
 echo "[TASK 12] Install solution components"
+su - vagrant -c '
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
 mkdir -p /opt/docker/containers/docker-registry/certs
@@ -108,8 +110,10 @@ docker run -d \
     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/docker-registry.crt \
     -e REGISTRY_HTTP_TLS_KEY=/certs/docker-registry.key \
     registry:2.7.1
+'
 
 # Install Nginx
+su - vagrant -c '
 docker pull nginx:1.17.9-alpine
 docker run -d \
     --name mycloud-nginx \
@@ -121,19 +125,10 @@ docker run -d \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/docker-registry/certs:/certs \
     nginx:1.17.9-alpine
-
-# docker run \
-#     --name mycloud-nginx \
-#     --restart unless-stopped \
-#     --network host \
-#     -v /home/vagrant/.mycloud/nginx/conf.d:/etc/nginx/conf.d:ro \
-#     -v /home/vagrant/.mycloud/nginx/nginx.conf:/etc/nginx/nginx.conf \
-#     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
-#     -v /opt/docker/containers/nginx-registry/auth:/auth \
-#     -v /opt/docker/containers/docker-registry/certs:/certs \
-#     nginx:1.17.9-alpine
+'
 
 # Install Postgres
+su - vagrant -c '
 docker pull postgres:12.2-alpine
 mkdir -p /home/vagrant/.mycloud/postgres/data
 docker run -d \
@@ -144,8 +139,10 @@ docker run -d \
     -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
     -e POSTGRES_USER=$POSTGRES_USER \
     postgres:12.2-alpine
+'
 
 # Install Mosquitto
+su - vagrant -c '
 docker pull eclipse-mosquitto:1.6
 mkdir -p /home/vagrant/.mycloud/mosquitto/config
 mkdir -p /home/vagrant/.mycloud/mosquitto/data
@@ -161,11 +158,12 @@ docker run -d \
     -v /home/vagrant/.mycloud/postgres/log:/mosquitto/log \
     -v /etc/localtime:/etc/localtime \
     eclipse-mosquitto:1.6
+'
 
 # Run API server
-mkdir cd /home/vagrant/mycloud/tmp
-cd /home/vagrant/mycloud/src/api
-docker build -t mycloud-api:0.9 .
+su - vagrant -c '
+mkdir cd /home/vagrant/mycloud/tmp \
+cd /home/vagrant/mycloud/src/api \
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
@@ -183,8 +181,10 @@ docker run -d \
     -e MC_SERVICES_DIR=/usr/src/app/data/mc_services \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
+'
 
 # Run controller component
+su - vagrant -c '
 cd /home/vagrant/mycloud/src/task-controller
 docker build -t mycloud-ctrl:0.9 .
 docker run -d \
@@ -202,6 +202,7 @@ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9
+'
 
 echo "[TASK 13] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"
