@@ -113,8 +113,6 @@ pull_git() {
 }
 
 collect_informations() {
-    echo "[STEP 2] Installing host controller components ..."
-    cd $HOME/mycloud/install/control-plane
     echo ""
     echo "==> Please enter IP address you wish to assign to the control-plane VM (make sure the IP is currently available on your network):"
     read VM_IP
@@ -145,6 +143,8 @@ collect_informations() {
 }
 
 install_core_components() {
+    cd $HOME/mycloud/install/control-plane
+    
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
