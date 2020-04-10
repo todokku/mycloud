@@ -1,8 +1,5 @@
 const DBController = require('../db/index');
-const OSController = require('../os/index');
-const TaskVolumeController = require('./tasks.volume');
-const TaskRuntimeController = require('./tasks.runtime');
-const YAML = require('yaml');
+
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
@@ -14,6 +11,76 @@ class TaskAppsController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
+    }
+
+    /**
+     * processScheduledDeployAppImage
+     * @param {*} task 
+     */
+    static async processScheduledDeployAppImage(task) {
+        task.payload = JSON.parse(task.payload);
+        try {
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type":"INFO",
+                "step":"DEPLOY_IMAGE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });
+
+            await this.buildImage(task.payload[0].socketId, task.targetId, task.payload[0].params.appZipPath, task.payload[0].params.image, task.payload[0].params.version);
+
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type":"INFO",
+                "step":"DEPLOY_IMAGE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });   
+        } catch (error) {
+            console.log("ERROR 6 => ", error);
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"DEPLOY_IMAGE",
+                "component": "task-controller",
+                "message":error.message,
+                "ts":new Date().toISOString()
+            });
+        } finally {
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
+    }
+
+    /**
+     * processScheduledDeleteAppImage
+     * @param {*} task 
+     */
+    static async processScheduledDeleteAppImage(task) {
+        task.payload = JSON.parse(task.payload);
+        try {
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type":"INFO",
+                "step":"DELETE_IMAGE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });
+
+            await this.deleteImage(task.targetId, task.payload[0].params.image);
+
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type":"INFO",
+                "step":"DELETE_IMAGE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });   
+        } catch (error) {
+            console.log("ERROR 6 => ", error);
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"DELETE_IMAGE",
+                "component": "task-controller",
+                "message":error.message,
+                "ts":new Date().toISOString()
+            });
+        }
     }
 
     /**

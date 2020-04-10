@@ -1,6 +1,6 @@
 const DBController = require('../db/index');
-const OSController = require('../os/index');
 const NGinxController = require("../nginx/index");
+
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 

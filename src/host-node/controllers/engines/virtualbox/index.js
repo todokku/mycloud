@@ -308,7 +308,6 @@ class EngineController {
             let STATIC_IP = "<STATIC_IP>";
             let REGISTRY_IP = "<REGISTRY_IP>";
 
-
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
                     l = `${l.substring(0, l.indexOf(WS_ID))}${hash}${l.substring(l.indexOf(WS_ID)+7)}`;

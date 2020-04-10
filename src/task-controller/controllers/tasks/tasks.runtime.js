@@ -1,17 +1,9 @@
 const DBController = require('../db/index');
-const OSController = require('../os/index');
+const TaskGlusterController = require('./tasks.gluster');
 const TaskVolumeController = require('./tasks.volume');
+
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
-
-// Sleep promise for async
-let _sleep = (duration) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, duration);
-    });
-}
 
 class TaskRuntimeController {
 
@@ -24,28 +16,10 @@ class TaskRuntimeController {
     }
 
     /**
-     * registerMissingK8SHosts
-     * @param {*} allDbHosts 
-     * @param {*} memArray 
-     */
-    static async registerMissingK8SHosts(allDbHosts, memArray) {
-        // Make sure all hosts are registered
-        for(let i=0; i<memArray.length; i++){                           
-            if(!allDbHosts.find(dbh => dbh.ip == memArray[i].ip)){
-                await DBController.createK8sHost(
-                    memArray[i].ip,
-                    memArray[i].hostname,
-                    "READY"
-                );
-            }
-        }
-    }
-
-    /**
-     * initiateK8sCluster
+     * processScheduledInitiateK8sCluster
      * @param {*} task 
      */
-    static async initiateK8sCluster(task) {
+    static async processScheduledInitiateK8sCluster(task) {
         task.payload = JSON.parse(task.payload);
 
         this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting MyCloud host resources");
@@ -105,6 +79,206 @@ class TaskRuntimeController {
             });
         } finally {
             this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
+    }
+
+    /**
+     * processScheduledUpdateK8sCluster
+     * @param {*} task 
+     */
+    static async processScheduledUpdateK8sCluster(task) {
+        task.payload = JSON.parse(task.payload);
+        let updateFlags = task.payload[0].flags;
+
+        if(updateFlags.scale != undefined && updateFlags.scale != null){
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+            let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(task.targetId);
+            let allK8SHosts = await DBController.getAllK8sHosts();
+
+            let memArray = await this.parent.collectMemoryFromNetwork();
+            await this.registerMissingK8SHosts(allK8SHosts, memArray);
+           
+            let workerNodes = workspaceK8SNodes.filter(n => n.nodeType == "WORKER");
+            let masterNodes = workspaceK8SNodes.filter(n => n.nodeType == "MASTER");
+            let workerNodesProfiles = workerNodes.map(wn => {
+                return {
+                    "node": wn, 
+                    "host": allK8SHosts.find(h => h.id == wn.k8sHostId)
+                }
+            });
+            let masterNodesProfiles = masterNodes.map(mn => {
+                return {
+                    "node": mn, 
+                    "host": allK8SHosts.find(h => h.id == mn.k8sHostId)
+                }
+            });
+
+            // ================ SCALE DOWN TO 1 NODE ONLY (The developement configuration) ==================
+            if(updateFlags.scale == 1 && workerNodes.length > 0) {
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"SCALE_DOWN",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+                try{
+                    await this.scaleDownK8SClusterNodes(task.payload[0].socketId, masterNodesProfiles, workerNodesProfiles, true);
+                    await DBController.updateTaskStatus(task, "DONE", {
+                        "type":"INFO",
+                        "step":"SCALE_DOWN",
+                        "component": "task-controller",
+                        "ts":new Date().toISOString()
+                    });
+                } catch(err) {
+                    this.mqttController.logEvent(task.payload[0].socketId, "error", "Could not scale down cluster");
+                    await DBController.updateTaskStatus(task, "ERROR", {
+                        "type":"ERROR",
+                        "step":"SCALE_DOWN",
+                        "component": "task-controller",
+                        "message": (err.code ? err.code : "500") + ": " + (err.message ? err.message : "Unexpected error"),
+                        "ts":new Date().toISOString()
+                    });
+                } finally {
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                }
+            } 
+            // ================ SCALE UP TO X WORKERS, NO WORKERS YET ==================
+            // ================ SCALE UP TO X WORKERS, HAVE WORKERS ALREADY ==================
+            else if((updateFlags.scale > 1 && workerNodes.length == 0) ||
+                    (updateFlags.scale > 1 && workerNodes.length > 0 && updateFlags.scale > workerNodes.length)) {
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"SCALE_UP",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+                let usableMemTargets = memArray.filter(h => h.memory > 3000);
+                if(usableMemTargets.length > 0){
+                    try{
+                        await this.scaleUpK8SCluster(task.payload[0].socketId, task.targetId, (workerNodes.length == 0) ? 0 : workerNodes.length, usableMemTargets, workerNodesProfiles, masterNodesProfiles, updateFlags, allK8SHosts);
+                        await DBController.updateTaskStatus(task, "DONE", {
+                            "type":"INFO",
+                            "step":"SCALE_UP",
+                            "component": "task-controller",
+                            "ts":new Date().toISOString()
+                        });
+                    } catch(err) {
+                        console.log(err);
+                        this.mqttController.logEvent(task.payload[0].socketId, "error", "Could not scale up cluster");
+                        await DBController.updateTaskStatus(task, "ERROR", {
+                            "type":"ERROR",
+                            "step":"SCALE_UP",
+                            "component": "task-controller",
+                            "message": (err.code ? err.code : "500") + ": " + (err.message ? err.message : "Unexpected error"),
+                            "ts":new Date().toISOString()
+                        });
+                    } finally {
+                        this.mqttController.closeEventStream(task.payload[0].socketId);
+                    }
+                } else {
+                    this.mqttController.logEvent(task.payload[0].socketId, "error", "No more hosts with sufficient memory available to provision workers on");
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                    await DBController.updateTaskStatus(task, "ERROR", {
+                        "type":"ERROR",
+                        "step":"SCALE_UP",
+                        "component": "task-controller",
+                        "message":"No more hosts with sufficient memory available to provision workers on",
+                        "ts":new Date().toISOString()
+                    });
+                    this.mqttController.client.publish('/mycloud/alert/out_of_resources/k8s_host_memory');
+                }        
+            } 
+            // ================ SCALE DOWN TO X WORKERS, HAVE WORKERS ALREADY ==================
+            else if(updateFlags.scale > 1 && workerNodes.length > 0 && updateFlags.scale < workerNodes.length) {
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"SCALE_DOWN",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+                try{
+                    // Need to deprovision workerNodes by "workerNodes.length - updateFlags.scale"
+                    let toDeprovisionCount = workerNodes.length - updateFlags.scale;
+
+                    let deproWorkers = [];
+                    for(let i=0; i<toDeprovisionCount; i++){
+                        deproWorkers.push(workerNodesProfiles[i]);
+                    }
+                    await this.scaleDownK8SClusterNodes(task.payload[0].socketId, masterNodesProfiles, deproWorkers);
+
+                    await DBController.updateTaskStatus(task, "DONE", {
+                        "type":"INFO",
+                        "step":"SCALE_DOWN",
+                        "component": "task-controller",
+                        "ts":new Date().toISOString()
+                    });
+                } catch(err) {
+                    this.mqttController.logEvent(task.payload[0].socketId, "error", "Could not scale down cluster");
+                    await DBController.updateTaskStatus(task, "ERROR", {
+                        "type":"ERROR",
+                        "step":"SCALE_DOWN",
+                        "component": "task-controller",
+                        "message": (err.code ? err.code : "500") + ": " + (err.message ? err.message : "Unexpected error"),
+                        "ts":new Date().toISOString()
+                    });
+                } finally {
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                }
+            } else {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Nothing to update");
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+
+                // Target is already in place, nothing to do. Just update task status
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type":"INFO",
+                    "step":"NO_ACTION",
+                    "component": "task-controller",
+                    "message":"as-is / to-be are the same",
+                    "ts":new Date().toISOString()
+                });
+            }   
+        }
+    }
+
+    /**
+     * registerMissingK8SHosts
+     * @param {*} allDbHosts 
+     * @param {*} memArray 
+     */
+    static async registerMissingK8SHosts(allDbHosts, memArray) {
+        // Make sure all hosts are registered
+        for(let i=0; i<memArray.length; i++){                           
+            if(!allDbHosts.find(dbh => dbh.ip == memArray[i].ip)){
+                await DBController.createK8sHost(
+                    memArray[i].ip,
+                    memArray[i].hostname,
+                    "READY"
+                );
+            }
+        }
+    }
+
+    /**
+     * updateClusterPodPresets
+     * @param {*} workspaceId 
+     * @param {*} ns 
+     * @param {*} masterHost 
+     * @param {*} masterNode 
+     */
+    static async updateClusterPodPresets(workspaceId, ns, masterHost, masterNode) {
+        // Update pod presets on cluster
+        let serviceAndRoutes = await DBController.getServicesForWsRoutes(workspaceId, ns);
+        let podPresetResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_pod_presets", {
+            "host": masterHost, 
+            "node": masterNode,
+            "ns": ns,
+            "allServices": serviceAndRoutes
+        }, 60 * 1000 * 1);
+        if(podPresetResponse.data.status != 200){
+            const error = new Error(podPresetResponse.data.message);
+            error.code = podPresetResponse.data.status;
+            throw error;
         }
     }
 
@@ -249,36 +423,6 @@ class TaskRuntimeController {
     }
 
     /**
-     * removeServiceResourcesFromCluster
-     * @param {*} workerNodesProfiles 
-     */
-    static async removeServiceResourcesFromCluster(service) {        
-        let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(service.workspaceId);
-        let allK8SHosts = await DBController.getAllK8sHosts();
-        let nodeProfiles = workspaceK8SNodes.map(n => {
-            return {
-                "node": n, 
-                "host": allK8SHosts.find(h => h.id == n.k8sHostId)
-            }
-        });
-
-        // // Clean up
-        // if(service.dedicatedPvc && service.dedicatedPvc.length > 0){
-        //     await TaskVolumeController.deprovisionPVC(nodeProfiles[0].find(o => o.node.nodeType == "MASTER"), service.dedicatedPvc);
-        // }
-        // if(service.dedicatedPv && service.dedicatedPv.length > 0){
-        //     await TaskVolumeController.deprovisionPV(nodeProfiles[0].find(o => o.node.nodeType == "MASTER"), service.dedicatedPv);
-        // }
-
-        // Need to deprovision workerNodes
-        for(let i=0; i<nodeProfiles.length; i++){
-            if(service.hasDedicatedVolume != null) {
-                await TaskVolumeController.deleteLocalVolumeFromNode(nodeProfiles[i].host, nodeProfiles[i].node, service.volumeId);
-            }
-        }
-    }
-
-    /**
      * scaleUpK8SCluster
      * @param {*} workspaceId 
      * @param {*} provisionCount 
@@ -296,7 +440,7 @@ class TaskRuntimeController {
                 let targetV = _volumes.find(v => v.id == _successAttach[y].volumeId);
 
                 if(targetV.type == "gluster"){
-                    try{await this.unmountGlusterVolumeFromClusterVMs(socketId, workspaceId, targetV, [_newNodeProfile.node.id]);} catch(_e){}
+                    try{await TaskGlusterController.unmountGlusterVolumeFromClusterVMs(socketId, workspaceId, targetV, [_newNodeProfile.node.id]);} catch(_e){}
                 } else if(targetV.type == "local"){
                     // Rollback mounts for this volume
                     let tmpSuccessMounts = _successMounts.filter(o => o.volumeBindingId == _successAttach[y].id);
@@ -377,7 +521,7 @@ class TaskRuntimeController {
                         let targetV = boundVolumes[y];
                         if(targetV.type == "gluster"){
                             this.mqttController.logEvent(socketId, "info", `Mounting Gluster volume ${y+1}/${boundVolumes.length} on new node ${counter}/${deltaProvisioning}`);
-                            await this.mountGlusterVolumeToClusterVMs(socketId, workspaceId, targetV, [newNode.id]);
+                            await TaskGlusterController.mountGlusterVolumeToClusterVMs(socketId, workspaceId, targetV, [newNode.id]);
                             let vbObj = volumeBindings.find(vb => vb.volumeId == boundVolumes[y].id);
                             successAttach.push(vbObj);
 
@@ -498,242 +642,35 @@ class TaskRuntimeController {
         }
     }
 
-    /**
-     * mountGlusterVolumeToClusterVMs
-     * @param {*} workspaceId 
-     * @param {*} volume 
-     * @param {*} target 
-     * @param {*} upgradeNodeIds 
-     */
-    static async mountGlusterVolumeToClusterVMs(socketId, workspaceId, volume, upgradeNodeIds) {
-        // Collect workspace nodes and hosts
-        let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
-        let allK8SHosts = await DBController.getAllK8sHosts();
-        let nodeProfiles = workspaceK8SNodes.map(n => {
-            return {
-                "node": n, 
-                "host": allK8SHosts.find(h => h.id == n.k8sHostId)
-            }
-        });
-
-        // Get all volume consumer IPs
-        let volumeBindingIps = workspaceK8SNodes.map(o =>o.ip);
-        let volBindings = await DBController.getGlusteVolumeBindingsByVolumeId(volume.id);
-        for(let i=0; i<volBindings.length; i++) {
-            if(volBindings[i].target == "workspace"){
-                let otherWorkspaceNodes = await DBController.getAllK8sWorkspaceNodes(volBindings[i].targetId);
-                volumeBindingIps = volumeBindingIps.concat(otherWorkspaceNodes.map(o => o.ip));
-            } else {
-                // TODO: If volume is also used by other type of resources, such as VMs
-                throw new Error("Unsupported binding target " + volBindings[i].target);
-            }
-        }
-
-        // Allow all node IPs on Gluster volume
-        let volumeName = volume.name + "-" + volume.secret;
-        let glusterVolumeHosts = await DBController.getGlusterHostsByVolumeId(volume.id);
-        
-        // Update volume authorized IPs
-
-        this.mqttController.logEvent(socketId, "info", "Setting authorized IPs for this Gluster volume");
-
-        let response = await this.mqttController.queryRequestResponse(glusterVolumeHosts[0].ip, "set_gluster_authorized_ips", {
-            "ips": volumeBindingIps,
-            "volumeName": volumeName
-        }, 60 * 1000 * 3);
-       
-        if(response.data.status != 200){
-            const error = new Error(response.data.message);
-            error.code = response.data.status;
-            throw error;
-        }
-       
-        // Mount volume on all cluster nodes
-        let successMounts = [];
-        try {
-            for(let i=0; i<nodeProfiles.length; i++) {
-                if(!upgradeNodeIds || upgradeNodeIds.indexOf(nodeProfiles[i].node.id) != -1){
-                    console.log("A");
-                    this.mqttController.logEvent(socketId, "info", `Mounting Gluster volume for node ${i+1}/${nodeProfiles.length}`);
-                    await this.mountK8SNodeGlusterVolume(nodeProfiles[i], volume);
-                    console.log("B");
-                    successMounts.push(nodeProfiles[i]);
-                }
-            }
-        } catch (error) {
-            this.mqttController.logEvent(socketId, "error", `Could not mount gluster volumes, rollback`);
-            for(let i=0; i<successMounts.length; i++) {
-                try { await this.unmountK8SNodeGlusterVolume(successMounts[i], volume); } catch (_error) { console.log(_error); }
-            }
-            if(successMounts.length > 0){
-                // Remove authorized IPs for gluster volume
-                let toRemoveIps;
-                if(upgradeNodeIds){
-                    toRemoveIps = workspaceK8SNodes.filter(o => upgradeNodeIds.indexOf(o.id) != -1).map(o =>o.ip);
-                } else {
-                    toRemoveIps = workspaceK8SNodes.map(o =>o.ip);
-                }
-                volumeBindingIps = volumeBindingIps.filter(o => toRemoveIps.indexOf(o) == -1);
-                await this.mqttController.queryRequestResponse(glusterVolumeHosts[0].ip, "set_gluster_authorized_ips", {
-                    "ips": volumeBindingIps,
-                    "volumeName": volumeName
-                }, 60 * 1000 * 3);
-            }
-            throw error;
-        }
-    }
-
-    /**
-     * unmountGlusterVolumeFromClusterVMs
-     * @param {*} workspaceId 
-     * @param {*} volume 
-     * @param {*} target 
-     * @param {*} downgradeNodeIds 
-     */
-    static async unmountGlusterVolumeFromClusterVMs(socketId, workspaceId, volume, downgradeNodeIds) {
-        // Collect workspace nodes and hosts
-        let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
-        let allK8SHosts = await DBController.getAllK8sHosts();
-        let nodeProfiles = workspaceK8SNodes.map(n => {
-            return {
-                "node": n, 
-                "host": allK8SHosts.find(h => h.id == n.k8sHostId)
-            }
-        });
-
-        let volumeName = volume.name + "-" + volume.secret;
-        
-        // Remove persistant k8s volume for this gluster volume
-        let masterNode;
-        let masterHost;
-        if(!downgradeNodeIds){ // Only applies if unbinding ALL nodes
-            masterNode = workspaceK8SNodes.find(n => n.nodeType == "MASTER");
-            masterHost = allK8SHosts.find(h => h.id == masterNode.k8sHostId);
-            this.mqttController.logEvent(socketId, "info", `deleting all volume specific PVs`);
-            let response = await this.mqttController.queryRequestResponse(masterHost.ip, "remove_k8s_all_pv_for_volume", {
-                "node": masterNode,
-                "host": masterHost,
-                "volume": volume,
-                "ns": "*",
-                "hostnames": workspaceK8SNodes.map(o =>o.hostname)
-            }, 60 * 1000 * 3);
-            
-            if(response.data.status != 200){
-                const error = new Error(response.data.message);
-                error.code = response.data.status;
-                throw error;
-            } 
-        }
-        
-        // Unmount volumes
-        let successUnmounts = [];
-        try{
-            for(let i=0; i<nodeProfiles.length; i++){
-                if(!downgradeNodeIds || downgradeNodeIds.indexOf(nodeProfiles[i].node.id) != -1){
-                    this.mqttController.logEvent(socketId, "info", `Unmount Gluster volume for node ${i+1}/${nodeProfiles.length}`);
-                    await this.unmountK8SNodeGlusterVolume(nodeProfiles[i], volume);
-                    successUnmounts.push(nodeProfiles[i]);
-                }
-            }
-        } catch (error) {
-            this.mqttController.logEvent(socketId, "info", `An error occured unmounting Gluster volume, rollback`);
-            for(let i=0; i<successUnmounts.length; i++) {
-                try { await this.mountK8SNodeGlusterVolume(successUnmounts[i], volume); } catch (_) {console.log(_e)}
-            }
-            throw error;
-        }
-
-        // Set authorized IPs for this volume
-        try{
-            this.mqttController.logEvent(socketId, "info", `Setting Gluster authorized IPs`);
-            // Get all volume consumer IPs
-            workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
-            let allVolumeBindings = workspaceK8SNodes.map(o => o); // clone
-            let volGlobalBindings = await DBController.getGlusteVolumeBindingsByVolumeId(volume.id);
-            for(let i=0; i<volGlobalBindings.length; i++) {
-                if(volGlobalBindings[i].target == "workspace"){
-                    let otherWorkspaceNodes = await DBController.getAllK8sWorkspaceNodes(volGlobalBindings[i].targetId);
-                    otherWorkspaceNodes.forEach(o => {
-                        if(!allVolumeBindings.find(a => a.id == o.id)){
-                            allVolumeBindings.push(o);
-                        }
-                    });
-                } else {
-                    // TODO: If volume is also used by other type of resources, such as VMs
-                    throw new Error("Unsupported binding target " + volGlobalBindings[i].target);
-                }
-            }
-            
-            let allVolumeBindingIps = allVolumeBindings.map(o => o.ip);
-            let remainingVolumeBindingIps;
-            if(!downgradeNodeIds){ // Only applies if unbinding ALL nodes
-                let volumeBindingIps = workspaceK8SNodes.map(o => o.ip);
-                remainingVolumeBindingIps = allVolumeBindingIps.filter(o => volumeBindingIps.indexOf(o) == -1);
-            } else {
-                let downgradeNodes = downgradeNodeIds.map(o => workspaceK8SNodes.find(a => a.id == o) );
-                let downgradeNodesIps = downgradeNodes.map(o => o.ip);
-                remainingVolumeBindingIps = allVolumeBindingIps.filter(o => downgradeNodesIps.indexOf(o) == -1);
-            }
-
-            let glusterVolumeHosts = await DBController.getGlusterHostsByVolumeId(volume.id);
-            let response = await this.mqttController.queryRequestResponse(glusterVolumeHosts[0].ip, "set_gluster_authorized_ips", {
-                "ips": remainingVolumeBindingIps.length == 0 ? ["10.20.30.40"] : remainingVolumeBindingIps,
-                "volumeName": volumeName
-            }, 60 * 1000 * 3);
-            if(response.data.status != 200){
-                const error = new Error(response.data.message);
-                error.code = response.data.status;
-                throw error;
-            } 
-        } catch (error) {
-            this.mqttController.logEvent(socketId, "info", `An error occured setting Gluster authorized IPs, rollback`);
-            for(let i=0; i<successUnmounts.length; i++) {
-                try { await this.mountK8SNodeGlusterVolume(successUnmounts[i], volume); } catch (_) {console.log(_e)}
-            }
-            throw error;
-        }     
-    }
-
-    /**
-     * mountK8SNodeGlusterVolume
+     /**
+     * deprovisionPVC
      * @param {*} nodeProfile 
-     * @param {*} volume 
+     * @param {*} pvcName 
      */
-    static async mountK8SNodeGlusterVolume(nodeProfile, volume) {
-        console.log("A1", nodeProfile.host.ip);
-        let response = await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "mount_gluster_volume", {
-            "nodeProfile": nodeProfile,
-            "volume": volume
-        }, 60 * 1000 * 15);
-        console.log("A2", response);
-        if(response.data.status != 200){
-            const error = new Error(response.data.message);
-            error.code = response.data.status;
-            throw error;
-        }
-        return response;
+    static async deprovisionPVC(nodeProfile, ns, pvcName) {
+        await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "deprovision_pvc", {
+            "pvcName": pvcName,
+            "ns": ns,
+            "node": nodeProfile.node
+        }, 60 * 1000 * 5);
     }
 
     /**
-     * unmountK8SNodeGlusterVolume
+     * deprovisionPV
      * @param {*} nodeProfile 
+     * @param {*} pvName 
+     * @param {*} subfolderName 
      * @param {*} volume 
      */
-    static async unmountK8SNodeGlusterVolume(nodeProfile, volume) {
-        let response = await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "unmount_gluster_volume", {
-            "nodeProfile": nodeProfile,
-            "volume": volume
-        }, 60 * 1000 * 15);
-        if(response.data.status != 200){
-            const error = new Error(response.data.message);
-            error.code = response.data.status;
-            throw error;
-        }
-        return response;
+    static async deprovisionPV(nodeProfile, ns, pvName, subfolderName, volume) {
+        await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "deprovision_pv", {
+            "pvName": pvName,
+            "ns": ns,
+            "volume": volume,
+            "subFolderName": subfolderName,
+            "node": nodeProfile.node
+        }, 60 * 1000 * 5);
     }
-
-    
-
 }
 TaskRuntimeController.pendingResponses = {};
 TaskRuntimeController.bussyTaskIds = [];

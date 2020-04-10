@@ -1,9 +1,9 @@
 const DBController = require('../db/index');
-const OSController = require('../os/index');
-const TaskVolumeController = require('./tasks.volume');
 const TaskRuntimeController = require('./tasks.runtime');
+const TaskVolumeController = require('./tasks.volume');
 const TaskNginxController = require('./tasks.nginx');
-const YAML = require('yaml');
+const NGinxController = require("../nginx/index");
+
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
@@ -15,6 +15,182 @@ class TaskServicesController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
+    }
+
+    /**
+     * processScheduledProvisionService
+     * @param {*} task 
+     */
+    static async processScheduledProvisionService(task) {
+        task.payload = JSON.parse(task.payload);
+        // let snapshotData = null;
+        try {
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type":"INFO",
+                "step":"PROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });
+
+            // Take cluster snapshot
+            // snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+
+            if(task.target == "workspace"){
+                // console.log("SIZE =>", task.payload[0].params.pvcSize);
+                await this.provisionServiceToTenantWorkspace(
+                    task.payload[0].socketId,
+                    task.targetId, 
+                    task.payload[0].params.ns, 
+                    task.payload[0].params.serviceLabel, 
+                    task.payload[0].params.service, 
+                    task.payload[0].params.overwriteConfigFile, 
+                    task.payload[0].params.serviceParams, 
+                    task.payload[0].params.instanceName,
+                    task.payload[0].params.exposeService,
+                    task.payload[0].params.volumeName,
+                    // task.payload[0].params.targetPv,
+                    task.payload[0].params.pvcSize,
+                    task.payload[0].params.domainId
+                );
+            } else {
+                // TODO: Not implemented yet, will become usefull when deployment on global service cluster is requested rather than workspace cluster
+                throw new Error("Provisioning service target not implemented yet");
+            }
+           
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type":"INFO",
+                "step":"PROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            }); 
+
+            // await this.parent.cleanUpClusterSnapshot(snapshotData);
+        } catch (error) {
+            console.log("ERROR 5 => ", error);
+            // if(snapshotData){
+            //     await this.parent.restoreClusterSnapshot(snapshotData);
+            // }
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"PROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "message": error.message,
+                "ts":new Date().toISOString()
+            });
+        } finally {
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
+    }
+
+    /**
+     * processScheduledDeprovisionService
+     * @param {*} task 
+     */
+    static async processScheduledDeprovisionService(task) {
+        task.payload = JSON.parse(task.payload);
+        let snapshotData = null;
+        let volume = null;
+        let restoreVolumeDb = false;
+        let backupNginxHttpConfig = null;
+        let backupNginxTcpConfig = null;
+        try {
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type":"INFO",
+                "step":"DEPROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });
+
+            let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(task.payload[0].params.service.workspaceId);
+            let allK8SHosts = await DBController.getAllK8sHosts();
+            let masterNode = workspaceK8SNodes.find(n => n.nodeType == "MASTER");
+            let masterHost = allK8SHosts.find(o => o.id == masterNode.k8sHostId);
+            // Deprovision K8S volume resources
+            // snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+
+            let dbService = await DBController.getService(task.payload[0].params.service.id);
+            let serviceRoutes = await DBController.getServiceRoutes(task.payload[0].params.service.id);
+
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Uninstalling service");
+            await this.uninstallService(dbService, masterHost, masterNode);
+            
+            // await this.parent.cleanUpClusterSnapshot(snapshotData);
+            snapshotData = null;
+
+            if(dbService.hasDedicatedVolume) {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Unmounting dedicated volume from cluster nodes");
+                // Delete volume entry from DB
+                volume = await DBController.getVolume(dbService.volumeId);
+                await TaskVolumeController.detatchAndUnmountLocalVolumeFromClusterVMs(task.payload[0].socketId, task.payload[0].params.service.workspaceId, dbService.volumeId);
+                await DBController.removeVolume(volume.id);
+                restoreVolumeDb = true;
+            }
+
+            await DBController.removeService(dbService.id);
+
+            let org = await DBController.getOrgForWorkspace(task.payload[0].params.service.workspaceId);
+            let account = await DBController.getAccountForOrg(org.id);
+            let workspace = await DBController.getWorkspace(task.payload[0].params.service.workspaceId);
+
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Updating NGinx configuration");
+
+            backupNginxHttpConfig = await NGinxController.deleteHttpConfigServersForVirtualPorts(serviceRoutes, account.name, org.name, workspace.name, dbService.instanceName);
+            backupNginxTcpConfig = await NGinxController.deleteTcpConfigServersForVirtualPorts(serviceRoutes, account.name, org.name, workspace.name, dbService.instanceName);
+
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Updating ingress controller");
+
+            await TaskNginxController.updateConfigAndIngress(dbService.workspaceId, dbService.namespace, masterHost, masterNode, workspaceK8SNodes, task.payload[0].params.serviceConfig);
+
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Updating cluster Pod Presets");
+
+            await TaskRuntimeController.updateClusterPodPresets(dbService.workspaceId, dbService.namespace, masterHost, masterNode);
+            
+            // Update DB
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type":"INFO",
+                "step":"DEPROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });  
+        } catch (error) {
+            console.log("ERROR 6 => ", error);
+            this.mqttController.logEvent(task.payload[0].socketId, "error", "Error while deleting service, rollback");
+            // if(snapshotData){
+            //     await this.parent.restoreClusterSnapshot(snapshotData);
+            // }
+           
+            if(restoreVolumeDb){
+                await DBController.createVolume(
+                    volume.size, 
+                    volume.name, 
+                    volume.secret, 
+                    volume.workspaceId, 
+                    volume.type, 
+                    volume.portIndex
+                );
+            }
+
+            if(backupNginxHttpConfig){
+                await NGinxController.restoreHttpConfig(backupNginxHttpConfig);
+            }
+            if(backupNginxTcpConfig){
+                await NGinxController.restoreTcpConfig(backupNginxTcpConfig);
+            }
+                       
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"DEPROVISIONNING_SERVICE",
+                "component": "task-controller",
+                "message":error.message,
+                "ts":new Date().toISOString()
+            });
+        } finally {
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
     }
 
     /**
@@ -117,11 +293,11 @@ class TaskServicesController {
             } else {
                 this.mqttController.logEvent(socketId, "error", "Error while collecting cluster resources, rollback");
                 /* ************* ROLLBACK ************ */
-                await TaskVolumeController.deprovisionPVC({
+                await TaskRuntimeController.deprovisionPVC({
                     "node": masterNode,
                     "host": masterHost
                 }, ns, pvcName);
-                await TaskVolumeController.deprovisionPV({
+                await TaskRuntimeController.deprovisionPV({
                     "node": masterNode,
                     "host": masterHost
                 }, ns, pvName, `srv-${serviceInstanceName}`, volume);
@@ -170,13 +346,13 @@ class TaskServicesController {
             /* ************* ROLLBACK ************ */
             if(service.provision_volume) {
                 if(pvcName){
-                    await TaskVolumeController.deprovisionPVC({
+                    await TaskRuntimeController.deprovisionPVC({
                         "node": masterNode,
                         "host": masterHost,
                     }, ns, pvcName);
                 }
                 if(pvName){
-                    await TaskVolumeController.deprovisionPV({
+                    await TaskRuntimeController.deprovisionPV({
                         "node": masterNode,
                         "host": masterHost
                     }, ns, pvName, `srv-${serviceInstanceName}`, volume);
@@ -216,17 +392,16 @@ class TaskServicesController {
             /* ************* ROLLBACK ************ */
             if(dbService){
                 await this.uninstallService(dbService, masterHost, masterNode);
-                // await TaskRuntimeController.removeServiceResourcesFromCluster(dbService);
                 await DBController.removeService(dbService.id);
             } else if(service.provision_volume) {
                 if(pvcName){
-                    await TaskVolumeController.deprovisionPVC({
+                    await TaskRuntimeController.deprovisionPVC({
                         "node": masterNode,
                         "host": masterHost
                     }, ns, pvcName);
                 }
                 if(pvName){
-                    await TaskVolumeController.deprovisionPV({
+                    await TaskRuntimeController.deprovisionPV({
                         "node": masterNode,
                         "host": masterHost
                     }, ns, pvName, `srv-${serviceInstanceName}`, volume);
@@ -237,30 +412,7 @@ class TaskServicesController {
         }
         this.mqttController.logEvent(socketId, "info", "Updating workspace VCAP PodPresets");
         // Update pod presets on cluster
-        await this.updateClusterPodPresets(workspaceId, ns, masterHost, masterNode);
-    }
-
-    /**
-     * updateClusterPodPresets
-     * @param {*} workspaceId 
-     * @param {*} ns 
-     * @param {*} masterHost 
-     * @param {*} masterNode 
-     */
-    static async updateClusterPodPresets(workspaceId, ns, masterHost, masterNode) {
-        // Update pod presets on cluster
-        let serviceAndRoutes = await DBController.getServicesForWsRoutes(workspaceId, ns);
-        let podPresetResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_pod_presets", {
-            "host": masterHost, 
-            "node": masterNode,
-            "ns": ns,
-            "allServices": serviceAndRoutes
-        }, 60 * 1000 * 1);
-        if(podPresetResponse.data.status != 200){
-            const error = new Error(podPresetResponse.data.message);
-            error.code = podPresetResponse.data.status;
-            throw error;
-        }
+        await TaskRuntimeController.updateClusterPodPresets(workspaceId, ns, masterHost, masterNode);
     }
 
    /**

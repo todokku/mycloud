@@ -1,5 +1,6 @@
 const DBController = require('../db/index');
-const OSController = require('../os/index');
+const TaskGlusterController = require('./tasks.gluster');
+
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 
@@ -11,6 +12,316 @@ class TaskVolumeController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
+    }
+
+    /**
+     * processScheduledUnbindVolume
+     * @param {*} task 
+     */
+    static async processScheduledUnbindVolume(task) {
+        task.payload = JSON.parse(task.payload);
+        let snapshotData = null;
+        if(task.payload[0].params.unbindFrom == "k8s") {
+            try {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+                await DBController.updateTaskStatus(task,"IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"UNBIND_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+
+                if(task.payload[0].params.volume.type == "gluster") {
+                    snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                    await TaskGlusterController.unmountGlusterVolumeFromClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
+                    await this.removeVolumeBindingFromDb(task.targetId, task.payload[0].params.volume.id, task.payload[0].params.unbindFrom == "k8s" ? "workspace" : "vm");
+                    await this.parent.cleanUpClusterSnapshot(snapshotData);
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                } else if(task.payload[0].params.volume.type == "local") {
+                    snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                    await this.detatchAndUnmountLocalVolumeFromClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume.id);
+                    await this.removeVolumeBindingFromDb(task.targetId, task.payload[0].params.volume.id, task.payload[0].params.unbindFrom == "k8s" ? "workspace" : "vm");
+                    await this.parent.cleanUpClusterSnapshot(snapshotData);
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                } else {
+                    await DBController.updateTaskStatus(task, "ERROR", {
+                        "type":"ERROR",
+                        "step":"VOLUME UNBINDING PREFLIGHT CHECKS",
+                        "component": "task-controller",
+                        "message":"Only gluster & local volumes can be unbound from k8s",
+                        "ts":new Date().toISOString()
+                    });
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                    return;
+                }
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type":"INFO",
+                    "step":"UNBIND_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });   
+            } catch (error) {
+                if(snapshotData){
+                    await this.parent.restoreClusterSnapshot(snapshotData);
+                }
+                await DBController.updateTaskStatus(task,"ERROR", {
+                    "type":"ERROR",
+                    "step":"VOLUME UNBINDING",
+                    "component": "task-controller",
+                    "message":error.message,
+                    "ts":new Date().toISOString()
+                });
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            }
+        } else {
+            // TODO: other targets are VM, to implement
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"VOLUME UNBINDING PREFLIGHT CHECKS",
+                "component": "task-controller",
+                "message":"VMs are not implemented yet",
+                "ts":new Date().toISOString()
+            });
+            this.mqttController.logEvent(task.payload[0].socketId, "error", "VMs are not implemented yet");
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
+    }
+
+    /**
+     * processScheduledBindVolume
+     * @param {*} task 
+     */
+    static async processScheduledBindVolume(task) {
+        task.payload = JSON.parse(task.payload);
+        let snapshotData = null;
+        if(task.payload[0].params.bindTo == "k8s") {
+            try {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"BIND_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+                if(task.payload[0].params.volume.type == "gluster") {
+                    // snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                    await TaskGlusterController.mountGlusterVolumeToClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
+                    await this.addVolumeBindingToDb(task.targetId, task.payload[0].params.volume.id, task.payload[0].params.bindTo == "k8s" ? "workspace" : "vm");
+                    // await this.parent.cleanUpClusterSnapshot(snapshotData);
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                } else if(task.payload[0].params.volume.type == "local") {
+                    snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                    await this.attachAndMountLocalVolumeToClusterVMs(task.payload[0].socketId, task.targetId, task.payload[0].params.volume);
+                    await this.addVolumeBindingToDb(task.targetId, task.payload[0].params.volume.id, task.payload[0].params.bindTo == "k8s" ? "workspace" : "vm");
+                    await this.parent.cleanUpClusterSnapshot(snapshotData);
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                } else {
+                    await DBController.updateTaskStatus(task, "ERROR", {
+                        "type":"ERROR",
+                        "step":"VOLUME BINDING PREFLIGHT CHECKS",
+                        "component": "task-controller",
+                        "message":"Only gluster & local volumes can be unbound from k8s",
+                        "ts":new Date().toISOString()
+                    });
+                    this.mqttController.closeEventStream(task.payload[0].socketId);
+                    return;
+                }
+                
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type":"INFO",
+                    "step":"BIND_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                }); 
+            } catch (error) {
+                console.log(error);
+                this.mqttController.logEvent(task.payload[0].socketId, "error", "An error occured while binding volume to cluster");
+                if(snapshotData){
+                    await this.parent.restoreClusterSnapshot(snapshotData);
+                }
+                await DBController.updateTaskStatus(task, "ERROR", {
+                    "type":"ERROR",
+                    "step":"BIND_VOLUME",
+                    "component": "task-controller",
+                    "message":error.message,
+                    "ts":new Date().toISOString()
+                });
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            }
+        } else {
+            // TODO: other targets are VM, to implement
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"BIND_VOLUME PREFLIGHT CHECKS",
+                "component": "task-controller",
+                "message":"VMs are not implemented yet",
+                "ts":new Date().toISOString()
+            });
+            this.mqttController.logEvent(task.payload[0].socketId, "error", "VMs are not implemented yet");
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
+    }
+
+    /**
+     * processScheduledDeprovisionVolume
+     * @param {*} task 
+     */
+    static async processScheduledDeprovisionVolume(task) {
+        task.payload = JSON.parse(task.payload);
+        let snapshotData = null;
+        try {
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type":"INFO",
+                "step":"DEPROVISIONNING_VOLUME",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });
+
+            if(task.payload[0].params.type == "gluster"){
+                snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                await TaskGlusterController.deprovisionVolume(task.payload[0].socketId, task.payload[0].params.volumeId, task.payload[0].params.volumeName, task.payload[0].params.volumeSecret);
+                await this.parent.cleanUpClusterSnapshot(snapshotData);
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            } else if(task.payload[0].params.type == "local"){
+                snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+                await this.detatchAndUnmountLocalVolumeFromClusterVMs(task.payload[0].socketId, task.payload[0].params.workspaceId, task.payload[0].params.volumeId);
+                await this.deleteLocalVolumeFromClusterVMs(task.payload[0].socketId, task.payload[0].params.workspaceId, task.payload[0].params.volumeId);
+                await DBController.removeVolume(task.payload[0].params.volumeId);
+                await this.parent.cleanUpClusterSnapshot(snapshotData);
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            } else {
+                this.mqttController.logEvent(task.payload[0].socketId, "error", "Only gluster and local volumes can be deprovisioned");
+                await DBController.updateTaskStatus(task, "ERROR", {
+                    "type":"ERROR",
+                    "step":"DEPROVISIONNING_VOLUME PREFLIGHT CHECKS",
+                    "component": "task-controller",
+                    "message":"Only gluster and local volumes can be deprovisioned",
+                    "ts":new Date().toISOString()
+                });
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+                return;
+            } 
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type":"INFO",
+                "step":"DEPROVISIONNING_VOLUME",
+                "component": "task-controller",
+                "ts":new Date().toISOString()
+            });   
+        } catch (error) {
+            console.log("ERROR 6 => ", error);
+            if(snapshotData){
+                await this.parent.restoreClusterSnapshot(snapshotData);
+            }
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"DEPROVISIONNING_VOLUME",
+                "component": "task-controller",
+                "message":error.message,
+                "ts":new Date().toISOString()
+            });
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        } 
+    }
+
+    /**
+     * processScheduledProvisionVolume
+     * @param {*} task 
+     */
+    static async processScheduledProvisionVolume(task) {
+        task.payload = JSON.parse(task.payload);
+        let snapshotData = null;
+        if(task.payload[0].params.type == "gluster"){
+            try {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type": "INFO",
+                    "step": "PROVISIONING_GLUSTER_VOLUME",
+                    "component": "task-controller",
+                    "ts": new Date().toISOString()
+                });
+
+                snapshotData = await this.parent.takeClusterSnapshot(task.targetId);
+
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Provisioning Gluster volume");
+                await TaskGlusterController.provisionVolume(task.targetId, task.id, task.payload[0].params.size, task.payload[0].params.replicas, task.payload[0].params.name, task.payload[0].params.type);
+    
+                await this.parent.cleanUpClusterSnapshot(snapshotData);
+                
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type": "INFO",
+                    "step": "PROVISIONING_GLUSTER_VOLUME",
+                    "component": "task-controller",
+                    "ts": new Date().toISOString()
+                });
+            } catch (err) {
+                this.mqttController.logEvent(task.payload[0].socketId, "error", "An error occured while provisionning Gluster volume, rollback");
+                if(snapshotData){
+                    await this.parent.restoreClusterSnapshot(snapshotData);
+                }
+
+                await DBController.updateTaskStatus(task, "ERROR", {
+                    "type": "ERROR",
+                    "step": "PROVISIONING_GLUSTER_VOLUME",
+                    "component": "task-controller",
+                    "message": err.message ? err.message : "Could not create gluster volume",
+                    "ts": new Date().toISOString()
+                });
+            } finally {
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            }
+        } 
+        // LOCAL VOLUME
+        else if(task.payload[0].params.type == "local"){
+            try {
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Collecting environement details");
+
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type":"INFO",
+                    "step":"PROVISIONNING_PV_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });
+
+                // Create volume DB entry
+                this.mqttController.logEvent(task.payload[0].socketId, "info", "Creating volume");
+                await this.declareLocalVolume(task.targetId, task.payload[0].params.name, task.payload[0].params.size, task.payload[0].params.type);
+
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type":"INFO",
+                    "step":"PROVISIONNING_PV_VOLUME",
+                    "component": "task-controller",
+                    "ts":new Date().toISOString()
+                });   
+            } catch (error) {
+                console.log("ERROR 4 => ", error);
+                this.mqttController.logEvent(task.payload[0].socketId, "error", "An error occured while provisionning volume, rollback");
+                
+                await DBController.updateTaskStatus(task, "ERROR", {
+                    "type":"ERROR",
+                    "step":"PROVISIONNING_PV_VOLUME",
+                    "component": "task-controller",
+                    "message": error.message,
+                    "ts":new Date().toISOString()
+                });
+            } finally {
+                this.mqttController.closeEventStream(task.payload[0].socketId);
+            }
+            // await this.bindVolume(task);
+        } else {
+            this.mqttController.logEvent(task.payload[0].socketId, "error", "Provisioning volume type that does not exist: " + task.payload[0].params.type);
+            console.error("Provisioning volume type that does not exist: " + task.payload[0].params.type);
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type":"ERROR",
+                "step":"PROVISIONNING_VOLUME",
+                "component": "task-controller",
+                "message": "Unsupported volume type " + task.payload[0].params.type,
+                "ts":new Date().toISOString()
+            });
+            this.mqttController.closeEventStream(task.payload[0].socketId);
+        }
     }
 
     /**
@@ -256,36 +567,6 @@ class TaskVolumeController {
             workspaceId,
             volumeId
         );
-    }
-
-    /**
-     * deprovisionPVC
-     * @param {*} nodeProfile 
-     * @param {*} pvcName 
-     */
-    static async deprovisionPVC(nodeProfile, ns, pvcName) {
-        await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "deprovision_pvc", {
-            "pvcName": pvcName,
-            "ns": ns,
-            "node": nodeProfile.node
-        }, 60 * 1000 * 5);
-    }
-
-    /**
-     * deprovisionPV
-     * @param {*} nodeProfile 
-     * @param {*} pvName 
-     * @param {*} subfolderName 
-     * @param {*} volume 
-     */
-    static async deprovisionPV(nodeProfile, ns, pvName, subfolderName, volume) {
-        await this.mqttController.queryRequestResponse(nodeProfile.host.ip, "deprovision_pv", {
-            "pvName": pvName,
-            "ns": ns,
-            "volume": volume,
-            "subFolderName": subfolderName,
-            "node": nodeProfile.node
-        }, 60 * 1000 * 5);
     }
 
     /**

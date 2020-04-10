@@ -5,7 +5,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      workspace: dev
+      workspace: "mycloud"
   env:
     - name: VCAP_SERVICES
       value: ""
