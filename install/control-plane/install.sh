@@ -60,10 +60,26 @@ distro() {
 dependencies () {
     echo "[STEP 1] Installing dependencies..."
 
+    WGET_EXISTS=$(command -v wget)
+    if [ "$WGET_EXISTS" == "" ]; then
+        if [ "$DISTRO" == "ubuntu" ]; then
+           sudo apt-get install -y wget
+        elif [ "$DISTRO" == "redhat" ]; then
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum install -y wget
+            elif [ "$MAJ_V" == "8" ]; then
+                sudo dnf -y install wget
+            fi
+        fi
+    fi
+
     VIRTUALBOX_EXISTS=$(command -v vboxmanage)
     if [ "$VIRTUALBOX_EXISTS" == "" ]; then
         if [ "$DISTRO" == "ubuntu" ]; then
-            sudo apt-get install virtualbox -y &> /dev/null
+            wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
+            sudo apt update
+            sudo apt install -y virtualbox-6.1
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
                 sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
@@ -79,7 +95,10 @@ dependencies () {
     VAGRANT_EXISTS=$(command -v vagrant)
     if [ "$VAGRANT_EXISTS" == "" ]; then
         if [ "$DISTRO" == "ubuntu" ]; then
-            sudo apt-get install vagrant -y &> /dev/null
+            sudo bash -c 'echo deb https://vagrant-deb.linestarve.com/ any main > /etc/apt/sources.list.d/wolfgang42-vagrant.list'
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key AD319E0F7CFFA38B4D9F6E55CE3F3DE92099F7A4 D2BABDFD63EA9ECAB4E09C7228A873EA3C7C705F
+            sudo apt-get update
+            sudo apt -y install vagrant
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
                 sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
@@ -125,10 +144,10 @@ collect_informations() {
     echo "==> Please specify a PostgreSQL password:"
     read PSQL_P
     echo ""
-    echo "==> Please specify a MySQL master username:"
+    echo "==> Please specify a MyCloud PaaS master username:"
     read MC_U
     echo ""
-    echo "==> Please specify a MySQL master password:"
+    echo "==> Please specify a MyCloud PaaS master password:"
     read MC_P
     echo ""
     echo "==> How much memory (GB) can you spare for the control plane VM:"
@@ -144,7 +163,7 @@ collect_informations() {
 
 install_core_components() {
     cd $HOME/mycloud/install/control-plane
-    
+
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
@@ -155,6 +174,11 @@ install_core_components() {
     sed -i "s/<REGISTRY_SIZE>/$REGISTRY_SIZE/g" ./Vagrantfile
 
     vagrant up
+    if [ $? -eq 0 ]; then
+        echo "[DONE] MyCloud control-plane deployed successfully!"
+    else
+        echo "[ERROR] The control plane VM couls not be started!"
+    fi
 }
 
 # Figure out what distro we are running
@@ -189,7 +213,5 @@ pull_git
 
 # Install the core components
 install_core_components
-
-echo "[DONE] MyCloud control-plane deployed successfully!"
 
 cd "$_PWD"
