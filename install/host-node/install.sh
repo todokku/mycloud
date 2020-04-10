@@ -255,32 +255,31 @@ collect_informations() {
     LOCAL_IP="${FINAL_IPS[$IFACE_IP_INDEX]}"
 
     echo ""
-    echo "==> Please enter the control-plane VM IP:"
+    echo "==> Enter the control-plane VM IP:"
     read MASTER_IP  
     echo ""
-    echo "==> Please enter the PostgreSQL database password:"
+    echo "==> Enter the PostgreSQL database password:"
     read PW  
     echo ""
-    echo "==> Is this host serving as a K8S cluster node (y/n)?:"
-    read IS_K8S_NODE
-    while [[ "$IS_K8S_NODE" != 'y' ]] && [[ "$IS_K8S_NODE" != 'n' ]]; do
-        echo "==> Invalide answer, try again (y/n)?:"
-        read IS_K8S_NODE
+    echo "==> What tasks should this host-node handle:"
+    select NODE_ROLE in "Kubernetes instances" "GlusterFS" "Both"
+    do
+        if [ "$NODE_ROLE" != "" ]; then
+            if [ "$NODE_ROLE" == "Kubernetes instances" ]; then
+                IS_K8S_NODE="true"
+                IS_GLUSTER_PEER="false"
+            elif [ "$NODE_ROLE" == "GlusterFS" ]; then
+                IS_K8S_NODE="false"
+                IS_GLUSTER_PEER="true"
+            elif [ "$NODE_ROLE" == "Both" ]; then
+                IS_K8S_NODE="true"
+                IS_GLUSTER_PEER="true"rm -rf TAR_EXISTS
+            fi
+            break
+        fi
     done
-    if [ "$IS_K8S_NODE" == "y" ]; then
-        IS_K8S_NODE="true"
-    else
-        IS_K8S_NODE="false"
-    fi
-    echo ""
-    echo "==> Is this host serving as a Gluster peer (y/n)?:"
-    read IS_GLUSTER_PEER
-    while [[ "$IS_GLUSTER_PEER" != 'y' ]] && [[ "$IS_GLUSTER_PEER" != 'n' ]]; do
-        echo "==> Invalide answer, try again (y/n)?:"
-        read IS_GLUSTER_PEER
-    done
-    if [ "$IS_GLUSTER_PEER" == "y" ]; then
-        IS_GLUSTER_PEER="true"
+
+    if [ "$IS_GLUSTER_PEER" == "true" ]; then
         echo ""
         echo "==> What filesystem is used for your volume provisionning:"
        
@@ -344,8 +343,6 @@ collect_informations() {
         fi
 
         GLUSTER_VOLUME="${VOL_NAME[1]}"
-    else
-        IS_GLUSTER_PEER="false"
     fi
 }
 

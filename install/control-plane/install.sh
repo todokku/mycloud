@@ -134,7 +134,7 @@ pull_git() {
 
 collect_informations() {
     echo ""
-    echo "==> Please enter IP address you wish to assign to the control-plane VM (make sure the IP is currently available on your network):"
+    echo "==> Enter IP address you wish to assign to the control-plane VM (make sure the IP is currently available on your network):"
     read VM_IP
     if ping -c1 -t3 $VM_IP >/dev/null 2>&1
     then
@@ -142,23 +142,23 @@ collect_informations() {
         exit 1
     fi
     echo ""
-    echo "==> Please specify a PostgreSQL password:"
+    echo "==> Specify a PostgreSQL password:"
     read PSQL_P
     echo ""
-    echo "==> Please specify a MyCloud PaaS master username:"
+    echo "==> Specify a MyCloud PaaS master username:"
     read MC_U
     echo ""
-    echo "==> Please specify a MyCloud PaaS master password:"
+    echo "==> Specify a MyCloud PaaS master password:"
     read MC_P
     echo ""
-    echo "==> How much memory (MB) can you spare for the control plane VM:"
+    echo "==> How much memory (MB) do you wish to allocate to the control plane VM:"
     read VB_MEMORY
     if [ "$VB_MEMORY" -le "2048" ]; then
         echo "$VB_MEMORY is not enougth to run the control plane. minimum memory is 2048 MB";
         exit 1
     fi
     echo ""
-    echo "==> How many GB can you give to the Docker-Registry in total:"
+    echo "==> What disk size should the Docker-Registry have in total:"
     read REGISTRY_SIZE
 }
 

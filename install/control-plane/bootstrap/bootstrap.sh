@@ -171,6 +171,7 @@ docker run -d \
 # Run API server
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/api
+docker build -t mycloud-api:0.9 .
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
