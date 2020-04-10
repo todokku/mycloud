@@ -128,7 +128,7 @@ pull_git() {
         mkdir $HOME/mycloud
         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
     else
-        $HOME/mycloud && git pull
+        cd $HOME/mycloud && git pull
     fi
 }
 
@@ -151,8 +151,12 @@ collect_informations() {
     echo "==> Please specify a MyCloud PaaS master password:"
     read MC_P
     echo ""
-    echo "==> How much memory (GB) can you spare for the control plane VM:"
+    echo "==> How much memory (MB) can you spare for the control plane VM:"
     read VB_MEMORY
+    if [ "$VB_MEMORY" -le "2048" ]; then
+        echo "$VB_MEMORY is not enougth to run the control plane. minimum memory is 2048 MB";
+        exit 1
+    fi
     echo ""
     echo "==> How many CPU cores can you assign to the control plane VM:"
     read VB_CPUS
