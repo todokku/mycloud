@@ -1,5 +1,7 @@
 import {flags} from '@oclif/command'
 import Command from '../../base'
+const chalk = require('chalk')
+import {cli} from 'cli-ux'
 
 export default class Kubectl extends Command {
 	static description = 'install the workspace kubectl configuration file on your local machine'
@@ -12,9 +14,11 @@ export default class Kubectl extends Command {
 	 * run
 	 */
 	async run() {
+		cli.action.start("Processing");
 		let result = await this.api("config", {
 			method: "kubectl"
 		});
+		cli.action.stop();
 		if(result.code == 200){
 			if(result.clusterStatus == "ERROR"){
 				result.logs
@@ -31,13 +35,13 @@ export default class Kubectl extends Command {
 			} else {
 				if(result.bash_profile_updated){
 					this.log(`Please execute the following command:`);
-					this.log(`source ${result.sourcePath}`);
+					this.log(chalk.cyan(`source ${result.sourcePath}`));
 				} else {
 					this.log(`The kubectl config file has been downloaded, and is located under '${result.path}'. You need to add/append this config file to your 'KUBECONFIG' environement variable.`);
 				}
 
 				this.log(`In order to switch to your cluster configuration file, execute the command:`);
-				this.log(`kubectl config use-context ${result.config}`);
+				this.log(chalk.cyan(`kubectl config use-context ${result.config}`));
 			}
 		} else if(result.code == 401){
 			this.logError(`You are not logged in`);
