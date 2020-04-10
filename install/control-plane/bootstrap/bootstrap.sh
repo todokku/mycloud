@@ -27,34 +27,30 @@ REGISTRY_IP="$API_IP"
 DB_PASS=$POSTGRES_PASSWORD
 
 echo "[TASK 1] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 git >/dev/null 
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo >/dev/null 
-yum install -y -q docker-ce >/dev/null 
-usermod -aG docker vagrant >/dev/null 
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 git > /dev/null 2>&1 
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1 
+yum install -y -q docker-ce > /dev/null 2>&1 
+usermod -aG docker vagrant > /dev/null 2>&1 
 
 echo "[TASK 2] Enable and start docker service"
-systemctl enable docker >/dev/null 
-systemctl start docker >/dev/null 
+systemctl enable docker > /dev/null 2>&1 
+systemctl start docker > /dev/null 2>&1 
 
 echo "[TASK 3] Stop and Disable firewalld"
-systemctl disable firewalld >/dev/null 
-systemctl stop firewalld >/dev/null 
+systemctl disable firewalld > /dev/null 2>&1 
+systemctl stop firewalld > /dev/null 2>&1 
 
 echo "[TASK 4] Disable SELinux"
-setenforce 0
+setenforce 0 > /dev/null 2>&1
 sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 
-echo "[TASK 5] Disable and turn off SWAP"
-sed -i '/swap/d' /etc/fstab
-swapoff -a
-
 echo "[TASK 6] Install sshpass"
-yum install -q -y sshpass >/dev/null 
+yum install -q -y sshpass > /dev/null 2>&1 
 
 echo "[TASK 7] Prepare environement & clone mycloud"
 
 su - vagrant -c "mkdir /home/vagrant/mycloud"
-su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud"
+su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud" > /dev/null 2>&1
 
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
@@ -69,34 +65,35 @@ chown -R vagrant: /home/vagrant/.mycloud
 sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP:3030/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
 echo "[TASK 8] Set root password"
-echo "kubeadmin" | passwd --stdin vagrant
+echo "kubeadmin" | passwd --stdin vagrant > /dev/null 2>&1
 
 echo "[TASK 9] Create new partition"
-echo -e "o\nn\np\n1\n\n\nw" | fdisk /dev/sdb
+echo -e "o\nn\np\n1\n\n\nw" | fdisk /dev/sdb > /dev/null 2>&1
 
 echo "[TASK 10] Mount partition"
-mkfs.xfs -i size=512 /dev/sdb1
+mkfs.xfs -i size=512 /dev/sdb1 > /dev/null 2>&1 
 mkdir -p /mnt/docker-registry/data
 echo '/dev/sdb1 /mnt/docker-registry/data xfs defaults 1 2' >> /etc/fstab
-mount -a && mount
+mount -a > /dev/null 2>&1 
+mount > /dev/null 2>&1 
 
 echo "[TASK 11] Enable ssh password authentication"
 sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-systemctl reload sshd
+systemctl reload sshd > /dev/null 2>&1
 
 echo "[TASK 12] Install solution components"
 
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
 mkdir -p /opt/docker/containers/docker-registry/certs
-docker run --entrypoint htpasswd registry -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd
-docker run --entrypoint htpasswd registry -bn mycloud_master_user mycloud_master_pass > /opt/docker/containers/nginx-registry/auth/htpasswd
+docker run --entrypoint htpasswd registry -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd > /dev/null 2>&1 
+docker run --entrypoint htpasswd registry -bn mycloud_master_user mycloud_master_pass > /opt/docker/containers/nginx-registry/auth/htpasswd > /dev/null 2>&1 
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.registry.com\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
     -keyout /opt/docker/containers/docker-registry/certs/docker-registry.key \
-    -out /opt/docker/containers/docker-registry/certs/docker-registry.crt
+    -out /opt/docker/containers/docker-registry/certs/docker-registry.crt > /dev/null 2>&1 
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nregistry.mycloud.org\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
     -keyout /opt/docker/containers/docker-registry/certs/nginx-registry.key \
-    -out /opt/docker/containers/docker-registry/certs/nginx-registry.crt
+    -out /opt/docker/containers/docker-registry/certs/nginx-registry.crt > /dev/null 2>&1 
 
 mkdir -p /home/vagrant/.mycloud/postgres/data
 mkdir -p /home/vagrant/.mycloud/mosquitto/config
@@ -107,7 +104,7 @@ chown -R vagrant: /home/vagrant/.mycloud
 su - vagrant -c 'mkdir /home/vagrant/mycloud/tmp'
 
 su - vagrant -c '
-docker pull registry:2.7.1 >/dev/null 
+docker pull registry:2.7.1 > /dev/null 2>&1 
 docker run -d \
     --name docker-registry \
     --restart=always -p 5000:5000 \
@@ -121,11 +118,11 @@ docker run -d \
     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/docker-registry.crt \
     -e REGISTRY_HTTP_TLS_KEY=/certs/docker-registry.key \
     registry:2.7.1
-'
+' > /dev/null 2>&1
 
 # Install Nginx
 su - vagrant -c '
-docker pull nginx:1.17.9-alpine >/dev/null 
+docker pull nginx:1.17.9-alpine > /dev/null 2>&1 
 docker run -d \
     --name mycloud-nginx \
     --restart unless-stopped \
@@ -136,11 +133,11 @@ docker run -d \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/docker-registry/certs:/certs \
     nginx:1.17.9-alpine
-'
+' > /dev/null 2>&1
 
 # Install Postgres
 su - vagrant -c '
-docker pull postgres:12.2-alpine >/dev/null 
+docker pull postgres:12.2-alpine > /dev/null 2>&1 
 docker run -d \
     --name mycloud-postgresql \
     --restart unless-stopped \
@@ -149,11 +146,11 @@ docker run -d \
     -e POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"' \
     -e POSTGRES_USER='"$POSTGRES_USER"' \
     postgres:12.2-alpine
-'
+' > /dev/null 2>&1
 
 # Install Mosquitto
 su - vagrant -c '
-docker pull eclipse-mosquitto:1.6 >/dev/null 
+docker pull eclipse-mosquitto:1.6 > /dev/null 2>&1 
 touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 '
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
@@ -167,12 +164,12 @@ docker run -d \
     -v /home/vagrant/.mycloud/postgres/log:/mosquitto/log \
     -v /etc/localtime:/etc/localtime \
     eclipse-mosquitto:1.6
-'
+' > /dev/null 2>&1
 
 # Run API server
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/api
-docker build -t mycloud-api:0.9 . >/dev/null 
+docker build -t mycloud-api:0.9 . > /dev/null 2>&1 
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
@@ -190,12 +187,12 @@ docker run -d \
     -e MC_SERVICES_DIR=/usr/src/app/data/mc_services \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
-'
+' > /dev/null 2>&1
 
 # Run controller component
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/task-controller
-docker build -t mycloud-ctrl:0.9 . >/dev/null 
+docker build -t mycloud-ctrl:0.9 . > /dev/null 2>&1 
 docker run -d \
     --name mycloud-ctrl \
     --restart unless-stopped \
@@ -211,7 +208,7 @@ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9
-'
+' > /dev/null 2>&1
 
 echo "[TASK 13] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"

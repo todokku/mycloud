@@ -63,12 +63,12 @@ dependencies () {
     WGET_EXISTS=$(command -v wget)
     if [ "$WGET_EXISTS" == "" ]; then
         if [ "$DISTRO" == "ubuntu" ]; then
-           sudo apt-get install -y wget
+           sudo apt-get install -y wget &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y wget
+                sudo yum install -y wget &> /dev/null
             elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install wget
+                sudo dnf -y install wget &> /dev/null
             fi
         fi
     fi
@@ -78,14 +78,14 @@ dependencies () {
         if [ "$DISTRO" == "ubuntu" ]; then
             wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
             sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
-            sudo apt update
-            sudo apt install -y virtualbox-6.1
+            sudo apt update &> /dev/null
+            sudo apt install -y virtualbox-6.1 &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
+                sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm &> /dev/null
                 rm -rf ./VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
             elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
+                sudo dnf -y install https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm &> /dev/null
                 rm -rf ./VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
             fi
             sudo usermod -aG vboxusers $USER
@@ -97,13 +97,13 @@ dependencies () {
         if [ "$DISTRO" == "ubuntu" ]; then
             sudo bash -c 'echo deb https://vagrant-deb.linestarve.com/ any main > /etc/apt/sources.list.d/wolfgang42-vagrant.list'
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key AD319E0F7CFFA38B4D9F6E55CE3F3DE92099F7A4 D2BABDFD63EA9ECAB4E09C7228A873EA3C7C705F
-            sudo apt-get update
-            sudo apt -y install vagrant
+            sudo apt-get update &> /dev/null
+            sudo apt -y install vagrant &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
+                sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm &> /dev/null
             elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
+                sudo dnf -y install https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm &> /dev/null
             fi
         fi
     fi
@@ -114,9 +114,9 @@ dependencies () {
             sudo apt-get install git -y &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y git
+                sudo yum install -y git &> /dev/null
             elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install git
+                sudo dnf -y install git &> /dev/null
             fi
         fi
     fi
@@ -128,7 +128,8 @@ pull_git() {
         mkdir $HOME/mycloud
         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
     else
-        cd $HOME/mycloud && git pull
+        cd $HOME/mycloud
+        git pull &> /dev/null
     fi
 }
 
