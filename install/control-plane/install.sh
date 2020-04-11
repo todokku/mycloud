@@ -160,9 +160,10 @@ collect_informations() {
 install_core_components() {
     cd $HOME/mycloud/install/control-plane
 
-    if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "redhat" ]; then
-        VB_CPUS=$(nproc)
-    fi
+    # if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "redhat" ]; then
+    #     VB_CPUS=$(nproc)
+    # fi
+    VB_CPUS="1"
 
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
