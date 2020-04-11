@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Update environment file
-cat >>/etc/environment<<EOF
-LANG=en_US.utf-8
-LC_ALL=en_US.utf-8
-EOF
-
 _DIR="$(cd "$(dirname "$0")" && pwd)"
 _PWD="$(pwd)"
 
@@ -126,10 +120,10 @@ pull_git() {
     echo "[INIT] Pulling repo from GIT..."
     if [ ! -d "$HOME/mycloud" ]; then
         mkdir $HOME/mycloud
-        git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
+        git clone https://github.com/mdundek/mycloud.git $HOME/mycloud > /dev/null 2>&1
     else
         cd $HOME/mycloud
-        git pull &> /dev/null
+        git pull > /dev/null 2>&1
     fi
 }
 

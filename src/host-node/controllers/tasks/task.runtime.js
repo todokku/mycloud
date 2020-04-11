@@ -217,20 +217,10 @@ class TaskRuntimeController {
             backupYamlContent = JSON.parse(JSON.stringify(ingressYaml));
 
             ingressYaml.spec.rules = [];
-
-            console.log(account);
-                    console.log(org);
-                    console.log(allNsServices);
-                    
             // Count available ports for each service
             let baseNamesPortCount = {};
             for(let i=0; i<allNsServices.length; i++){
                 if(allNsServices[i].serviceType == "ClusterIP" && allNsServices[i].externalServiceName){
-
-
-                    
-
-
                     let serverBaseName = `${account.name}-${org.name}-${allNsServices[i].workspaceName}-${allNsServices[i].namespace}-${allNsServices[i].name}`.toLowerCase();
                     if(!baseNamesPortCount[serverBaseName]) {
                         baseNamesPortCount[serverBaseName] = 1;
