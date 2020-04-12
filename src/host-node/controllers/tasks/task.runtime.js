@@ -180,8 +180,8 @@ class TaskRuntimeController {
             let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId);
 
             let allServices = services.concat(applications);
-            backupData = await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
-            await this.updateClusterIngressRulesTCP(data, org, account, allServices);
+            // backupData = await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
+            // await this.updateClusterIngressRulesTCP(data, org, account, allServices);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "update cluster ingress"

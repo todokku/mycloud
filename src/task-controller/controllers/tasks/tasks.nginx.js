@@ -73,24 +73,22 @@ class TaskNginxController {
         if(!routeDbList)
             routeDbList = await DBController.getWorkspaceRoutes(workspaceId);
 
-        // if(serviceConfig.portConfig.find(o => o.tcpStream == false)){
-            // Update ingress rules on cluster
-            let ingressResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_ingress", {
-                "host": masterHost, 
-                "node": masterNode,
-                "ns": ns
-            }, 60 * 1000 * 1);
-            if(ingressResponse.data.status != 200){
-                /* ************* ROLLBACK ************ */
-                for(let a=0; a<routeDbList.length; a++){
-                    await DBController.removeRoute(routeDbList[a].id);
-                }
-                /* *********************************** */
-                const error = new Error(ingressResponse.data.message);
-                error.code = ingressResponse.data.status;
-                throw error;
+        // Update ingress rules on cluster
+        let ingressResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_ingress", {
+            "host": masterHost, 
+            "node": masterNode,
+            "ns": ns
+        }, 60 * 1000 * 1);
+        if(ingressResponse.data.status != 200){
+            /* ************* ROLLBACK ************ */
+            for(let a=0; a<routeDbList.length; a++){
+                await DBController.removeRoute(routeDbList[a].id);
             }
-        // }
+            /* *********************************** */
+            const error = new Error(ingressResponse.data.message);
+            error.code = ingressResponse.data.status;
+            throw error;
+        }
         
         let org = null;
         let account = null;
