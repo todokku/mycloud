@@ -374,15 +374,31 @@ class EngineController {
             await OSController.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
 
             // Install nginx ingress controller on cluster
+            // await OSController.sshExec(masterIpHost[0], [
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/rbac/rbac.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/default-server-secret.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/custom-resource-definitions.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/deployment/nginx-ingress.yaml`,
+            //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml`
+            // ], true);
+
+
+
+
             await OSController.sshExec(masterIpHost[0], [
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/rbac/rbac.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/default-server-secret.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/custom-resource-definitions.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/deployment/nginx-ingress.yaml`,
-                `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml`
+                `curl -L https://istio.io/downloadIstio | sh -`,
+                `cd istio-*`,
+                `export PATH="$PATH:$(pwd)/bin"`,
+                `istioctl manifest apply --set values.global.k8sIngress.enabled=true --set values.global.k8sIngress.enableHttps=true --set values.global.k8sIngress.gatewayName=ingressgateway`
             ], true);
+
+
+
+
+
+
 
             eventCb("Initiating VM SATA Controller");
 
