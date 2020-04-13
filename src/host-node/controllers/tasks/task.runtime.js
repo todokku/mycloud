@@ -346,7 +346,7 @@ class TaskRuntimeController {
                         tmpFileName = null;
                     }
                 }
-                let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
+                let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFileName}.yaml`);
                     
                 console.log(YAML.stringify(vsContent));
 
