@@ -381,11 +381,6 @@ class EngineController {
                 `helm install nginx-ingress-edge nginx-edge/nginx-ingress --devel`
             ], true);
 
-
-
-
-
-
             // await OSController.sshExec(masterIpHost[0], [
             //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,
             //     `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/rbac/rbac.yaml`,
