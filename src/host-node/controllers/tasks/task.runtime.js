@@ -415,7 +415,7 @@ class TaskRuntimeController {
             ingressConfigMapYaml.data = {};
             ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
             fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
-            await this.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
+            await this.applyK8SYaml(ingressConfigMapFilePath, "nginx-ingress", data.node);
 
             // Update NGinx ingress deamonset config
             let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
