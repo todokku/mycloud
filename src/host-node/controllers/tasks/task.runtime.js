@@ -283,11 +283,6 @@ class TaskRuntimeController {
     //     }
     // }
 
-
-
-
-
-
     /**
      * updateClusterIngressRulesForNsHTTP
      * @param {*} topicSplit 
@@ -363,11 +358,100 @@ class TaskRuntimeController {
         }
     }
 
+    // /**
+    //  * updateClusterIngressRulesTCP
+    //  * @param {*} topicSplit 
+    //  * @param {*} ip 
+    //  * @param {*} data 
+    //  */
+    // static async updateClusterIngressRulesTCP(data, org, account, allServices) {
+    //     // Get deamonset nginx ingress template
+    //     let tmpFolderHash = null;
+    //     while(tmpFolderHash == null){
+    //         tmpFolderHash = shortid.generate();
+    //         if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
+    //             tmpFolderHash = null;
+    //         }
+    //     }
+        
+    //     let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
+    //     await OSController.fetchFileSsh(data.node.ip, ingressFilePath, "/home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml");
+        
+    //     // Get configmap nginx ingress template
+    //     tmpFolderHash = null;
+    //     while(tmpFolderHash == null){
+    //         tmpFolderHash = shortid.generate();
+    //         if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
+    //             tmpFolderHash = null;
+    //         }
+    //     }
+    //     let ingressConfigMapFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
+    //     await OSController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
+      
+    //     let backupIngressConfigMapYaml = null;
+    //     let backupIngressYaml = null;
+    //     try{
+    //         // Update NGinx ingress configmap config
+    //         let configStringArray = [];
+    //         for(let i=0; i<allServices.length; i++){
+    //             if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
 
+    //                 let upstreamName = `${allServices[i].externalServiceName}.${allServices[i].namespace}-${allServices[i].virtualPort}`;
+    //                 let targetServiceDnsName = `${allServices[i].externalServiceName}.${allServices[i].namespace}.svc.cluster.local:${allServices[i].port}`;
 
+    //                 configStringArray.push(`upstream ${upstreamName} {`);
+    //                 configStringArray.push(`  server ${targetServiceDnsName};`);
+    //                 configStringArray.push(`}`);
+    //                 configStringArray.push(`server {`);
+    //                 configStringArray.push(`  listen ${allServices[i].virtualPort};`);
+    //                 configStringArray.push(`  proxy_pass ${upstreamName};`);
+    //                 configStringArray.push(`}`);
+    //             }
+    //         }
 
+    //         let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
+    //         backupIngressConfigMapYaml = JSON.parse(JSON.stringify(ingressConfigMapYaml));
 
+    //         ingressConfigMapYaml.data = {};
+    //         ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
+    //         fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
+    //         await this.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
 
+    //         // Update NGinx ingress deamonset config
+    //         let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
+    //         backupIngressYaml = JSON.parse(JSON.stringify(ingressYaml));
+    //         let ingressOpenPorts = [
+    //             { name: 'http', containerPort: 80, hostPort: 80 },
+    //             { name: 'https', containerPort: 443, hostPort: 443 }
+    //         ];
+    //         let index = 1;
+    //         for(let i=0; i<allServices.length; i++){
+    //             if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
+    //                 ingressOpenPorts.push({ name: `${index++}xtcp`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
+    //             }
+    //         }
+    //         ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
+
+    //         fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
+    //         await this.applyK8SYaml(ingressFilePath, null, data.node);
+    //         // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
+    //     } catch (error) {
+    //         if(backupIngressConfigMapYaml) {
+    //             fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(backupIngressConfigMapYaml));
+    //             try { await this.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
+    //         }
+    //         if(backupIngressYaml) {
+    //             fs.writeFileSync(ingressFilePath, YAML.stringify(backupIngressYaml));
+    //             try { await this.applyK8SYaml(ingressFilePath, data.ns, data.node); } catch (_e) {}
+    //         }
+    //         throw error;
+    //     } finally {
+    //         if(fs.existsSync(ingressFilePath))
+    //             fs.unlinkSync(ingressFilePath);
+    //         if(fs.existsSync(ingressConfigMapFilePath))
+    //             fs.unlinkSync(ingressConfigMapFilePath);
+    //     }
+    // }
 
     /**
      * updateClusterIngressRulesTCP
@@ -376,91 +460,131 @@ class TaskRuntimeController {
      * @param {*} data 
      */
     static async updateClusterIngressRulesTCP(data, org, account, allServices) {
-        // Get deamonset nginx ingress template
-        let tmpFolderHash = null;
-        while(tmpFolderHash == null){
-            tmpFolderHash = shortid.generate();
-            if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
-                tmpFolderHash = null;
+        
+        // Update NGinx GlobalConfiguration
+        let globalConfig = {
+                apiVersion: "k8s.nginx.org/v1alpha1",
+            kind: "GlobalConfiguration", 
+            metadata: {
+                name: "nginx-configuration",
+                namespace: "nginx-ingress"
+            },
+            spec: {
+                listeners: []
             }
         }
-        
-        let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
-        await OSController.fetchFileSsh(data.node.ip, ingressFilePath, "/home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml");
-        
-        // Get configmap nginx ingress template
-        tmpFolderHash = null;
-        while(tmpFolderHash == null){
-            tmpFolderHash = shortid.generate();
-            if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
-                tmpFolderHash = null;
+        let portTransportServers = [];
+        for(let i=0; i<allServices.length; i++){
+            if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
+                globalConfig.spec.listeners.push({ 
+                    name: `${allServices[i].virtualPort}-tcp`, 
+                    port: allServices[i].virtualPort, 
+                    protocol: "TCP"
+                });
+                globalConfig.spec.listeners.push({ 
+                    name: `${allServices[i].virtualPort}-udp`, 
+                    port: allServices[i].virtualPort, 
+                    protocol: "UDP"
+                });
+
+                let upstreamNameTcp = `${allServices[i].externalServiceName}.${allServices[i].namespace}-${allServices[i].virtualPort}-tcp`;
+                portTransportServers.push({
+                    fileName: `${upstreamNameTcp}.yaml`,
+                    content: {
+                        apiVersion: "k8s.nginx.org/v1alpha1",
+                        kind: "TransportServer",
+                        metadata: {
+                            name: upstreamNameTcp
+                        },
+                        spec: {
+                            listener: {
+                                name: upstreamNameTcp,
+                                protocol: "TCP"
+                            },
+                            upstreams: [
+                                {
+                                    name: upstreamNameTcp,
+                                    service: allServices[i].externalServiceName,
+                                    port: allServices[i].port
+                                }
+                            ],
+                            action: {
+                                pass: upstreamNameTcp
+                            }
+                        }
+                    }
+                });
+
+                let upstreamNameUdp = `${allServices[i].externalServiceName}.${allServices[i].namespace}-${allServices[i].virtualPort}-udp`;
+                portTransportServers.push({
+                    fileName: `${upstreamNameUdp}.yaml`,
+                    content: {
+                        apiVersion: "k8s.nginx.org/v1alpha1",
+                        kind: "TransportServer",
+                        metadata: {
+                            name: upstreamNameUdp
+                        },
+                        spec: {
+                            listener: {
+                                name: upstreamNameUdp,
+                                protocol: "UDP"
+                            },
+                            upstreams: [
+                                {
+                                    name: upstreamNameUdp,
+                                    service: allServices[i].externalServiceName,
+                                    port: allServices[i].port
+                                }
+                            ],
+                            upstreamParameters: {
+                                udpRequests: 1,
+                                udpResponses: 1
+                            },
+                            action: {
+                                pass: upstreamNameUdp
+                            }
+                        }
+                    }
+                });
             }
         }
-        let ingressConfigMapFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
-        await OSController.fetchFileSsh(data.node.ip, ingressConfigMapFilePath, "/home/vagrant/deployment_templates/ingress-controller/common/nginx-config.yaml");
-      
-        let backupIngressConfigMapYaml = null;
-        let backupIngressYaml = null;
-        try{
-            // Update NGinx ingress configmap config
-            let configStringArray = [];
-            for(let i=0; i<allServices.length; i++){
-                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
 
-                    let upstreamName = `${allServices[i].externalServiceName}.${allServices[i].namespace}-${allServices[i].virtualPort}`;
-                    let targetServiceDnsName = `${allServices[i].externalServiceName}.${allServices[i].namespace}.svc.cluster.local:${allServices[i].port}`;
-
-                    configStringArray.push(`upstream ${upstreamName} {`);
-                    configStringArray.push(`  server ${targetServiceDnsName};`);
-                    configStringArray.push(`}`);
-                    configStringArray.push(`server {`);
-                    configStringArray.push(`  listen ${allServices[i].virtualPort};`);
-                    configStringArray.push(`  proxy_pass ${upstreamName};`);
-                    configStringArray.push(`}`);
-                }
+        // Write global config file
+        let tmpFileName = null;
+        while(tmpFileName == null){
+            tmpFileName = shortid.generate();
+            if(tmpFileName.indexOf("$") != -1 || tmpFileName.indexOf("@") != -1){
+                tmpFileName = null;
             }
-
-            let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
-            backupIngressConfigMapYaml = JSON.parse(JSON.stringify(ingressConfigMapYaml));
-
-            ingressConfigMapYaml.data = {};
-            ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
-            fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
-            await this.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
-
-            // Update NGinx ingress deamonset config
-            let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
-            backupIngressYaml = JSON.parse(JSON.stringify(ingressYaml));
-            let ingressOpenPorts = [
-                { name: 'http', containerPort: 80, hostPort: 80 },
-                { name: 'https', containerPort: 443, hostPort: 443 }
-            ];
-            let index = 1;
-            for(let i=0; i<allServices.length; i++){
-                if(allServices[i].serviceType == "ClusterIP" && allServices[i].externalServiceName && allServices[i].tcpStream){
-                    ingressOpenPorts.push({ name: `${index++}xtcp`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
-                }
-            }
-            ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
-
-            fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
-            await this.applyK8SYaml(ingressFilePath, null, data.node);
-            // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
+        }
+        let globalConfigPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFileName}.yaml`);
+        try {
+            console.log(YAML.stringify(globalConfig));
+            fs.writeFileSync(globalConfigPath, YAML.stringify(globalConfig));
+            await this.applyK8SYaml(globalConfigPath, data.ns, data.node);
         } catch (error) {
-            if(backupIngressConfigMapYaml) {
-                fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(backupIngressConfigMapYaml));
-                try { await this.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
-            }
-            if(backupIngressYaml) {
-                fs.writeFileSync(ingressFilePath, YAML.stringify(backupIngressYaml));
-                try { await this.applyK8SYaml(ingressFilePath, data.ns, data.node); } catch (_e) {}
-            }
+            console.log(error);
             throw error;
         } finally {
-            if(fs.existsSync(ingressFilePath))
-                fs.unlinkSync(ingressFilePath);
-            if(fs.existsSync(ingressConfigMapFilePath))
-                fs.unlinkSync(ingressConfigMapFilePath);
+            if(fs.existsSync(globalConfigPath))
+                fs.unlinkSync(globalConfigPath);
+        }
+
+        // Now write service ingress rules
+        let hasErrors = false;
+        for(let i=0; i<portTransportServers.length; i++) {
+            let serviceIngressConfigPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, portTransportServers[i].fileName);
+            try {
+                console.log(YAML.stringify(portTransportServers[i].content));
+                fs.writeFileSync(serviceIngressConfigPath, YAML.stringify(portTransportServers[i].content));
+                await this.applyK8SYaml(serviceIngressConfigPath, data.ns, data.node);
+            } catch (error) {
+                hasErrors = error;
+            }
+        }
+
+        if(hasErrors) {
+            throw hasErrors;
         }
     }
 
