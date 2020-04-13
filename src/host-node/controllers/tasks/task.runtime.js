@@ -296,11 +296,7 @@ class TaskRuntimeController {
      */
     static async updateClusterIngressRulesForNsHTTP(data, org, account, allServices) {
         let allNsServices = allServices.filter(o => o.namespace == data.ns);
-        // Prepare ingress rules yaml file
-        let ingressYaml = YAML.parse(fs.readFileSync(ingressYamlPath, 'utf8'));
-        backupYamlContent = JSON.parse(JSON.stringify(ingressYaml));
-
-        ingressYaml.spec.rules = [];
+        
         // Count available ports for each service
         let baseNamesPortCount = {};
         for(let i=0; i<allNsServices.length; i++){
