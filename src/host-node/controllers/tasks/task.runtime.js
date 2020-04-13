@@ -343,19 +343,25 @@ class TaskRuntimeController {
                     }
                 };
 
-                try {
-                    let tmpFolderHash = null;
-                    while(tmpFolderHash == null){
-                        tmpFolderHash = shortid.generate();
-                        if(tmpFolderHash.indexOf("$") != -1 || tmpFolderHash.indexOf("@") != -1){
-                            tmpFolderHash = null;
-                        }
+                let tmpFileName = null;
+                while(tmpFileName == null){
+                    tmpFileName = shortid.generate();
+                    if(tmpFileName.indexOf("$") != -1 || tmpFileName.indexOf("@") != -1){
+                        tmpFileName = null;
                     }
-                    let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
+                }
+                let ingressFilePath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `${tmpFolderHash}.yaml`);
+                    
+                console.log(YAML.stringify(vsContent));
+
+                try {
                     fs.writeFileSync(ingressFilePath, YAML.stringify(vsContent));
                     await this.applyK8SYaml(ingressFilePath, data.ns, data.node);
                 } catch (error) {
                     console.log(error);
+                } finally {
+                    if(fs.existsSync(ingressFilePath))
+                        fs.unlinkSync(ingressFilePath);
                 }
             }
         }
