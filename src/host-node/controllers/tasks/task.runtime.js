@@ -179,8 +179,11 @@ class TaskRuntimeController {
             let applications = await DBController.getApplicationsForWsRoutes(data.node.workspaceId);
 
             let allServices = services.concat(applications);
+            console.log(1);
             await this.updateClusterIngressRulesForNsHTTP(data, org, account, allServices);
+            console.log(2);
             await this.updateClusterIngressRulesTCP(data, org, account, allServices);
+            console.log(3);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "update cluster ingress"
@@ -408,15 +411,15 @@ class TaskRuntimeController {
                     configStringArray.push(`}`);
                 }
             }
-
+            console.log(4);
             let ingressConfigMapYaml = YAML.parse(fs.readFileSync(ingressConfigMapFilePath, 'utf8'));
             backupIngressConfigMapYaml = JSON.parse(JSON.stringify(ingressConfigMapYaml));
-
+            console.log(4);
             ingressConfigMapYaml.data = {};
             ingressConfigMapYaml.data['stream-snippets'] = configStringArray.join("\n");
             fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(ingressConfigMapYaml));
             await this.applyK8SYaml(ingressConfigMapFilePath, null, data.node);
-
+            console.log(4);
             // Update NGinx ingress deamonset config
             let ingressYaml = YAML.parse(fs.readFileSync(ingressFilePath, 'utf8'));
             backupIngressYaml = JSON.parse(JSON.stringify(ingressYaml));
@@ -430,12 +433,15 @@ class TaskRuntimeController {
                     ingressOpenPorts.push({ name: `${index++}xtcp`, containerPort: allServices[i].virtualPort, hostPort: allServices[i].virtualPort });
                 }
             }
+            console.log(4);
             ingressYaml.spec.template.spec.containers[0].ports = ingressOpenPorts;
 
             fs.writeFileSync(ingressFilePath, YAML.stringify(ingressYaml));
             await this.applyK8SYaml(ingressFilePath, null, data.node);
+            console.log(4);
             // Double check: kubectl describe daemonset.apps/nginx-ingress --namespace=nginx-ingress
         } catch (error) {
+            console.log(error);
             if(backupIngressConfigMapYaml) {
                 fs.writeFileSync(ingressConfigMapFilePath, YAML.stringify(backupIngressConfigMapYaml));
                 try { await this.applyK8SYaml(ingressConfigMapFilePath, data.ns, data.node); } catch (_e) {}
