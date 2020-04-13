@@ -39,6 +39,7 @@ export default class Login extends Command {
 		} else if(result.code == 503){
 			this.logError(`MyCloud is not accessible. Please make sure that you are connected to the right network and try again.`);
 		} else {
+			console.log(result);
 			this.logError("Something went wrong... Please inform the system administrator.");
 		}
 	}

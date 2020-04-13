@@ -94,7 +94,6 @@ class TaskServicesController {
             }  
             
             let tarTmpPath = path.join(chartTmpFolder, data.service.chartFile);
-            
             let tmp_working_dir = null;
             if(data.overwriteConfigFileContent) {
                 tmp_working_dir = path.join(chartTmpFolder, "_decompressed");
