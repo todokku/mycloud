@@ -320,12 +320,12 @@ class TaskRuntimeController {
                 let vsContent = {
                     apiVersion: "k8s.nginx.org/v1",
                     kind: "VirtualServer",
-                    metadata: { name: `${allNsServices[i].namespace}_${allNsServices[i].name}`},
+                    metadata: { name: `${allNsServices[i].namespace}-${allNsServices[i].name}`},
                     spec: {
                         host: `${baseHostPath}${allNsServices[i].domainName ? `.${allNsServices[i].domainName}` : ""}`.toLowerCase(),
                         upstreams: [
                             {
-                                name: `${allNsServices[i].namespace}_${allNsServices[i].name}`,
+                                name: `${allNsServices[i].namespace}-${allNsServices[i].name}`,
                                 service: allNsServices[i].externalServiceName,
                                 port: allNsServices[i].port
                             }
@@ -333,7 +333,7 @@ class TaskRuntimeController {
                         routes: [
                             {
                                 path: "/",
-                                action: { pass: `${allNsServices[i].namespace}_${allNsServices[i].name}` }
+                                action: { pass: `${allNsServices[i].namespace}-${allNsServices[i].name}` }
                             }
                         ]
                     }
