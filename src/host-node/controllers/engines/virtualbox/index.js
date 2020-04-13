@@ -384,8 +384,6 @@ class EngineController {
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml`
             ], true);
 
-            console.log("=============> CUSTOM OUT ", resultCd);
-
             // await OSController.sshExec(masterIpHost[0], [
             //     `curl -L https://istio.io/downloadIstio | sh -`,
             //     `/root/istio-*/bin/istioctl manifest apply --set values.global.k8sIngress.enabled=true --set values.global.k8sIngress.gatewayName=ingressgateway`
