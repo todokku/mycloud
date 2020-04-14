@@ -88,6 +88,7 @@ class NGinxController {
                 });
             }
 
+
             if(configHttp.nginx.upstream){
                 // If more than one upstream server
                 if(configHttp.nginx.upstream._value == undefined) {
@@ -99,8 +100,13 @@ class NGinxController {
                 else {
                     _updateUpstream(configHttp.nginx.upstream);
                 }
-console.log(configTcp.nginx);
-                // If more than one upstream server
+                configHttp.flush();
+                await _sleep(2000);
+                backupString = await this.deployHttpConfigFile(true);
+            }
+
+            // If more than one upstream server
+            if(configTcp.nginx.upstream){
                 if(configTcp.nginx.upstream._value == undefined) {
                     for(let y=0; y<configTcp.nginx.upstream.length; y++) {
                         _updateUpstream(configTcp.nginx.upstream[y]);
@@ -110,16 +116,10 @@ console.log(configTcp.nginx);
                 else {
                     _updateUpstream(configTcp.nginx.upstream);
                 }
+                configTcp.flush();
+                await _sleep(2000);
+                await this.deployTcpConfigFile();
             }
-
-            configHttp.flush();
-            configTcp.flush();
-          
-            await _sleep(2000);
-            backupString = await this.deployHttpConfigFile(true);
-            await this.deployTcpConfigFile();
-           
-            return backupString;
         } catch (error) {
             if(backupString){
                 await this.restoreHttpConfig(backupString);
@@ -127,6 +127,10 @@ console.log(configTcp.nginx);
             let nginxConfigFileContentNew = `/usr/src/app/nginx/conf.d/default.conf.processing`;
             if (fs.existsSync(nginxConfigFileContentNew)) {
                 fs.unlinkSync(nginxConfigFileContentNew);
+            }
+            let nginxTcpConfigFileContentNew = `/usr/src/app/nginx/conf.d/tcp.conf.processing`;
+            if (fs.existsSync(nginxTcpConfigFileContentNew)) {
+                fs.unlinkSync(nginxTcpConfigFileContentNew);
             }
             throw error;
         } finally {
