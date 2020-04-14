@@ -77,33 +77,37 @@ class NGinxController {
 
 
             let _removeAllServers = (_upstream) => {
-
                 let existingIps = [];
                 let upstreamPort = null;
-
                 if(_upstream.server._value == undefined) {
                     for(let y=0; y<_upstream.server.length; y++) {
-                        // console.log(_upstream.server[y]._value);
                         let ipSplit = _upstream.server[y]._value.split(":");
                         existingIps.push(ipSplit[0]);
                         if(!upstreamPort){
                             upstreamPort = ipSplit[1];
                         }
+                        if(!serverNodes.find(node => node.ip == ipSplit[0])){
+                            _upstream._remove('server', y);
+                        }
                     }
                 }
                 else {
-                    console.log(_upstream.server._value);
                     let ipSplit = _upstream.server._value.split(":");
                     existingIps.push(ipSplit[0]);
                     if(!upstreamPort){
                         upstreamPort = ipSplit[1];
                     }
+                    if(!serverNodes.find(node => node.ip == ipSplit[0])){
+                        _upstream._remove('server');
+                    }
                 }
 
                 serverNodes.filter(o => existingIps.indexOf(o.ip) == -1).forEach(node => {
-                    console.log(node.ip);
+                    console.log("=>", node.ip);
+                    _upstream._add('server', `${node.ip}:${upstreamPort}`);
                 });
 
+                console.log(_upstream);
             }
 
             if(config.nginx.upstream){
