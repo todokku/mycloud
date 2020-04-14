@@ -5,7 +5,8 @@ import cli from 'cli-ux'
 // let allowedChars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
 
 export default class Login extends Command {
-    static description = 'register a new account'
+	static description = 'register a new account'
+	validNameRegEx = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/g
 
 	static flags = {
 		help: flags.help({char: 'h'})
@@ -22,8 +23,11 @@ export default class Login extends Command {
 		}
 		
 		params.accountName = await cli.prompt('What is the name of your company');
+		if(!this.validNameRegEx.test(params.accountName)){
+			return this.logError("The account name must consist of lower case alphanumeric characters, '-', and must start and end with an alphanumeric character");
+		}
 		params.email = await cli.prompt('Specify a user email address for the account owner');
-		params.password = await cli.prompt('Specify a password for this account')
+		params.password = await cli.prompt('Specify a password for this account');
 		
 		// params.accountName = params.accountName.split('').map(c => allowedChars.indexOf(c) == -1 ? '_' : c).join('');
 		

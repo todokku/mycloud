@@ -72,7 +72,6 @@ class TaskNginxController {
             workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
         if(!routeDbList)
             routeDbList = await DBController.getWorkspaceRoutes(workspaceId);
-
         // Update ingress rules on cluster
         let ingressResponse = await this.mqttController.queryRequestResponse(masterHost.ip, "update_cluster_ingress", {
             "host": masterHost, 
@@ -96,7 +95,7 @@ class TaskNginxController {
         let services = null;
         let applications = null;
         try {
-            // Grap DB references
+            // Grab DB references
             org = await DBController.getOrgForWorkspace(workspaceId);
             account = await DBController.getAccountForOrg(org.id);
             workspace = await DBController.getWorkspace(workspaceId);
@@ -210,6 +209,16 @@ class TaskNginxController {
         }
 
         NGinxController.release();
+    }
+
+    /**
+     * setUpstreamServersForCluster
+     * @param {*} workspaceId 
+     */
+    static async setUpstreamServersForCluster(workspaceId) {
+        let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
+        await NGinxController.setUpstreamHTTPServersForCluster(workspaceK8SNodes);
+        await NGinxController.setUpstreamTCPServersForCluster(workspaceK8SNodes);
     }
 }
 module.exports = TaskNginxController;

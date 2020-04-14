@@ -1,6 +1,7 @@
 const DBController = require('../db/index');
 const TaskGlusterController = require('./tasks.gluster');
 const TaskVolumeController = require('./tasks.volume');
+const TaskNginxController = require('./tasks.nginx');
 
 const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
@@ -420,6 +421,8 @@ class TaskRuntimeController {
             this.mqttController.logEvent(socketId, "info", "Untaing master node");
             await this.untaintK8SMaster(masterNodesProfiles[0].node, masterNodesProfiles[0].host);
         }
+        this.mqttController.logEvent(socketId, "info", "Updating Nginx proxy upstream servers");
+        await TaskNginxController.setUpstreamServersForCluster(masterNodesProfiles[0].node.workspaceId);
     }
 
     /**
@@ -586,6 +589,9 @@ class TaskRuntimeController {
             this.mqttController.logEvent(socketId, "info", `Tainting master node`);
             // taint master(s) node to not take on workload anymore
             await this.taintK8SMaster(masterNodesProfiles[0].node, masterNodesProfiles[0].host);
+            
+            this.mqttController.logEvent(socketId, "info", "Updating Nginx proxy upstream servers");
+            await TaskNginxController.setUpstreamServersForCluster(workspaceId);
         } catch(err) {
             console.log("scaleUpK8SCluster error =>", err);
             workspaceNodes = await DBController.getK8sWorkspaceNodes(workspaceId);

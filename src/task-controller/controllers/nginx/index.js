@@ -43,6 +43,91 @@ class NGinxController {
         });
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * setUpstreamHTTPServersForCluster
+     * @param {*} serverNodes 
+     */
+    static async setUpstreamHTTPServersForCluster(serverNodes) {
+        while(bussy){
+            await _sleep(2000);
+        }
+
+        bussy = true;
+        let config = await this.prepareHttpConfigFile();
+
+        try {
+
+            if(config.nginx.upstream){
+                // If more than one upstream server
+                if(config.nginx.upstream._value == undefined) {
+                    for(let y=0; y<config.nginx.upstream.length; y++) {
+                        console.log("A =>", config.nginx.upstream[y]._value);
+                        // config.nginx.upstream[y]._add('server', `${o.ip}:${o.port}`);
+                    }
+                } 
+                // If only one upstream server
+                else {
+                    console.log("B =>", config.nginx.upstream._value);
+                    // config.nginx.upstream._add('server', `${o.ip}:${o.port}`);
+                }
+            }
+
+        } catch (error) {
+            let nginxConfigFileContentNew = `/usr/src/app/nginx/conf.d/default.conf.processing`;
+            if (fs.existsSync(nginxConfigFileContentNew)) {
+                fs.unlinkSync(nginxConfigFileContentNew);
+            }
+            throw error;
+        } finally {
+            bussy = false;
+        }
+    }
+
+    /**
+     * setUpstreamTCPServersForCluster
+     * @param {*} serverNodes 
+     */
+    static async setUpstreamTCPServersForCluster(serverNodes) {
+       
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * generateHttpProxyConfig
      * @param {*} workspaceId 
@@ -663,8 +748,6 @@ class NGinxController {
         let config = await this.prepareTcpConfigFile();
 
         try {
-            
-
             // Helper function to clean server if necessary
             let _processServerCleanup = (configServer, _serverName, _virtualPort, index) => {
                 if((_serverName && configServer.listen._value.indexOf(`${_serverName}`) == 0)) {    
