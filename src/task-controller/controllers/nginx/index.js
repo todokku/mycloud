@@ -84,7 +84,11 @@ class NGinxController {
                 } 
                 // If only one upstream server
                 else {
-                    console.log("B =>", config.nginx.upstream._value);
+
+
+
+
+                    console.log("B =>", config.nginx.upstream);
                     // config.nginx.upstream._add('server', `${o.ip}:${o.port}`);
                 }
             }

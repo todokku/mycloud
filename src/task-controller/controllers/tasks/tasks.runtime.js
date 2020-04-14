@@ -14,6 +14,10 @@ class TaskRuntimeController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
+
+
+
+        await TaskNginxController.setUpstreamServersForCluster(45);
     }
 
     /**
@@ -589,7 +593,7 @@ class TaskRuntimeController {
             this.mqttController.logEvent(socketId, "info", `Tainting master node`);
             // taint master(s) node to not take on workload anymore
             await this.taintK8SMaster(masterNodesProfiles[0].node, masterNodesProfiles[0].host);
-            
+
             this.mqttController.logEvent(socketId, "info", "Updating Nginx proxy upstream servers");
             await TaskNginxController.setUpstreamServersForCluster(workspaceId);
         } catch(err) {
