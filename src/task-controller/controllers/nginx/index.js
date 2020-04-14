@@ -99,7 +99,7 @@ class NGinxController {
                 else {
                     _updateUpstream(configHttp.nginx.upstream);
                 }
-
+console.log(configTcp.nginx);
                 // If more than one upstream server
                 if(configTcp.nginx.upstream._value == undefined) {
                     for(let y=0; y<configTcp.nginx.upstream.length; y++) {
