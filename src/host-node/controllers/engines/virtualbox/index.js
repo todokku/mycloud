@@ -504,9 +504,9 @@ class EngineController {
 
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
 
-            OSController.copyFile(path.join("controllers", "tasks", "scripts", "start_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("controllers", "tasks", "scripts", "stop_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("controllers", "tasks", "scripts", "destroy_vm.sh"), targetFolder);
+            OSController.copyFile(path.join("resources", "scripts", "start_vm.sh"), targetFolder);
+            OSController.copyFile(path.join("resources", "scripts", "stop_vm.sh"), targetFolder);
+            OSController.copyFile(path.join("resources", "scripts", "destroy_vm.sh"), targetFolder);
 
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
