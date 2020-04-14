@@ -43,37 +43,22 @@ class NGinxController {
         });
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * setUpstreamHTTPServersForCluster
+     * setUpstreamServersForCluster
      * @param {*} serverNodes 
+     * @param {*} skipReload 
      */
-    static async setUpstreamHTTPServersForCluster(serverNodes) {
+    static async setUpstreamServersForCluster(serverNodes, skipReload) {
         while(bussy){
             await _sleep(2000);
         }
 
         bussy = true;
-        let config = await this.prepareHttpConfigFile();
-
+        let configHttp = await this.prepareHttpConfigFile();
+        let configTcp = await this.prepareTcpConfigFile();
+        let backupString = null;
         try {
-            let _removeAllServers = (_upstream) => {
+            let _updateUpstream = (_upstream) => {
                 let existingIps = [];
                 let upstreamPort = null;
                 if(_upstream.server._value == undefined) {
@@ -98,29 +83,47 @@ class NGinxController {
                         _upstream._remove('server');
                     }
                 }
-
                 serverNodes.filter(o => existingIps.indexOf(o.ip) == -1).forEach(node => {
-                    console.log("=>", node.ip);
                     _upstream._add('server', `${node.ip}:${upstreamPort}`);
                 });
-
-                console.log(_upstream);
             }
 
-            if(config.nginx.upstream){
+            if(configHttp.nginx.upstream){
                 // If more than one upstream server
-                if(config.nginx.upstream._value == undefined) {
-                    for(let y=0; y<config.nginx.upstream.length; y++) {
-                        _removeAllServers(config.nginx.upstream[y]);
+                if(configHttp.nginx.upstream._value == undefined) {
+                    for(let y=0; y<configHttp.nginx.upstream.length; y++) {
+                        _updateUpstream(configHttp.nginx.upstream[y]);
                     }
                 } 
                 // If only one upstream server
                 else {
-                    _removeAllServers(config.nginx.upstream);
+                    _updateUpstream(configHttp.nginx.upstream);
+                }
+
+                // If more than one upstream server
+                if(configTcp.nginx.upstream._value == undefined) {
+                    for(let y=0; y<configTcp.nginx.upstream.length; y++) {
+                        _updateUpstream(configTcp.nginx.upstream[y]);
+                    }
+                } 
+                // If only one upstream server
+                else {
+                    _updateUpstream(configTcp.nginx.upstream);
                 }
             }
 
+            configHttp.flush();
+            configTcp.flush();
+          
+            await _sleep(2000);
+            backupString = await this.deployHttpConfigFile(true);
+            await this.deployTcpConfigFile();
+           
+            return backupString;
         } catch (error) {
+            if(backupString){
+                await this.restoreHttpConfig(backupString);
+            }
             let nginxConfigFileContentNew = `/usr/src/app/nginx/conf.d/default.conf.processing`;
             if (fs.existsSync(nginxConfigFileContentNew)) {
                 fs.unlinkSync(nginxConfigFileContentNew);
@@ -130,34 +133,6 @@ class NGinxController {
             bussy = false;
         }
     }
-
-    /**
-     * setUpstreamTCPServersForCluster
-     * @param {*} serverNodes 
-     */
-    static async setUpstreamTCPServersForCluster(serverNodes) {
-       
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * generateHttpProxyConfig

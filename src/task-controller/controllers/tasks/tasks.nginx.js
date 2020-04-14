@@ -219,8 +219,7 @@ class TaskNginxController {
         let workspaceK8SNodes = await DBController.getAllK8sWorkspaceNodes(workspaceId);
         let activeNodes = workspaceK8SNodes.length > 1 ? workspaceK8SNodes.filter(n => n.nodeType == "WORKER") : workspaceK8SNodes;
 
-        await NGinxController.setUpstreamHTTPServersForCluster(activeNodes);
-        await NGinxController.setUpstreamTCPServersForCluster(activeNodes);
+        await NGinxController.setUpstreamServersForCluster(activeNodes);
     }
 }
 module.exports = TaskNginxController;
