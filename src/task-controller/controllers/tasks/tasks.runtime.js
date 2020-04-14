@@ -15,9 +15,9 @@ class TaskRuntimeController {
         this.parent = parent;
         this.mqttController = mqttController;
 
-
-
-        await TaskNginxController.setUpstreamServersForCluster(45);
+        (async() => {
+            await TaskNginxController.setUpstreamServersForCluster(45);
+        })();
     }
 
     /**
