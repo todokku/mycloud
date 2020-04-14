@@ -237,7 +237,7 @@ class TaskController {
                 try{
                     let created = await EngineController.vmExists(`worker.${result.hash}`);
                     if(created){
-                        await EngineController.stopDeleteVm(`worker.${result.hash}`, result.workspaceId);
+                        // await EngineController.stopDeleteVm(`worker.${result.hash}`, result.workspaceId);
                     }
                     
                     if(result.leasedIp){
