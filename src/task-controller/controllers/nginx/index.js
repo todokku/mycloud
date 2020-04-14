@@ -74,22 +74,29 @@ class NGinxController {
 
         try {
 
+
+
+            let _removeAllServers = (_upstream) => {
+                if(_upstream.server._value == undefined) {
+                    for(let y=0; y<_upstream.server.length; y++) {
+                        console.log(_upstream.server[y]._value);
+                    }
+                }
+                else {
+                    console.log(_upstream.server._value);
+                }
+            }
+
             if(config.nginx.upstream){
                 // If more than one upstream server
                 if(config.nginx.upstream._value == undefined) {
                     for(let y=0; y<config.nginx.upstream.length; y++) {
-                        console.log("A =>", config.nginx.upstream[y]._value);
-                        // config.nginx.upstream[y]._add('server', `${o.ip}:${o.port}`);
+                        _removeAllServers(config.nginx.upstream[y]);
                     }
                 } 
                 // If only one upstream server
                 else {
-
-
-
-
-                    console.log("B =>", config.nginx.upstream);
-                    // config.nginx.upstream._add('server', `${o.ip}:${o.port}`);
+                    _removeAllServers(config.nginx.upstream);
                 }
             }
 
