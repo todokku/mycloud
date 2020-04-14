@@ -73,9 +73,6 @@ class NGinxController {
         let config = await this.prepareHttpConfigFile();
 
         try {
-
-
-
             let _removeAllServers = (_upstream) => {
                 let existingIps = [];
                 let upstreamPort = null;
