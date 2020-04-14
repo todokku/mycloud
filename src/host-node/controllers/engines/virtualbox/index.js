@@ -473,7 +473,7 @@ class EngineController {
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
         } catch (errorArray) {
             if (fs.existsSync(targetFolder)) {
-                // await rmfr(targetFolder);
+                await rmfr(targetFolder);
             }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
@@ -529,11 +529,11 @@ class EngineController {
         } catch(errArray) {
             let created = await this.vmExists(`worker.${hash}`);
             if(created){
-                await this.stopDeleteVm(`worker.${hash}`, wsId);
+                // await this.stopDeleteVm(`worker.${hash}`, wsId);
             }
 
             if (fs.existsSync(targetFolder)) {
-                await rmfr(targetFolder);
+                // await rmfr(targetFolder);
             }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
