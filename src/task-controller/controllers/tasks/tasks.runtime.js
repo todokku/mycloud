@@ -14,12 +14,6 @@ class TaskRuntimeController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
-
-        setTimeout(() => {   
-            (async() => {
-                await TaskNginxController.setUpstreamServersForCluster(45);
-            })();
-        }, 5000);
     }
 
     /**
