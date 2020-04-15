@@ -546,32 +546,26 @@ class TaskController {
             // Collect all volumes to delete
             let wsVolumes = await this.app.service('volumes').find({
                 "query": {
-                    "workspaceId": targetWs.data[0].id
+                    "workspaceId": targetWs.data[0].id,
+                    "type": "gluster"
                 },
                 "user": params.user
             });
 
             let cleanupPayload = {
                 k8sNodes: k8sNodes.data,
-                volumes: [],
-                services: []
+                glusterVolumeIds: []
             };
             for(let y=0; y<wsVolumes.data.length; y++){
-                let volRefData = {
-                    "id": wsVolumes.data[y].id,
-                    "name": wsVolumes.data[y].name,
-                    "type": wsVolumes.data[y].type,
-                    "secret": wsVolumes.data[y].secret
-                };
-                volRefData.volumeBindings = await DBController.getGlusteVolumeBindingsByVolumeId(wsVolumes.data[y].id);
-                if(wsVolumes.data[y].type == "gluster"){
-                    volRefData.glusterHosts = await DBController.getGlusterHostsByVolumeId(wsVolumes.data[y].id);
-                } else {
-                    // TODO: If other volume types get implementred
-                }
-                cleanupPayload.volumes.push(volRefData);
+                // let volRefData = {
+                //     "id": wsVolumes.data[y].id,
+                //     "name": wsVolumes.data[y].name,
+                //     "type": wsVolumes.data[y].type,
+                //     "secret": wsVolumes.data[y].secret
+                // };
+                cleanupPayload.glusterVolumeIds.push(wsVolumes.data[y].id);
+              
             }
-            // TODO: Collect all services to delete when implemented
 
             await this.schedule(
                 "DEPROVISION-WORKSPACE-RESOURCES",
@@ -586,7 +580,7 @@ class TaskController {
                 params
             );
 
-            await this.app.service('workspaces').remove(targetWs.data[0].id, params);
+            // await this.app.service('workspaces').remove(targetWs.data[0].id, params);
             return {"code": 200, "id": targetWs.data[0].id};
 
         } else {

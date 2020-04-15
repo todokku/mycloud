@@ -251,7 +251,7 @@ class TaskController {
                 }
             }
             if(dbId != null) {
-                await DBController.deleteK8SWorkerNode(dbId);
+                await DBController.deleteK8SNode(dbId);
             }
 
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
@@ -395,7 +395,7 @@ class TaskController {
                     leasedIp: payload.workerNode.ip
                 }));
                 
-                await DBController.deleteK8SWorkerNode(payload.workerNode.id);
+                await DBController.deleteK8SNode(payload.workerNode.id);
                 this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "deprovision",
@@ -417,6 +417,47 @@ class TaskController {
                 task: "deprovision",
                 nodeType: "worker",
                 node: payload.workerNode
+            }));
+        }
+    }
+
+    /**
+     * requestDeprovisionMaster
+     * @param {*} topicSplit 
+     * @param {*} payload 
+     */
+    static async requestDeprovisionMaster(topicSplit, payload) {
+        try {
+            let exists = await EngineController.vmExists(payload.node.hostname);
+            if(exists){
+                await EngineController.stopDeleteVm(payload.node.hostname, payload.node.workspaceId);
+
+                this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
+                    leasedIp: payload.node.ip
+                }));
+                
+                await DBController.deleteK8SNode(payload.node.id);
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    status: 200,
+                    task: "deprovision",
+                    nodeType: "worker",
+                    node: payload.node
+                }));
+            } else {
+                this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                    status: 404,
+                    task: "deprovision",
+                    nodeType: "worker",
+                    node: payload.node
+                }));
+            }
+        } catch (err) {
+            this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
+                status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
+                message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
+                task: "deprovision",
+                nodeType: "worker",
+                node: payload.node
             }));
         }
     }

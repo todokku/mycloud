@@ -179,7 +179,7 @@ class MqttController {
                     await TaskController.requestDeprovisionWorker(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/deprovision_master`)) { // Expects response
-                    await TaskRuntimeController.deprovision_master(topicSplit, JSON.parse(message.toString()));
+                    await TaskController.requestDeprovisionMaster(topicSplit, JSON.parse(message.toString()));
                 } 
                 else if(topic.startsWith(`${queryBase}/provision_worker`)) { // Expects response
                     await TaskController.requestProvisionWorker(topicSplit, JSON.parse(message.toString()));

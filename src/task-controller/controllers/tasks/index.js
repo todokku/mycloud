@@ -209,15 +209,65 @@ class TaskController {
     static async processScheduledDeprovisionWorkspaceResources(task) {
         task.payload = JSON.parse(task.payload);
         console.log(JSON.stringify(task.payload, null, 4));
-        // TODO
 
-        // Halt and destroy all VMs
-        // Delete workspace base folder
-        // Look up all gluster volumes provisioned & deprovision them from the Gluster network
-        // Delete Workspace from DB
-        // Delete Workspace tasks from DB
+        try {
+            // All good, create workspace cluster
+            await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                "type": "INFO",
+                "step": "DEPROVISION-WORKSPACE",
+                "component": "task-controller",
+                "ts": new Date().toISOString()
+            });
 
+            // Look up all gluster volumes provisioned & deprovision them from the Gluster network
+            let allGlusterVolumeIds = task.payload[0].params.glusterVolumeIds;
+            for(let i=0; i<allGlusterVolumeIds.length; i++) {
+                let volumeGlusterHosts = await DBController.getGlusterHostsByVolumeId(allGlusterVolumeIds[i]);
+                await this.mqttController.queryRequestResponse(volumeGlusterHosts[0].ip, "deprovision_gluster_volume", {
+                    "volumeId": allGlusterVolumeIds[i]
+                }, 60 * 1000 * 15);
+            }
 
+            // Halt and destroy all VMs
+            // Delete workspace base folder
+            // Return leased IPs
+            let allNodesAndHosts = task.payload[0].params.k8sNodes;
+            let workerNodes = allNodesAndHosts.filter(n => n.nodeType == "WORKER");
+            let masterNodes = allNodesAndHosts.filter(n => n.nodeType == "MASTER");
+            for(let i=0; i<allNodesAndHosts.length; i++) {
+                await TaskRuntimeController.deprovisionK8SWorker(
+                    masterNodes[0],
+                    masterNodes[0].k8s_host,
+                    workerNodes[i], 
+                    workerNodes[i].k8s_host
+                );
+            }
+
+            for(let i=0; i<masterNodes.length; i++) {
+                await TaskRuntimeController.deprovisionK8SMaster(
+                    masterNodes[i],
+                    masterNodes[i].k8s_host
+                );
+            }
+
+            // Delete Workspace DB entry
+            await DBController.deleteWorkspace(task.payload[0].params.k8sNodes[0].workspaceId)
+            
+            await DBController.updateTaskStatus(task, "DONE", {
+                "type": "INFO",
+                "step": "DEPROVISION-WORKSPACE",
+                "component": "task-controller",
+                "ts": new Date().toISOString()
+            });
+        } catch (error) {
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type": "ERROR",
+                "step": "DEPROVISION-WORKSPACE",
+                "component": "task-controller",
+                "message": error.message ? error.message : "Could not create k8s cluster",
+                "ts": new Date().toISOString()
+            });
+        }
     }
 }
 

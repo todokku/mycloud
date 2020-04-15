@@ -328,6 +328,23 @@ class TaskRuntimeController {
     }
 
     /**
+     * deprovisionK8SMaster
+     * @param {*} masterNode 
+     * @param {*} masterHost 
+     */
+    static async deprovisionK8SMaster(masterNode, masterHost) {
+        let response = await this.mqttController.queryRequestResponse(masterHost.ip, "deprovision_master", {
+            "node": masterNode,
+            "host": masterHost
+        }, 60 * 1000 * 15);
+        if(response.data.status != 200){
+            const error = new Error(response.data.message);
+            error.code = response.data.status;
+            throw error;
+        }
+    }
+
+    /**
      * detatchK8SWorker
      * @param {*} node 
      * @param {*} host 
@@ -345,21 +362,7 @@ class TaskRuntimeController {
         return response;
     }
 
-    /**
-     * deprovisionK8SMaster
-     * @param {*} masterNode 
-     * @param {*} masterHost 
-     */
-    static async deprovisionK8SMaster(masterNode, masterHost) {
-        let response = await this.mqttController.queryRequestResponse(masterHost.ip, "deprovision_master", {
-            "masterNode": masterNode
-        }, 60 * 1000 * 15);
-        if(response.data.status != 200){
-            const error = new Error(response.data.message);
-            error.code = response.data.status;
-            throw error;
-        }
-    }
+    
 
     /**
      * taintK8SMaster
@@ -533,14 +536,7 @@ class TaskRuntimeController {
                             successAttach.push(vbObj);
 
                             // NOTE: Probably not necessary, mounting the volume will sync existing folders from the gluster network
-                            // // Mount service and app folders if any
-                            // for(let i=0; i<allServices.length; i++){
-                            //     await this.mqttController.queryRequestResponse(newNodeProfile.host.ip, "create_pv_directory", {
-                            //         "node": newNode,
-                            //         "volume": targetV,
-                            //         "subFolderName": `srv-${allServices[i].name}`
-                            //     }, 60 * 1000 * 3);
-                            // }
+                          
                         } else if(targetV.type == "local"){
                             this.mqttController.logEvent(socketId, "info", `Attaching local volume ${y+1}/${boundVolumes.length} to new node ${counter}/${deltaProvisioning}`);
                             await TaskVolumeController.attachLocalVolumeToVM(workspaceId, newNodeProfile, targetV);
@@ -619,9 +615,6 @@ class TaskRuntimeController {
                             "node": workerNode,
                             "host": workerHost
                         }], false)
-
-                        // await this.detatchK8SWorker(masterNode, masterHost, workerNode, workerHost);
-                        // await this.deprovisionK8SWorker(masterNode, masterHost, workerNode, workerHost);
                     } catch (error) {
                         console.log("rollback error =>", error);
                     }

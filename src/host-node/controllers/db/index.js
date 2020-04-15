@@ -536,10 +536,10 @@ class DBController {
     }
 
     /**
-     * deleteK8SWorkerNode
+     * deleteK8SNode
      * @param {*} id 
      */
-    static async deleteK8SWorkerNode(id) {
+    static async deleteK8SNode(id) {
         let _client = await this.pool.connect();
         try {
             let query = `DELETE FROM k8s_nodes WHERE "id" = $1`;
