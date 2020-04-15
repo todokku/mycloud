@@ -208,7 +208,16 @@ class TaskController {
      */
     static async processScheduledDeprovisionWorkspaceResources(task) {
         task.payload = JSON.parse(task.payload);
+        console.log(JSON.stringify(task.payload, null, 4));
         // TODO
+
+        // Halt and destroy all VMs
+        // Delete workspace base folder
+        // Look up all gluster volumes provisioned & deprovision them from the Gluster network
+        // Delete Workspace from DB
+        // Delete Workspace tasks from DB
+
+
     }
 }
 
