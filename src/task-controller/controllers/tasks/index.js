@@ -234,7 +234,7 @@ class TaskController {
             let allNodesAndHosts = task.payload[0].params.k8sNodes;
             let workerNodes = allNodesAndHosts.filter(n => n.nodeType == "WORKER");
             let masterNodes = allNodesAndHosts.filter(n => n.nodeType == "MASTER");
-            for(let i=0; i<allNodesAndHosts.length; i++) {
+            for(let i=0; i<workerNodes.length; i++) {
                 await TaskRuntimeController.deprovisionK8SWorker(
                     masterNodes[0],
                     masterNodes[0].k8s_host,

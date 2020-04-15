@@ -557,14 +557,7 @@ class TaskController {
                 glusterVolumeIds: []
             };
             for(let y=0; y<wsVolumes.data.length; y++){
-                // let volRefData = {
-                //     "id": wsVolumes.data[y].id,
-                //     "name": wsVolumes.data[y].name,
-                //     "type": wsVolumes.data[y].type,
-                //     "secret": wsVolumes.data[y].secret
-                // };
                 cleanupPayload.glusterVolumeIds.push(wsVolumes.data[y].id);
-              
             }
 
             await this.schedule(
@@ -579,8 +572,6 @@ class TaskController {
                 }],
                 params
             );
-
-            // await this.app.service('workspaces').remove(targetWs.data[0].id, params);
             return {"code": 200, "id": targetWs.data[0].id};
 
         } else {
