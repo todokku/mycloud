@@ -46,9 +46,8 @@ class NGinxController {
     /**
      * setUpstreamServersForCluster
      * @param {*} serverNodes 
-     * @param {*} skipReload 
      */
-    static async setUpstreamServersForCluster(serverNodes, skipReload) {
+    static async setUpstreamServersForCluster(serverNodes) {
         while(bussy){
             await _sleep(2000);
         }
@@ -72,6 +71,13 @@ class NGinxController {
                             _upstream._remove('server', y);
                         }
                     }
+                    if(_upstream.server._value) {
+                        let ipSplit = _upstream.server._value.split(":");
+                        existingIps.push(ipSplit[0]);
+                        if(!serverNodes.find(node => node.ip == ipSplit[0])){
+                            _upstream._remove('server');
+                        }
+                    }
                 }
                 else {
                     let ipSplit = _upstream.server._value.split(":");
@@ -87,7 +93,6 @@ class NGinxController {
                     _upstream._add('server', `${node.ip}:${upstreamPort}`);
                 });
             }
-
 
             if(configHttp.nginx.upstream){
                 // If more than one upstream server
