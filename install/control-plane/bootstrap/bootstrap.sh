@@ -58,6 +58,7 @@ mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
 
 cp /home/vagrant/mycloud/install/control-plane/nginx_resources/nginx.conf /home/vagrant/.mycloud/nginx
 cp /home/vagrant/mycloud/install/control-plane/nginx_resources/registry.conf /home/vagrant/.mycloud/nginx/conf.d
+cp /home/vagrant/mycloud/install/control-plane/nginx_resources/keycloak.conf /home/vagrant/.mycloud/nginx/conf.d
 touch /home/vagrant/.mycloud/nginx/conf.d/default.conf
 touch /home/vagrant/.mycloud/nginx/conf.d/tcp.conf
 mkdir -p /home/vagrant/.mycloud/postgres/data
@@ -87,24 +88,25 @@ echo "[TASK 10] Enable ssh password authentication"
 sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 systemctl reload sshd > /dev/null 2>&1
 
+mkdir -p /opt/docker/containers/nginx/certs
+
 echo "[TASK 11] Install Docker registry"
 
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
-mkdir -p /opt/docker/containers/docker-registry/certs
 docker run --entrypoint htpasswd registry -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd > /dev/null 2>&1 
 docker run --entrypoint htpasswd registry -bn mycloud_master_user mycloud_master_pass > /opt/docker/containers/nginx-registry/auth/htpasswd > /dev/null 2>&1 
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.registry.com\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
-    -keyout /opt/docker/containers/docker-registry/certs/docker-registry.key \
-    -out /opt/docker/containers/docker-registry/certs/docker-registry.crt > /dev/null 2>&1 
+    -keyout /opt/docker/containers/nginx/certs/docker-registry.key \
+    -out /opt/docker/containers/nginx/certs/docker-registry.crt > /dev/null 2>&1 
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nregistry.mycloud.org\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
-    -keyout /opt/docker/containers/docker-registry/certs/nginx-registry.key \
-    -out /opt/docker/containers/docker-registry/certs/nginx-registry.crt > /dev/null 2>&1 
+    -keyout /opt/docker/containers/nginx/certs/nginx-registry.key \
+    -out /opt/docker/containers/nginx/certs/nginx-registry.crt > /dev/null 2>&1 
 
 su - vagrant -c '
 docker pull registry:2.7.1 > /dev/null 2>&1 
 docker run -d \
-    --name docker-registry \
+    --name mycloud-registry \
     --restart=always -p 5000:5000 \
     -v /mnt/docker-registry/data/:/var/lib/registry \
     -v /opt/docker/containers/docker-registry/auth:/auth \
@@ -112,11 +114,45 @@ docker run -d \
     -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
     -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
     -e REGISTRY_STORAGE_DELETE_ENABLED=true \
-    -v /opt/docker/containers/docker-registry/certs:/certs \
+    -v /opt/docker/containers/nginx/certs:/certs \
     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/docker-registry.crt \
     -e REGISTRY_HTTP_TLS_KEY=/certs/docker-registry.key \
     registry:2.7.1
 ' > /dev/null 2>&1
+
+
+
+
+
+
+
+
+echo "[TASK 12] Install Keycloak"
+echo "$API_IP mycloud.keycloak.com" >> /etc/hosts
+mkdir -p /opt/docker/containers/nginx/certs
+printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.keycloak.com\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -extensions v3_req -days 365 \
+    -keyout /opt/docker/containers/nginx/certs/nginx-keycloak.key \
+    -out /opt/docker/containers/nginx/certs/nginx-keycloak.crt > /dev/null 2>&1 
+su - vagrant -c '
+docker pull jboss/keycloak:latest > /dev/null 2>&1 
+docker run -d \
+    --name mycloud-keycloak \
+    --restart=always -p 8888:8080 \
+    -e "KEYCLOAK_PASSWORD=pass" \
+    -e "KEYCLOAK_USER=admin" \
+    -e "PROXY_ADDRESS_FORWARDING=true" \
+    jboss/keycloak:latest
+' > /dev/null 2>&1
+
+
+
+
+
+
+
+
+
+
 
 # Install Nginx
 echo "[TASK 12] Install NGinx"
@@ -130,7 +166,7 @@ docker run -d \
     -v /home/vagrant/.mycloud/nginx/nginx.conf:/etc/nginx/nginx.conf \
     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
-    -v /opt/docker/containers/docker-registry/certs:/certs \
+    -v /opt/docker/containers/nginx/certs:/certs \
     nginx:1.17.9-alpine
 ' > /dev/null 2>&1
 
@@ -215,8 +251,8 @@ docker run -d \
 
 echo "[TASK 17] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"
-CRT="$(cat /opt/docker/containers/docker-registry/certs/docker-registry.crt)"
-CRT_NGINX="$(cat /opt/docker/containers/docker-registry/certs/nginx-registry.crt)"
+CRT="$(cat /opt/docker/containers/nginx/certs/docker-registry.crt)"
+CRT_NGINX="$(cat /opt/docker/containers/nginx/certs/nginx-registry.crt)"
 
 echo "#!/bin/bash"  >> /home/vagrant/configPrivateRegistry.sh
 # echo "echo \"$M_IP mycloud.registry.com registry.mycloud.org docker-registry\"  >> /etc/hosts" >> /home/vagrant/configPrivateRegistry.sh
