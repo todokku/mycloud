@@ -67,6 +67,20 @@ dependencies () {
         fi
     fi
 
+    JQ_EXISTS=$(command -v jq)
+    if [ "$JQ_EXISTS" == "" ]; then
+        if [ "$DISTRO" == "ubuntu" ]; then
+           sudo apt-get install -y jq &> /dev/null
+        elif [ "$DISTRO" == "redhat" ]; then
+            if [ "$MAJ_V" == "7" ]; then
+                sudo yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm &> /dev/null
+                sudo yum install jq -y &> /dev/null
+            elif [ "$MAJ_V" == "8" ]; then
+                sudo dnf -y install jq &> /dev/null
+            fi
+        fi
+    fi
+
     VIRTUALBOX_EXISTS=$(command -v vboxmanage)
     if [ "$VIRTUALBOX_EXISTS" == "" ]; then
         if [ "$DISTRO" == "ubuntu" ]; then
@@ -139,6 +153,7 @@ collect_informations() {
     echo ""
     echo "==> Specify a password for the main database:"
     read PSQL_P
+    echo ""
     echo "==> Specify a password for the Keycloak database:"
     read KEYCLOAK_P
     echo ""
@@ -176,14 +191,71 @@ install_core_components() {
     sed -i "s/<VB_MEMORY>/$VB_MEMORY/g" ./Vagrantfile
     sed -i "s/<VB_CPUS>/$VB_CPUS/g" ./Vagrantfile
     sed -i "s/<REGISTRY_SIZE>/$REGISTRY_SIZE/g" ./Vagrantfile
-
+    echo ""
     vagrant up
     if [ $? -eq 0 ]; then
-        echo "[DONE] MyCloud control-plane deployed successfully!"
-    else
-        echo "[ERROR] The control plane VM couls not be started!"
-    fi
-}
+        echo "To finalyze the setup, do the following:"
+        echo ""
+        echo "  1. Add the following line to your '/etc/hosts' file: $VM_IP mycloud.keycloak.com"
+        echo "  2. Open a browser and go to 'https://mycloud.keycloak.com/auth/admin/master/console/#/realms/master/clients'"
+        echo "  3. Keycloak uses a self signed certificate, add an exception to your browser to access the website"
+        echo "  4. Login to the Keycloak Admin page with the credentials 'admin/$KEYCLOAK_P'"
+        echo "  3. From the 'Clients' section, click on the client 'master-realm'"
+        echo "  4. Change 'Access Type' value to 'confidential'"
+        echo "  5. Enable the boolean value 'Service Accounts Enabled'"
+        echo "  6. Set 'Valid Redirect URIs' value to '*'"
+        echo "  7. Save those changes (button at the bottom of the page)"
+        echo "  8. Go to the 'Service Account Roles' tab and add the role 'admin' to the 'Assigned Roles' box"
+        echo "  9. Click on tab 'Credentials'"
+        echo "  10. When ready, copy and paste the 'Secret' value into this terminal, then press enter:"
+        read KEYCLOAK_SECRET
+
+        # docker exec -u postgres mycloud-postgresql psql postgres postgres SELECT * FROM USERS
+
+        KC_TOKEN=$(curl -k -X POST \
+            'https://mycloud.keycloak.com/auth/realms/master/protocol/openid-connect/token' \
+            -H "Content-Type: application/x-www-form-urlencoded"  \
+            -d "grant_type=client_credentials" \
+            -d "client_id=master-realm" \
+            -d "client_secret=$KEYCLOAK_SECRET" \
+            -d "username=admin"  \
+            -d "password=$KEYCLOAK_P" \
+            -d "scope=openid" | jq -r '.access_token')
+
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            --data '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients
+
+
+        MC_TOKEN=$(curl http://$VM_IP:3030/authentication/ \
+            -H 'Content-Type: application/json' \
+            --data-binary '{ "strategy": "local", "email": "mdundek@gmail.com", "password": "li14ebe14" }' | jq -r '.accessToken')
+
+        echo "MC TOKEN IS => $MC_TOKEN"
+        # curl -k --request POST \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     --data '{}' \
+        #     http://$VM_IP:3030/
+
+
+        # curl -k --request POST \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $KC_TOKEN" \
+        #     --data '{ "username": "test-user-2", "lastName": "test", "firstName": "joe", "email": "test2@mail.de", "enabled": true, "credentials":[{ "type": "password", "value": "test", "temporary": false }] }' \
+        #     https://mycloud.keycloak.com/auth/admin/realms/master/users
+
+
+                echo "[DONE] MyCloud control-plane deployed successfully!"
+            else
+                echo "[ERROR] The control plane VM couls not be started!"
+            fi
+        }
 
 # Figure out what distro we are running
 distro

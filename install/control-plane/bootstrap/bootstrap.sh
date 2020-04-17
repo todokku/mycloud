@@ -124,7 +124,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Postgres
-echo "[TASK 13] Install PostgreSQL"
+echo "[TASK 12] Install PostgreSQL"
 su - vagrant -c '
 docker pull postgres:12.2-alpine > /dev/null 2>&1 
 docker run -d \
@@ -144,7 +144,7 @@ docker run -d \
 sleep 15 # Give time to Postgres to start and init DB
 
 # Install Keycloak
-echo "[TASK 12] Install Keycloak"
+echo "[TASK 13] Install Keycloak"
 echo "$API_IP mycloud.keycloak.com" >> /etc/hosts
 
 NGINX_CRT_FOLDER=/opt/docker/containers/nginx/certs
@@ -183,21 +183,21 @@ EOT
 
 openssl genrsa -out \
     $NGINX_CRT_FOLDER/rootCA.key \
-    4096
+    4096 > /dev/null 2>&1
 
 openssl req -x509 -new -nodes \
     -key $NGINX_CRT_FOLDER/rootCA.key -sha256 -days 1024 \
     -out $NGINX_CRT_FOLDER/rootCA.crt \
-    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com
+    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com > /dev/null 2>&1
 
 openssl genrsa \
     -out $NGINX_CRT_FOLDER/nginx-keycloak.key \
-    2048
+    2048 > /dev/null 2>&1
 
 openssl req -config ./ssl.conf -new \
     -key $NGINX_CRT_FOLDER/nginx-keycloak.key \
     -out $NGINX_CRT_FOLDER/nginx-keycloak.csr \
-    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com
+    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com > /dev/null 2>&1
 
 openssl x509 -req \
     -in $NGINX_CRT_FOLDER/nginx-keycloak.csr \
@@ -205,7 +205,7 @@ openssl x509 -req \
     -CAkey $NGINX_CRT_FOLDER/rootCA.key \
     -CAcreateserial \
     -out $NGINX_CRT_FOLDER/nginx-keycloak.crt \
-    -days 500 -sha256 -extensions v3_req -extfile ssl.conf
+    -days 500 -sha256 -extensions v3_req -extfile ssl.conf > /dev/null 2>&1
 
 su - vagrant -c '
 docker pull jboss/keycloak:latest > /dev/null 2>&1 
@@ -225,7 +225,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Nginx
-echo "[TASK 12] Install NGinx"
+echo "[TASK 14] Install NGinx"
 su - vagrant -c '
 docker pull nginx:1.17.9-alpine > /dev/null 2>&1 
 docker run -d \
@@ -241,7 +241,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Mosquitto
-echo "[TASK 14] Install Mosquitto"
+echo "[TASK 15] Install Mosquitto"
 su - vagrant -c '
 docker pull eclipse-mosquitto:1.6 > /dev/null 2>&1 
 touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
@@ -260,7 +260,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Run API server
-echo "[TASK 15] Install MyCloud API Server"
+echo "[TASK 16] Install MyCloud API Server"
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/api
 docker build -t mycloud-api:0.9 . > /dev/null 2>&1 
@@ -284,7 +284,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Run controller component
-echo "[TASK 16] Install MyCloud task controller"
+echo "[TASK 17] Install MyCloud task controller"
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/task-controller
 docker build -t mycloud-ctrl:0.9 . > /dev/null 2>&1 
@@ -305,7 +305,7 @@ docker run -d \
     mycloud-ctrl:0.9
 ' > /dev/null 2>&1
 
-echo "[TASK 17] Generate client registry setup script"
+echo "[TASK 18] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"
 CRT="$(cat /opt/docker/containers/nginx/certs/docker-registry.crt)"
 CRT_NGINX="$(cat /opt/docker/containers/nginx/certs/nginx-registry.crt)"
