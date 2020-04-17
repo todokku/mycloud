@@ -15,6 +15,9 @@ echo "[TASK 9] Configuring Docker registry on IP $1"
 sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/home/vagrant/configPrivateRegistry.sh /configPrivateRegistry.sh
 /configPrivateRegistry.sh
 
+echo "[TASK 10] Configuring Keycloak"
+sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/opt/docker/containers/nginx/certs/rootCA.crt /etc/kubernetes/pki/rootCA.crt
+
 # Initialize Kubernetes cluster
 echo "[TASK M.1] Initialize Kubernetes Cluster"
 M_IP="$(hostname -I | cut -d' ' -f2)"
@@ -44,6 +47,12 @@ su - vagrant -c "kubectl apply -f https://github.com/coreos/flannel/raw/master/D
 # Enable PodPresets
 sed -i "s/enable-admission-plugins=NodeRestriction/enable-admission-plugins=NodeRestriction,PodPreset/g" /etc/kubernetes/manifests/kube-apiserver.yaml
 sed -i '/- kube-apiserver/a\ \ \ \ - --runtime-config=settings.k8s.io/v1alpha1=true' /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# Configure OpenID Connect for Keycloak
+sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-issuer-url=https://mycloud.keycloak.com/auth/realms/master' /etc/kubernetes/manifests/kube-apiserver.yaml
+sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-username-claim=email' /etc/kubernetes/manifests/kube-apiserver.yaml
+sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-client-id=kubernetes-cluster' /etc/kubernetes/manifests/kube-apiserver.yaml
+sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-ca-file=/etc/kubernetes/pki/rootCA.crt' /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Install Gluster client
 echo "[TASK M.4] Install Gluster engine"

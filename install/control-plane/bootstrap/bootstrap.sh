@@ -55,7 +55,9 @@ su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/
 
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
+mkdir -p /home/vagrant/.mycloud/postgres/pg-init-scripts
 
+cp /home/vagrant/mycloud/install/control-plane/pg_resources/create-multiple-postgresql-databases.sh /home/vagrant/.mycloud/postgres/pg-init-scripts
 cp /home/vagrant/mycloud/install/control-plane/nginx_resources/nginx.conf /home/vagrant/.mycloud/nginx
 cp /home/vagrant/mycloud/install/control-plane/nginx_resources/registry.conf /home/vagrant/.mycloud/nginx/conf.d
 cp /home/vagrant/mycloud/install/control-plane/nginx_resources/keycloak.conf /home/vagrant/.mycloud/nginx/conf.d
@@ -120,39 +122,104 @@ docker run -d \
     registry:2.7.1
 ' > /dev/null 2>&1
 
+# Install Postgres
+echo "[TASK 13] Install PostgreSQL"
+su - vagrant -c '
+docker pull postgres:12.2-alpine > /dev/null 2>&1 
+docker run -d \
+    --name mycloud-postgresql \
+    --restart unless-stopped \
+    --network host \
+    -v /home/vagrant/.mycloud/postgres/data:/var/lib/postgresql/data \
+    -v /home/vagrant/.mycloud/postgres/pg-init-scripts:/docker-entrypoint-initdb.d \
+    -e POSTGRES_MULTIPLE_DATABASES=postgres,keycloak \
+    -e POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"' \
+    -e POSTGRES_USER='"$POSTGRES_USER"' \
+    postgres:12.2-alpine
+' > /dev/null 2>&1
 
+sleep 15 # Give time to Postgres to start and init DB
 
-
-
-
-
-
+# Install Keycloak
 echo "[TASK 12] Install Keycloak"
 echo "$API_IP mycloud.keycloak.com" >> /etc/hosts
-mkdir -p /opt/docker/containers/nginx/certs
-printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.keycloak.com\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -extensions v3_req -days 365 \
-    -keyout /opt/docker/containers/nginx/certs/nginx-keycloak.key \
-    -out /opt/docker/containers/nginx/certs/nginx-keycloak.crt > /dev/null 2>&1 
+
+NGINX_CRT_FOLDER=/opt/docker/containers/nginx/certs
+mkdir -p $NGINX_CRT_FOLDER
+
+cat <<EOT >> ssl.conf
+[ req ]
+distinguished_name	= req_distinguished_name
+attributes		= req_attributes
+
+[ req_distinguished_name ]
+countryName			= Country Name (2 letter code)
+countryName_min			= 2
+countryName_max			= 2
+stateOrProvinceName		= State or Province Name (full name)
+localityName			= Locality Name (eg, city)
+0.organizationName		= Organization Name (eg, company)
+organizationalUnitName		= Organizational Unit Name (eg, section)
+commonName			= Common Name (eg, fully qualified host name)
+commonName_max			= 64
+emailAddress			= Email Address
+emailAddress_max		= 64
+
+[ req_attributes ]
+challengePassword		= A challenge password
+challengePassword_min		= 4
+challengePassword_max		= 20
+
+req_extensions = v3_req
+
+[ v3_req ]
+# Extensions to add to a certificate request
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+EOT
+
+openssl genrsa -out \
+    $NGINX_CRT_FOLDER/rootCA.key \
+    4096
+
+openssl req -x509 -new -nodes \
+    -key $NGINX_CRT_FOLDER/rootCA.key -sha256 -days 1024 \
+    -out $NGINX_CRT_FOLDER/rootCA.crt \
+    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com
+
+openssl genrsa \
+    -out $NGINX_CRT_FOLDER/nginx-keycloak.key \
+    2048
+
+openssl req -config ./ssl.conf -new \
+    -key $NGINX_CRT_FOLDER/nginx-keycloak.key \
+    -out $NGINX_CRT_FOLDER/nginx-keycloak.csr \
+    -subj /C=FR/ST=Garonne/L=Toulouse/O=mycloud/OU=ITLAB/CN=mycloud.keycloak.com/emailAddress=mycloud@mycloud.com
+
+openssl x509 -req \
+    -in $NGINX_CRT_FOLDER/nginx-keycloak.csr \
+    -CA $NGINX_CRT_FOLDER/rootCA.crt \
+    -CAkey $NGINX_CRT_FOLDER/rootCA.key \
+    -CAcreateserial \
+    -out $NGINX_CRT_FOLDER/nginx-keycloak.crt \
+    -days 500 -sha256 -extensions v3_req -extfile ssl.conf
+
 su - vagrant -c '
 docker pull jboss/keycloak:latest > /dev/null 2>&1 
 docker run -d \
     --name mycloud-keycloak \
     --restart=always -p 8888:8080 \
-    -e "KEYCLOAK_PASSWORD=pass" \
-    -e "KEYCLOAK_USER=admin" \
-    -e "PROXY_ADDRESS_FORWARDING=true" \
+    -e DB_VENDOR=POSTGRES \
+    -e KEYCLOAK_PASSWORD=pass \
+    -e KEYCLOAK_USER=admin \
+    -e DB_DATABASE=keycloak \
+    -e DB_PORT=5432 \
+    -e DB_USER=postgres \
+    -e DB_PASSWORD=postgrespass \
+    -e DB_ADDR=192.168.0.97 \
+    -e PROXY_ADDRESS_FORWARDING=true \
     jboss/keycloak:latest
 ' > /dev/null 2>&1
-
-
-
-
-
-
-
-
-
-
 
 # Install Nginx
 echo "[TASK 12] Install NGinx"
@@ -168,20 +235,6 @@ docker run -d \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
     nginx:1.17.9-alpine
-' > /dev/null 2>&1
-
-# Install Postgres
-echo "[TASK 13] Install PostgreSQL"
-su - vagrant -c '
-docker pull postgres:12.2-alpine > /dev/null 2>&1 
-docker run -d \
-    --name mycloud-postgresql \
-    --restart unless-stopped \
-    --network host \
-    -v /home/vagrant/.mycloud/postgres/data:/var/lib/postgresql/data \
-    -e POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"' \
-    -e POSTGRES_USER='"$POSTGRES_USER"' \
-    postgres:12.2-alpine
 ' > /dev/null 2>&1
 
 # Install Mosquitto

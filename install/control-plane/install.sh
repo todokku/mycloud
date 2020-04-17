@@ -153,7 +153,7 @@ collect_informations() {
         exit 1
     fi
     echo ""
-    echo "==> What disk size should the Docker-Registry have in total:"
+    echo "==> What disk size (GB) should the Docker-Registry have in total:"
     read REGISTRY_SIZE
 }
 
