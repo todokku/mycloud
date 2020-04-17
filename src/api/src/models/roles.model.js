@@ -9,6 +9,10 @@ module.exports = function (app) {
     name: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    kcUUID: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     hooks: {

@@ -21,11 +21,7 @@ exports.Roles = class Roles extends Service {
                     // Create roles if not exist
                     let allRoles = await app.service('roles').find({});
                     let initialRoles =  [{
-                        name: "SYSADMIN",
-                    }, {
-                        name: "ACCOUNT_OWNER",
-                    }, {
-                        name: "ACCOUNT_USER",
+                        name: "mc-sysadmin",
                     }];
                     
                     for(let i=0; i<initialRoles.length; i++) {
@@ -36,7 +32,7 @@ exports.Roles = class Roles extends Service {
                     
                     // Create sysadmin user if not exist
                     let sysAdmRole = await app.service('roles').find({
-                        "name": "SYSADMIN"
+                        "name": "mc-sysadmin"
                     });
         
                     if(sysAdmRole.total == 0) {

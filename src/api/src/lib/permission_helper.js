@@ -9,7 +9,7 @@ class PermissionHelper {
     static async initRoles(context) {
         if(!this.roles){
             this.roles = (await context.app.service('roles').find({ query: {
-                $or: [{ name: "ACCOUNT_OWNER" },{ name: "SYSADMIN" }]
+                $or: [{ name: "mc-account-owner" },{ name: "mc-sysadmin" }]
             }})).data;
         }
     }
@@ -23,7 +23,7 @@ class PermissionHelper {
         if(!context.params.user){
             return false;
         }
-        if(this.roles.find(r => r.id == context.params.user.roleId && r.name == "SYSADMIN")){
+        if(this.roles.find(r => r.id == context.params.user.roleId && r.name == "mc-sysadmin")){
             return true;
         } 
         return false;
