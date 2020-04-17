@@ -133,9 +133,9 @@ docker run -d \
     --network host \
     -v /home/vagrant/.mycloud/postgres/data:/var/lib/postgresql/data \
     -v /home/vagrant/.mycloud/postgres/pg-init-scripts:/docker-entrypoint-initdb.d \
-    -e POSTGRES_PASSWORD='$POSTGRES_PASSWORD' \
+    -e POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"' \
     -e KEYCLOAK_USER=keycloak \
-    -e KEYCLOAK_PASS='$KEYCLOAK_PASSWORD' \
+    -e KEYCLOAK_PASS='"$KEYCLOAK_PASSWORD"' \
     -e MYCLOUD_USER=mycloud \
     -e MYCLOUD_PASS=mycloudpass \
     postgres:12.2-alpine
@@ -213,13 +213,13 @@ docker run -d \
     --name mycloud-keycloak \
     --restart=always -p 8888:8080 \
     -e DB_VENDOR=POSTGRES \
-    -e KEYCLOAK_PASSWORD='$KEYCLOAK_PASSWORD' \
+    -e KEYCLOAK_PASSWORD='"$KEYCLOAK_PASSWORD"' \
     -e KEYCLOAK_USER=admin \
     -e DB_DATABASE=keycloak \
     -e DB_PORT=5432 \
     -e DB_USER=keycloak \
-    -e DB_PASSWORD='$KEYCLOAK_PASSWORD' \
-    -e DB_ADDR='$DB_HOST' \
+    -e DB_PASSWORD='"$KEYCLOAK_PASSWORD"' \
+    -e DB_ADDR='"$DB_HOST"' \
     -e PROXY_ADDRESS_FORWARDING=true \
     jboss/keycloak:latest
 ' > /dev/null 2>&1
