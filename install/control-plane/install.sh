@@ -137,8 +137,10 @@ collect_informations() {
         exit 1
     fi
     echo ""
-    echo "==> Specify a PostgreSQL password:"
+    echo "==> Specify a password for the main database:"
     read PSQL_P
+    echo "==> Specify a password for the Keycloak database:"
+    read KEYCLOAK_P
     echo ""
     echo "==> Specify a MyCloud PaaS master username:"
     read MC_U
@@ -168,6 +170,7 @@ install_core_components() {
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
     sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
+    sed -i "s/<KEYCLOAK_P>/$KEYCLOAK_P/g" ./Vagrantfile
     sed -i "s/<MC_U>/$MC_U/g" ./Vagrantfile
     sed -i "s/<MC_P>/$MC_P/g" ./Vagrantfile
     sed -i "s/<VB_MEMORY>/$VB_MEMORY/g" ./Vagrantfile

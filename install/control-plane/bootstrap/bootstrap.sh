@@ -9,8 +9,9 @@ EOF
 echo "export TERM=xterm" >> /etc/bashrc
 
 POSTGRES_PASSWORD="$1"
-API_SYSADMIN_USER="$2"
-API_SYSADMIN_PASSWORD="$3"
+KEYCLOAK_PASSWORD="$2"
+API_SYSADMIN_USER="$3"
+API_SYSADMIN_PASSWORD="$4"
 
 API_IP=$(hostname -I | cut -d' ' -f2)
 
@@ -132,9 +133,11 @@ docker run -d \
     --network host \
     -v /home/vagrant/.mycloud/postgres/data:/var/lib/postgresql/data \
     -v /home/vagrant/.mycloud/postgres/pg-init-scripts:/docker-entrypoint-initdb.d \
-    -e POSTGRES_MULTIPLE_DATABASES=postgres,keycloak \
-    -e POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"' \
-    -e POSTGRES_USER='"$POSTGRES_USER"' \
+    -e POSTGRES_PASSWORD='$POSTGRES_PASSWORD' \
+    -e KEYCLOAK_USER=keycloak \
+    -e KEYCLOAK_PASS='$KEYCLOAK_PASSWORD' \
+    -e MYCLOUD_USER=mycloud \
+    -e MYCLOUD_PASS=mycloudpass \
     postgres:12.2-alpine
 ' > /dev/null 2>&1
 
@@ -210,13 +213,13 @@ docker run -d \
     --name mycloud-keycloak \
     --restart=always -p 8888:8080 \
     -e DB_VENDOR=POSTGRES \
-    -e KEYCLOAK_PASSWORD=pass \
+    -e KEYCLOAK_PASSWORD='$KEYCLOAK_PASSWORD' \
     -e KEYCLOAK_USER=admin \
     -e DB_DATABASE=keycloak \
     -e DB_PORT=5432 \
-    -e DB_USER=postgres \
-    -e DB_PASSWORD=postgrespass \
-    -e DB_ADDR=192.168.0.97 \
+    -e DB_USER=keycloak \
+    -e DB_PASSWORD='$KEYCLOAK_PASSWORD' \
+    -e DB_ADDR='$DB_HOST' \
     -e PROXY_ADDRESS_FORWARDING=true \
     jboss/keycloak:latest
 ' > /dev/null 2>&1
