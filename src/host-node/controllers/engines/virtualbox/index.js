@@ -373,6 +373,9 @@ class EngineController {
             await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
             await OSController.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
 
+            // Update hostnames with keycloak domain
+            await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.keycloak.com" >> /etc/hosts`, true);
+
             // Install nginx ingress controller on cluster
             await OSController.sshExec(masterIpHost[0], [
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,

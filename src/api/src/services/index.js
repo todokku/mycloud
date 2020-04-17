@@ -17,6 +17,7 @@ const certificates = require('./certificates/certificates.service.js');
 const domains = require('./domains/domains.service.js');
 const applications = require('./applications/applications.service.js');
 const routes = require('./routes/routes.service.js');
+const settings = require('./settings/settings.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function (app) {
   app.configure(roles);
@@ -38,4 +39,5 @@ module.exports = function (app) {
   app.configure(domains);
   app.configure(applications);
   app.configure(routes);
+  app.configure(settings);
 };
