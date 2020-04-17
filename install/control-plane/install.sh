@@ -52,7 +52,8 @@ distro() {
 }
 
 dependencies () {
-    echo "[STEP 1] Installing dependencies..."
+    echo ""
+    echo "[PREREQ] Installing dependencies..."
 
     WGET_EXISTS=$(command -v wget)
     if [ "$WGET_EXISTS" == "" ]; then
@@ -131,7 +132,7 @@ dependencies () {
 }
 
 pull_git() {
-    echo "[INIT] Pulling repo from GIT..."
+    echo "[DOWNLOAD] Pulling repo from GIT..."
     if [ ! -d "$HOME/mycloud" ]; then
         mkdir $HOME/mycloud
         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud > /dev/null 2>&1
@@ -210,8 +211,6 @@ install_core_components() {
         echo "  10. When ready, copy and paste the 'Secret' value into this terminal, then press enter:"
         read KEYCLOAK_SECRET
 
-        # docker exec -u postgres mycloud-postgresql psql postgres postgres SELECT * FROM USERS
-
         KC_TOKEN=$(curl -k -X POST \
             'https://mycloud.keycloak.com/auth/realms/master/protocol/openid-connect/token' \
             -H "Content-Type: application/x-www-form-urlencoded"  \
@@ -226,30 +225,26 @@ install_core_components() {
             -H "Accept: application/json" \
             -H "Content-Type:application/json" \
             -H "Authorization: Bearer $KC_TOKEN" \
-            --data '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
+            -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
-
 
         MC_TOKEN=$(curl http://$VM_IP:3030/authentication/ \
             -H 'Content-Type: application/json' \
-            --data-binary '{ "strategy": "local", "email": "mdundek@gmail.com", "password": "li14ebe14" }' | jq -r '.accessToken')
+            --data-binary '{ "strategy": "local", "email": "'"$MC_U"'", "password": "'"$MC_P"'" }' | jq -r '.accessToken')
 
-        echo "MC TOKEN IS => $MC_TOKEN"
-        # curl -k --request POST \
-        #     -H "Accept: application/json" \
-        #     -H "Content-Type:application/json" \
-        #     -H "Authorization: Bearer $MC_TOKEN" \
-        #     --data '{}' \
-        #     http://$VM_IP:3030/
-
-
+        curl -k \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            -X POST \
+            -d '{"key":"KEYCLOAK_SECRET","value":"'"$KEYCLOAK_SECRET"'"}' \
+            http://$VM_IP:3030/settings
+           
         # curl -k --request POST \
         #     -H "Accept: application/json" \
         #     -H "Content-Type:application/json" \
         #     -H "Authorization: Bearer $KC_TOKEN" \
         #     --data '{ "username": "test-user-2", "lastName": "test", "firstName": "joe", "email": "test2@mail.de", "enabled": true, "credentials":[{ "type": "password", "value": "test", "temporary": false }] }' \
         #     https://mycloud.keycloak.com/auth/admin/realms/master/users
-
 
                 echo "[DONE] MyCloud control-plane deployed successfully!"
             else
