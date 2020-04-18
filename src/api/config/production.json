@@ -12,7 +12,8 @@
     "secret": "SVQfBaO5z3xe4wBQdERL7SnEhDA=",
     "authStrategies": [
       "jwt",
-      "local"
+      "local",
+      "keycloak"
     ],
     "jwtOptions": {
       "header": {

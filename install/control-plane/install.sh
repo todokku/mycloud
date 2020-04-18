@@ -211,6 +211,7 @@ install_core_components() {
         echo "  10. When ready, copy and paste the 'Secret' value into this terminal, then press enter:"
         read KEYCLOAK_SECRET
 
+        # Get master token from Keycloak
         KC_TOKEN=$(curl -k -X POST \
             'https://mycloud.keycloak.com/auth/realms/master/protocol/openid-connect/token' \
             -H "Content-Type: application/x-www-form-urlencoded"  \
@@ -221,6 +222,7 @@ install_core_components() {
             -d "password=$KEYCLOAK_P" \
             -d "scope=openid" | jq -r '.access_token')
 
+        # Create client for kubernetes
         curl -k --request POST \
             -H "Accept: application/json" \
             -H "Content-Type:application/json" \
@@ -228,6 +230,51 @@ install_core_components() {
             -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
 
+        # Retrieve client UUID
+        CLIENT_UUID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients?clientId=kubernetes-cluster | jq '.[0].id' | sed 's/[\"]//g')
+
+        # Create roles in Keycloak
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            --data '{"clientRole": true,"name": "mc-sysadmin"}' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
+        SYSADMIN_ROLE_UUID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-sysadmin | jq '.id' | sed 's/[\"]//g')
+
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            --data '{"clientRole": true,"name": "mc-account-owner"}' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
+        ACCOWNER_ROLE_UUID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-owner | jq '.id' | sed 's/[\"]//g')
+
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            --data '{"clientRole": true,"name": "mc-account-user"}' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
+        ACCUSER_ROLE_UUID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-user | jq '.id' | sed 's/[\"]//g')
+        
+        # Login to MyCloud with sysadmin credentials
         MC_TOKEN=$(curl http://$VM_IP:3030/authentication/ \
             -H 'Content-Type: application/json' \
             --data-binary '{ "strategy": "local", "email": "'"$MC_U"'", "password": "'"$MC_P"'" }' | jq -r '.accessToken')
@@ -239,6 +286,34 @@ install_core_components() {
             -d '{"key":"KEYCLOAK_SECRET","value":"'"$KEYCLOAK_SECRET"'"}' \
             http://$VM_IP:3030/settings
            
+        # Get MyCloud sysadmin role ID
+        SYSADMIN_ID=$(curl -k --request GET \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            http://$VM_IP:3030/roles?name=mc-sysadmin | jq '.data | .[0].id' | sed 's/[\"]//g')
+
+        curl -k \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            -X PATCH \
+            -d '{"kcUUID":"'$SYSADMIN_ROLE_UUID'"}' \
+            http://$VM_IP:3030/roles/$SYSADMIN_ID
+
+        curl -k \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            -X POST \
+            -d '{"name": "mc-account-owner", "kcUUID":"'$ACCOWNER_ROLE_UUID'"}' \
+            http://$VM_IP:3030/roles
+
+        curl -k \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            -X POST \
+            -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
+            http://$VM_IP:3030/roles
+
+
         # curl -k --request POST \
         #     -H "Accept: application/json" \
         #     -H "Content-Type:application/json" \
@@ -246,11 +321,11 @@ install_core_components() {
         #     --data '{ "username": "test-user-2", "lastName": "test", "firstName": "joe", "email": "test2@mail.de", "enabled": true, "credentials":[{ "type": "password", "value": "test", "temporary": false }] }' \
         #     https://mycloud.keycloak.com/auth/admin/realms/master/users
 
-                echo "[DONE] MyCloud control-plane deployed successfully!"
-            else
-                echo "[ERROR] The control plane VM couls not be started!"
-            fi
-        }
+        echo "[DONE] MyCloud control-plane deployed successfully!"
+    else
+        echo "[ERROR] The control plane VM couls not be started!"
+    fi
+}
 
 # Figure out what distro we are running
 distro

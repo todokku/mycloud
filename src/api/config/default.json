@@ -12,13 +12,14 @@
     "secret": "SVQfBaO5z3xe4wBQdERL7SnEhDA=",
     "authStrategies": [
       "jwt",
-      "local"
+      "local",
+      "keycloak"
     ],
     "jwtOptions": {
       "header": {
         "typ": "access"
       },
-      "audience": "https://yourdomain.com",
+      "audience": "https://mycloud.org",
       "issuer": "feathers",
       "algorithm": "HS256",
       "expiresIn": "1d"
