@@ -52,18 +52,25 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 		let rolesService = this.app.service('roles');
 		let settingsService = this.app.service('settings');
 
-		const auth = new Promise(async (resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			const { email, password } = data;
 			
 			// Authenticate with Keycloak
 			let _o = JSON.parse(JSON.stringify(authOptions));
 			_o.form.username = email;
 			_o.form.password = password;
-			let response = await asyncRequest(_o); // If unauthorized, an exception is thrown here
+
+			let response = null;
+			try {
+				response = await asyncRequest(_o); // If unauthorized, an exception is thrown here
+			} catch (error) {
+				return reject(error);
+			}
 
 			let jwtToken = response.access_token;
 			var jwtDecoded = jwtDecode(jwtToken);
 			
+			// console.log(JSON.stringify(jwtDecoded, null, 4));
 			// Look for user locally
 			let existingUser = await usersService.find({
 				paginate: false,
@@ -72,29 +79,34 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 					email: jwtDecoded.email
 				}
 			});
-
+			
 			// Get keycloak secret from DB
 			let keycloakSecret = await settingsService.find({
 				paginate: false,
 				query: {
 					$or: [
-						{ name: "KEYCLOAK_SECRET" },
-						{ name: "KEYCLOAK_PASSWORD" }
+						{ key: "KEYCLOAK_SECRET" }
 					]
-				}
+				},
+				_internalRequest: true
 			});
+			
 			if(keycloakSecret.length != 2){
 				return reject(new GeneralError(new Error("Keycloak secret not known")));
 			}
+
 			// Authenticate admin
 			_o = JSON.parse(JSON.stringify(authOptions));
 			_o.form['grant_type'] = `client_credentials`;
 			_o.form['client_id'] = `master-realm`;
-			_o.form['client_secret'] = ``;
-			_o.form['username'] = `admin`;
-			_o.form['password'] = keycloakSecret.find(o => o.name == "KEYCLOAK_SECRET").value;
+			_o.form['client_secret'] = keycloakSecret.find(o => o.key == "KEYCLOAK_SECRET").value;
 			_o.form['scope'] = `openid`;
-			let adminResponse = await asyncRequest(_o); 
+			let adminResponse = null;
+			try {
+				adminResponse = await asyncRequest(_o); 
+			} catch (error) {
+				return reject(error);
+			}
 
 			// Does not yet exist, create one
 			if(existingUser.length == 0){
@@ -154,8 +166,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				});
 			}
 		});
-
-		return auth.then(authData => authData).catch(error => {throw error});
 	}
 }
 

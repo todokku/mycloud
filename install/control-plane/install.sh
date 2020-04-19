@@ -152,13 +152,13 @@ collect_informations() {
         exit 1
     fi
     echo ""
-    echo "==> Specify a password for the main database:"
-    read PSQL_P
-    echo ""
-    echo "==> Specify a password for the Keycloak database:"
-    read KEYCLOAK_P
-    echo ""
-    echo "==> Specify a MyCloud PaaS master username:"
+    # echo "==> Specify a password for the main database:"
+    # read PSQL_P
+    # echo ""
+    # echo "==> Specify a password for the Keycloak database:"
+    # read KEYCLOAK_P
+    # echo ""
+    echo "==> Specify a MyCloud PaaS master user email address:"
     read MC_U
     echo ""
     echo "==> Specify a MyCloud PaaS master password:"
@@ -181,16 +181,14 @@ install_core_components() {
     # if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "redhat" ]; then
     #     VB_CPUS=$(nproc)
     # fi
-    VB_CPUS="1"
 
     cp ./Vagrantfile.template ./Vagrantfile
     sed -i "s/<VM_IP>/$VM_IP/g" ./Vagrantfile
-    sed -i "s/<PSQL_P>/$PSQL_P/g" ./Vagrantfile
-    sed -i "s/<KEYCLOAK_P>/$KEYCLOAK_P/g" ./Vagrantfile
+    sed -i "s/<PSQL_P>/$MC_P/g" ./Vagrantfile
+    sed -i "s/<KEYCLOAK_P>/$MC_P/g" ./Vagrantfile
     sed -i "s/<MC_U>/$MC_U/g" ./Vagrantfile
     sed -i "s/<MC_P>/$MC_P/g" ./Vagrantfile
     sed -i "s/<VB_MEMORY>/$VB_MEMORY/g" ./Vagrantfile
-    sed -i "s/<VB_CPUS>/$VB_CPUS/g" ./Vagrantfile
     sed -i "s/<REGISTRY_SIZE>/$REGISTRY_SIZE/g" ./Vagrantfile
     echo ""
     vagrant up
@@ -200,7 +198,7 @@ install_core_components() {
         echo "  1. Add the following line to your '/etc/hosts' file: $VM_IP mycloud.keycloak.com"
         echo "  2. Open a browser and go to 'https://mycloud.keycloak.com/auth/admin/master/console/#/realms/master/clients'"
         echo "  3. Keycloak uses a self signed certificate, add an exception to your browser to access the website"
-        echo "  4. Login to the Keycloak Admin page with the credentials 'admin/$KEYCLOAK_P'"
+        echo "  4. Login to the Keycloak Admin page with the credentials 'admin/$MC_P'"
         echo "  3. From the 'Clients' section, click on the client 'master-realm'"
         echo "  4. Change 'Access Type' value to 'confidential'"
         echo "  5. Enable the boolean value 'Service Accounts Enabled'"
@@ -223,7 +221,7 @@ install_core_components() {
             -d "client_id=master-realm" \
             -d "client_secret=$KEYCLOAK_SECRET" \
             -d "username=admin"  \
-            -d "password=$KEYCLOAK_P" \
+            -d "password=$MC_P" \
             -d "scope=openid" | jq -r '.access_token')
 
         # Create client for kubernetes
@@ -233,6 +231,19 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
+
+        # Update admin email
+        ADMIN_U_ID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/users?username=admin | jq '.[0].id' | sed 's/[\"]//g')
+
+        curl -k -X PUT \
+            https://mycloud.keycloak.com/auth/admin/realms/master/users/$ADMIN_U_ID \
+            -H "Content-Type: application/json"  \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            -d '{"email": "'"$MC_U"'"}'
 
         # Retrieve client UUID
         CLIENT_UUID=$(curl -k --request GET \
@@ -289,12 +300,12 @@ install_core_components() {
             -X POST \
             -d '{"key":"KEYCLOAK_SECRET","value":"'"$KEYCLOAK_SECRET"'"}' \
             http://$VM_IP:3030/settings
-        curl -k \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $MC_TOKEN" \
-            -X POST \
-            -d '{"key":"KEYCLOAK_PASSWORD","value":"'"$KEYCLOAK_P"'"}' \
-            http://$VM_IP:3030/settings
+        # curl -k \
+        #     -H "Content-Type: application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     -X POST \
+        #     -d '{"key":"KEYCLOAK_PASSWORD","value":"'"$KEYCLOAK_P"'"}' \
+        #     http://$VM_IP:3030/settings
            
         # Get MyCloud sysadmin role ID
         SYSADMIN_ID=$(curl -k --request GET \
