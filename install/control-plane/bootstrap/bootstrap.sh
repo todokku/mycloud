@@ -121,7 +121,7 @@ docker run -d \
     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/docker-registry.crt \
     -e REGISTRY_HTTP_TLS_KEY=/certs/docker-registry.key \
     registry:2.7.1
-' > /dev/null 2>&1
+'
 
 # Install Postgres
 echo "[TASK 12] Install PostgreSQL"
@@ -139,7 +139,7 @@ docker run -d \
     -e MYCLOUD_USER=mycloud \
     -e MYCLOUD_PASS=mycloudpass \
     postgres:12.2-alpine
-' > /dev/null 2>&1
+'
 
 sleep 15 # Give time to Postgres to start and init DB
 
@@ -222,7 +222,7 @@ docker run -d \
     -e DB_ADDR='"$DB_HOST"' \
     -e PROXY_ADDRESS_FORWARDING=true \
     jboss/keycloak:latest
-' > /dev/null 2>&1
+'
 
 # Install Nginx
 echo "[TASK 14] Install NGinx"
@@ -238,7 +238,7 @@ docker run -d \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
     nginx:1.17.9-alpine
-' > /dev/null 2>&1
+'
 
 # Install Mosquitto
 echo "[TASK 15] Install Mosquitto"
@@ -257,7 +257,7 @@ docker run -d \
     -v /home/vagrant/.mycloud/postgres/log:/mosquitto/log \
     -v /etc/localtime:/etc/localtime \
     eclipse-mosquitto:1.6
-' > /dev/null 2>&1
+'
 
 # Run API server
 echo "[TASK 16] Install MyCloud API Server"
@@ -281,7 +281,7 @@ docker run -d \
     -e MC_SERVICES_DIR=/usr/src/app/data/mc_services \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
-' > /dev/null 2>&1
+'
 
 # Run controller component
 echo "[TASK 17] Install MyCloud task controller"
@@ -303,7 +303,7 @@ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9
-' > /dev/null 2>&1
+'
 
 echo "[TASK 18] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"
