@@ -126,7 +126,7 @@ docker run -d \
 # Install Postgres
 echo "[TASK 12] Install PostgreSQL"
 su - vagrant -c '
-docker pull postgres:12.2-alpine > /dev/null 2>&1 
+docker pull postgres:12.2 > /dev/null 2>&1 
 docker run -d \
     --name mycloud-postgresql \
     --restart unless-stopped \
@@ -227,7 +227,7 @@ docker run -d \
 # Install Nginx
 echo "[TASK 14] Install NGinx"
 su - vagrant -c '
-docker pull nginx:1.17.9-alpine > /dev/null 2>&1 
+docker pull nginx:1.17.9 > /dev/null 2>&1 
 docker run -d \
     --name mycloud-nginx \
     --restart unless-stopped \
@@ -350,3 +350,6 @@ chmod +x /home/vagrant/configPrivateRegistry.sh
 # echo "https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#before-you-begin"
 
 echo "[DONE]"
+
+
+
