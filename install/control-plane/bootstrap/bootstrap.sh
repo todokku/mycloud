@@ -107,7 +107,6 @@ printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nregistry.mycloud.org\nmycloud@myc
     -out /opt/docker/containers/nginx/certs/nginx-registry.crt > /dev/null 2>&1 
 
 su - vagrant -c '
-docker pull registry:2.7.1 > /dev/null 2>&1 
 docker run -d \
     --name mycloud-registry \
     --restart=always -p 5000:5000 \
@@ -126,7 +125,6 @@ docker run -d \
 # Install Postgres
 echo "[TASK 12] Install PostgreSQL"
 su - vagrant -c '
-docker pull postgres:12.2 > /dev/null 2>&1 
 docker run -d \
     --name mycloud-postgresql \
     --restart unless-stopped \
@@ -138,7 +136,7 @@ docker run -d \
     -e KEYCLOAK_PASS='"$KEYCLOAK_PASSWORD"' \
     -e MYCLOUD_USER=mycloud \
     -e MYCLOUD_PASS=mycloudpass \
-    postgres:12.2-alpine
+    postgres:12.2
 '
 
 sleep 15 # Give time to Postgres to start and init DB
@@ -208,7 +206,6 @@ openssl x509 -req \
     -days 500 -sha256 -extensions v3_req -extfile ssl.conf > /dev/null 2>&1
 
 su - vagrant -c '
-docker pull jboss/keycloak:latest > /dev/null 2>&1 
 docker run -d \
     --name mycloud-keycloak \
     --restart=always -p 8888:8080 \
@@ -227,7 +224,6 @@ docker run -d \
 # Install Nginx
 echo "[TASK 14] Install NGinx"
 su - vagrant -c '
-docker pull nginx:1.17.9 > /dev/null 2>&1 
 docker run -d \
     --name mycloud-nginx \
     --restart unless-stopped \
@@ -237,13 +233,12 @@ docker run -d \
     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
-    nginx:1.17.9-alpine
+    nginx:1.17.9
 '
 
 # Install Mosquitto
 echo "[TASK 15] Install Mosquitto"
 su - vagrant -c '
-docker pull eclipse-mosquitto:1.6 > /dev/null 2>&1 
 touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 '
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
