@@ -50,6 +50,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 	async authenticate(data) {
 		let usersService = this.app.service('users');
 		let rolesService = this.app.service('roles');
+		let settingsService = this.app.service('settings');
 
 		const auth = new Promise(async (resolve, reject) => {
 			const { email, password } = data;
@@ -59,6 +60,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			_o.form.username = email;
 			_o.form.password = password;
 			let response = await asyncRequest(_o); // If unauthorized, an exception is thrown here
+
 			let jwtToken = response.access_token;
 			var jwtDecoded = jwtDecode(jwtToken);
 			
@@ -71,6 +73,29 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				}
 			});
 
+			// Get keycloak secret from DB
+			let keycloakSecret = await settingsService.find({
+				paginate: false,
+				query: {
+					$or: [
+						{ name: "KEYCLOAK_SECRET" },
+						{ name: "KEYCLOAK_PASSWORD" }
+					]
+				}
+			});
+			if(keycloakSecret.length != 2){
+				return reject(new GeneralError(new Error("Keycloak secret not known")));
+			}
+			// Authenticate admin
+			_o = JSON.parse(JSON.stringify(authOptions));
+			_o.form['grant_type'] = `client_credentials`;
+			_o.form['client_id'] = `master-realm`;
+			_o.form['client_secret'] = ``;
+			_o.form['username'] = `admin`;
+			_o.form['password'] = keycloakSecret.find(o => o.name == "KEYCLOAK_SECRET").value;
+			_o.form['scope'] = `openid`;
+			let adminResponse = await asyncRequest(_o); 
+
 			// Does not yet exist, create one
 			if(existingUser.length == 0){
 				let userRoles = jwtDecoded.resource_access["kubernetes-cluster"].roles;
@@ -79,7 +104,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				_o = JSON.parse(JSON.stringify(queryOptions));
 				_o.url += `/users?email=${jwtDecoded.email}`;
 				_o.method = "GET";
-				_o.headers['Authorization'] = `Bearer ${jwtToken}`;
+				_o.headers['Authorization'] = `Bearer ${adminResponse.access_token}`;
 				let userDetailList = await asyncRequest(_o);
 
 				// Make sure we have a user returned

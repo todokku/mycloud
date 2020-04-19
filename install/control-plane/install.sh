@@ -210,8 +210,12 @@ install_core_components() {
         echo "  9. Click on tab 'Credentials'"
         echo "  10. When ready, copy and paste the 'Secret' value into this terminal, then press enter:"
         read KEYCLOAK_SECRET
+        while [[ "$KEYCLOAK_SECRET" == '' ]]; do
+            echo "==> Invalide answer, try again:"
+            read KEYCLOAK_SECRET
+        done
 
-        # Get master token from Keycloak
+         # Get master token from Keycloak
         KC_TOKEN=$(curl -k -X POST \
             'https://mycloud.keycloak.com/auth/realms/master/protocol/openid-connect/token' \
             -H "Content-Type: application/x-www-form-urlencoded"  \
@@ -285,6 +289,12 @@ install_core_components() {
             -X POST \
             -d '{"key":"KEYCLOAK_SECRET","value":"'"$KEYCLOAK_SECRET"'"}' \
             http://$VM_IP:3030/settings
+        curl -k \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $MC_TOKEN" \
+            -X POST \
+            -d '{"key":"KEYCLOAK_PASSWORD","value":"'"$KEYCLOAK_P"'"}' \
+            http://$VM_IP:3030/settings
            
         # Get MyCloud sysadmin role ID
         SYSADMIN_ID=$(curl -k --request GET \
@@ -312,7 +322,6 @@ install_core_components() {
             -X POST \
             -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
             http://$VM_IP:3030/roles
-
 
         # curl -k --request POST \
         #     -H "Accept: application/json" \
