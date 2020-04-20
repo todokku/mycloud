@@ -359,7 +359,7 @@ class PermissionHelper {
         jwtDecoded.sub
 
 try {
-    let _user = await app.users.get(parseInt(jwtDecoded.sub), {
+    let _user = await app.service('users').get(parseInt(jwtDecoded.sub), {
         _internalRequest: true
     });
     return _user;
