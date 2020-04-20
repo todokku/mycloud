@@ -71,16 +71,10 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				} 
 				// User exists, logged in
 				else {
-					let loggedInUser = existingUser[0];
-					loggedInUser.roles = jwtDecoded.resource_access["kubernetes-cluster"] ? jwtDecoded.resource_access["kubernetes-cluster"].roles : [];
-
-
-					console.log(JSON.stringify(loggedInUser, null, 4));
-
-
 					resolve({
 						authentication: { strategy: this.name },
-						user: loggedInUser
+						user: existingUser[0],
+						roles: jwtDecoded.resource_access["kubernetes-cluster"] ? jwtDecoded.resource_access["kubernetes-cluster"].roles : []
 					});
 				}
 			} catch (error) {
