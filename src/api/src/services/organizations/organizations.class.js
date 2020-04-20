@@ -71,7 +71,7 @@ exports.Organizations = class Organizations extends Service {
 
 
 
-            console.log("USER =>", params.user);
+            console.log("PARAMS =>", params);
 
 
 
