@@ -356,9 +356,11 @@ class PermissionHelper {
 
     static async getAuthUserFromJwt(app, jwt) {
         var jwtDecoded = jwtDecode(jwt);
+        jwtDecoded.sub
 
-
-        console.log(jwtDecoded);
+        return await app.users.get(parseInt(jwtDecoded.sub), {
+            _internalRequest: true
+        });
     }
 }
 PermissionHelper.roles = null;
