@@ -195,6 +195,16 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async isResourceAccountOwner(context, orgId, wsId) {
+
+
+
+
+        console.log(context);
+        console.log(orgId);
+        console.log(wsId);
+
+
+
         let acc = null;
         if(orgId != null && orgId != undefined) {
             acc = await DBController.getAccountForOrg(orgId);
