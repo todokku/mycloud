@@ -32,17 +32,17 @@ exports.Cli = class Cli {
 		switch(data.action) {
 			case "account":
 				try {					
-					let adminSession = await this.app.service('authentication').create({
-						strategy: 'local',
-						email: process.env.API_SYSADMIN_USER,
-						password: process.env.API_SYSADMIN_PASSWORD
-					});
+					// let adminSession = await this.app.service('authentication').create({
+					// 	strategy: 'local',
+					// 	email: process.env.API_SYSADMIN_USER,
+					// 	password: process.env.API_SYSADMIN_PASSWORD
+					// });
 
 					let existingAccount = await this.app.service('accounts').find({
-						"query": {
+						query: {
 							"name": data.params.accountName
 						},
-						"user": adminSession.user
+						_internalRequest: true
 					});
 
 					if(existingAccount.total == 1){
