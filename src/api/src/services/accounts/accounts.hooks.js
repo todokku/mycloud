@@ -76,6 +76,8 @@ module.exports = {
 				_internalRequest: true
 			});
 		
+			console.log(context.result.data);
+			console.log(accUsers);
 			// Itterate over all returned organizations
 			context.result.data = context.result.data.filter((acc, z) => {
 				return accUsers.find(o => o.accountId == acc.accountId);
