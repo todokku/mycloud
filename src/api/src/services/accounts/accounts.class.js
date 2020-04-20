@@ -91,8 +91,13 @@ exports.Accounts = class Accounts extends Service {
                 });
 
                 let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
-                await PermissionHelper.createKeycloakUser(adminToken, email, password)
 
+                let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
+                console.log(kcUser);
+                if(!kcUser) {
+                    await PermissionHelper.createKeycloakUser(adminToken, email, password);
+                }
+            
                 await transaction.commit();
                 
                 return {

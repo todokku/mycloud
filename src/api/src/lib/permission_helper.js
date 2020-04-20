@@ -41,7 +41,6 @@ class PermissionHelper {
                 } else if (response.statusCode == 401) {
                     reject(new NotAuthenticated(new Error('Unauthorized')));
                 } else if (response.statusCode != 200) {
-                    console.log(response);
                     reject(new GeneralError(new Error("Unexpected error")));
                 } else {
                     resolve(JSON.parse(body));
@@ -122,6 +121,26 @@ class PermissionHelper {
             return {};
         } else {
             return userDetailList[0].attributes;
+        }
+    }
+
+    /**
+     * keycloakUserExists
+     * @param {*} adminAccessToken 
+     * @param {*} email 
+     */
+    static async getKeycloakUserByEmail(adminAccessToken, email) {
+        // Get user attributes
+        let _o = JSON.parse(JSON.stringify(queryOptions));
+        _o.url += `/users?email=${email}`;
+        _o.method = "GET";
+        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+        let users = await this.asyncRequest(_o);
+        console.log(users);
+        if(users .length == 1) {
+            return users[0];
+        } else {
+            return null;
         }
     }
 
