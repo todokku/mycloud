@@ -80,6 +80,7 @@ exports.Accounts = class Accounts extends Service {
                     });
                 }
 
+                console.log(this.app.service);
                 await this.app.service('acc_users').create({
                     accountId: newAccount.id, 
                     userId: user.id,
