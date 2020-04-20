@@ -66,7 +66,8 @@ class TaskDomainsController {
             "query": {
                 "domainId": data.domainId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         
         if(routes.total != 0) {
@@ -88,7 +89,8 @@ class TaskDomainsController {
             "query": {
                 "organizationId": organizationId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         
         return {

@@ -100,7 +100,8 @@ class TaskRoutesController {
             "query": {
                 "workspaceId": workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         let appIds = wsList.data.map(o => o.id);
 
@@ -111,7 +112,8 @@ class TaskRoutesController {
                         $in: appIds
                     }
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
             
             return {

@@ -123,7 +123,8 @@ class TaskController {
                 "workspaceId": workspaceId,
                 "name": name
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(response.total == 0) {
@@ -146,7 +147,8 @@ class TaskController {
                 "workspaceId": workspaceId,
                 "name": name
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(response.total != 0) {
@@ -169,7 +171,8 @@ class TaskController {
                 "organizationId": organizationId,
                 "name": name
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(response.total == 0) {
@@ -192,7 +195,8 @@ class TaskController {
                 "organizationId": organizationId,
                 "name": name
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(response.total != 0) {
@@ -222,7 +226,8 @@ class TaskController {
                     $in: [ "PENDING","IN_PROGRESS" ]
                 }
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         if(dbEntry.total != 0){
             return { "code": 425 }
@@ -252,7 +257,8 @@ class TaskController {
                     $in: [ "PENDING","IN_PROGRESS" ]
                 }
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         if(dbEntry.total != 0){
             return { "code": 425 }
@@ -273,7 +279,8 @@ class TaskController {
                 "workspaceId": workspaceId,
                 "name": volumeName
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(volumes.total == 0) {
@@ -296,7 +303,8 @@ class TaskController {
                 "instanceName": serviceName,
                 "namespace": ns
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(service.total == 0) {
@@ -318,7 +326,8 @@ class TaskController {
                 "workspaceId": workspaceId,
                 "name": volumeName
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(volumes.total != 0) {
@@ -339,7 +348,8 @@ class TaskController {
                 nodeType: "MASTER",
                 workspaceId: workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         if(masterNodeResult.total == 0){
             return {
@@ -369,7 +379,8 @@ class TaskController {
                 },
                 $limit: 10
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         provisionTask.data = provisionTask.data.reverse();
@@ -484,7 +495,8 @@ class TaskController {
                 "name": orgName,
                 "accountId": accountId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         
         if(targetOrg.total == 1){
@@ -497,7 +509,8 @@ class TaskController {
                     "query": {
                         "organizationId": targetOrg.data[0].id
                     },
-                    "user": params.user
+                    "user": params.user,
+                    "authentication": params.authentication
                 });
                 // Schedule workspace resource cleanup
                 for(let i=0; i<orgWorkspaces.data.length; i++) {
@@ -527,7 +540,8 @@ class TaskController {
                 "name": workspaceName,
                 "organizationId": orgId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(targetWs.total == 1){
@@ -541,7 +555,8 @@ class TaskController {
                 "query": {
                     "workspaceId": targetWs.data[0].id
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
             // Collect all volumes to delete
             let wsVolumes = await this.app.service('volumes').find({
@@ -549,7 +564,8 @@ class TaskController {
                     "workspaceId": targetWs.data[0].id,
                     "type": "gluster"
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
 
             let cleanupPayload = {

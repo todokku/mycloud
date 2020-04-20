@@ -58,7 +58,8 @@ class TaskRuntimeController {
             "query": {
                 "workspaceId": data.params.workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         if(k8s_node.total == 0){
             let provisionTask = await this.app.service('tasks').find({
@@ -67,7 +68,8 @@ class TaskRuntimeController {
                     "targetId": data.params.workspaceId,
                     "taskType": "CREATE-K8S-CLUSTER"
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
 
             if(provisionTask.total == 1){

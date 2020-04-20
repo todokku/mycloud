@@ -174,7 +174,8 @@ class TaskServiceController {
             "query": {
                 "workspaceId": workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
        
         r = await this.parent._getWorkspaceMasterNodes(workspaceId, params);

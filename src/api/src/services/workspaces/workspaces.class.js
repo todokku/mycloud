@@ -24,7 +24,8 @@ exports.Workspaces = class Workspaces extends Service {
                     "name": data.name,
                     "organizationId":  data.organizationId
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             })).total != 0){
                 return new Conflict(new Error('This workspace name already exists'));
             } 

@@ -85,7 +85,8 @@ class TaskVolumeController {
             "query": {
                 "volumeId": r.data[0].id
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         
         if(volumleBindings.total != 0) {
@@ -140,7 +141,8 @@ class TaskVolumeController {
                     "target": "workspace",
                     "targetId": data.workspaceId
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
 
             if(volumleBindings.total >= 20) {
@@ -202,7 +204,8 @@ class TaskVolumeController {
                     "target": "workspace",
                     "targetId": data.workspaceId
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
             if(volumleBindings.total == 0) {
                 return { "code": 409 }
@@ -317,7 +320,8 @@ class TaskVolumeController {
             "query": {
                 "workspaceId": workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         let volumeBindings = await this.app.service("volume-bindings").find({
@@ -325,7 +329,8 @@ class TaskVolumeController {
                 "target": "workspace", 
                 "targetId": workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         let services = await this.app.service("services").find({
@@ -334,7 +339,8 @@ class TaskVolumeController {
                     $in: volumes.data.map(o => o.id)
                 }
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         let applications = await this.app.service("applications").find({
             "query": {
@@ -342,7 +348,8 @@ class TaskVolumeController {
                     $in: volumes.data.map(o => o.id)
                 }
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         return { "code": 200, "data": volumes.data.map(v => {

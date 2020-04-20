@@ -34,7 +34,8 @@ class TaskPvcController {
             "query": {
                 "workspaceId": data.workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         let masterNode = k8s_nodes.data.find(k => k.nodeType == "MASTER");
 

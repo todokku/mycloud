@@ -192,7 +192,8 @@ class TaskApplicationsController {
             "query": {
                 "workspaceId": workspaceId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         
         return {

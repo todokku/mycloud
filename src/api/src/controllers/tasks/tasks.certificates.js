@@ -30,7 +30,8 @@ class TaskCertificatesController {
                 "domainId": data.domainId,
                 "name": data.name
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(existsResponse.total != 0) {
@@ -87,7 +88,8 @@ class TaskCertificatesController {
             "query": {
                 "organizationId": organizationId
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
         let domainIds = orgs.data.map(o => o.id);
 
@@ -98,7 +100,8 @@ class TaskCertificatesController {
                         $in: domainIds
                     }
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             });
             
             return {
