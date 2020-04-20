@@ -69,6 +69,7 @@ module.exports = {
 				
 
 			let accUsers = await context.app.service('acc-users').find({
+				paginate: false,
 				query: {
 					userId: userId
 				},
