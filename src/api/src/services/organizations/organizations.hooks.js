@@ -88,13 +88,12 @@ module.exports = {
 				
 				let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
 				let orgUsers = await context.app.service('org-users').find({
+					paginate: false,
 					query: {
 						userId: userId
 					}
 				});
 				
-				console.log("orgUsers =>", orgUsers);
-				console.log("context.result.data =>", context.result.data);
 				// Itterate over all returned organizations
 				context.result.data = context.result.data.filter((org) => {
 					return orgUsers.find(o => o.organizationId == org.id) ? true : false;

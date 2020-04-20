@@ -322,7 +322,7 @@ class PermissionHelper {
         });
         if(orgUsers.length == 0) {
             return false;
-        } else if(orgUsers.data[0].permissions.split(";").indexOf("ORG_ADMIN") != -1) {
+        } else if(orgUsers[0].permissions.split(";").indexOf("ORG_ADMIN") != -1) {
             return true;
         }
         return false;

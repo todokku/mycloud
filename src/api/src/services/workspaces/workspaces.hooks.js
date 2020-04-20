@@ -107,6 +107,7 @@ module.exports = {
 
 			let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
 			let orgUsers = await context.app.service('org-users').find({
+				paginate: false,
 				query: {
 					userId: userId
 				}
