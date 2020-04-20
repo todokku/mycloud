@@ -70,7 +70,7 @@ exports.Organizations = class Organizations extends Service {
         try{
 
 
-
+            console.log("data =>", data);
             console.log("PARAMS =>", params);
 
 
