@@ -217,15 +217,23 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isAccountOwner(context, accountId) {
-        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
-        let accUsers = await context.app.service('acc-users').find({
-            query: {
-                userId: userId,
-                isAccountOwner: true
-            },
-            _internalRequest: true
-        });
-        return accUsers.find(o => o.accountId == accountId);
+
+
+        try {
+            let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
+            let accUsers = await context.app.service('acc-users').find({
+                query: {
+                    userId: userId,
+                    isAccountOwner: true
+                },
+                _internalRequest: true
+            });
+            return accUsers.find(o => o.accountId == accountId);
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+        
     }
 
     /**
