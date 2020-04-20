@@ -187,6 +187,12 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isAccountOwner(context) {
+
+
+        console.log(context.params);
+
+
+
         if(!context.params.user){
             return false;
         }
