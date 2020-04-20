@@ -60,7 +60,7 @@ class PermissionHelper {
         _o.form.username = email;
         _o.form.password = password;
 
-        let response = await asyncRequest(_o); // If unauthorized, an exception is thrown here
+        let response = await this.asyncRequest(_o); // If unauthorized, an exception is thrown here
 
         let jwtToken = response.access_token;
         var jwtDecoded = jwtDecode(jwtToken);
@@ -98,7 +98,7 @@ class PermissionHelper {
         _o.form['client_id'] = `master-realm`;
         _o.form['client_secret'] = keycloakSecret.find(o => o.key == "KEYCLOAK_SECRET").value;
         _o.form['scope'] = `openid`;
-        let response = await asyncRequest(_o); 
+        let response = await this.asyncRequest(_o); 
         return response.access_token;
     }
 
@@ -113,7 +113,7 @@ class PermissionHelper {
         _o.url += `/users?email=${email}`;
         _o.method = "GET";
         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
-        let userDetailList = await asyncRequest(_o);
+        let userDetailList = await this.asyncRequest(_o);
 
         if(userDetailList.length != 1) {
             throw new GeneralError(new Error("User not found"));
@@ -139,7 +139,7 @@ class PermissionHelper {
             "enabled": true, 
             "credentials":[{ "type": "password", "value": password, "temporary": false }]
         };
-        let response = await asyncRequest(_o);
+        let response = await this.asyncRequest(_o);
 
         console.log(response);
     }
