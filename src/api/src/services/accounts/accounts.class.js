@@ -47,13 +47,15 @@ exports.Accounts = class Accounts extends Service {
                 return error;
             }
         }
-
-        if((await this.app.service('accounts').find({
+        console.log("=========> 1");
+        let accounts = await this.app.service('accounts').find({
             query: {
                 "name": name
             },
             _internalRequest: true
-        })).total == 0){
+        });
+        console.log("=========> 2");
+        if(accounts.total == 0){
             let transaction = null;
             try {
                 const sequelize = this.app.get('sequelizeClient');
