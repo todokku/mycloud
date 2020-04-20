@@ -57,14 +57,14 @@ exports.Accounts = class Accounts extends Service {
         if(accounts.total == 0){
             let transaction = null;
             try {
-                const sequelize = this.app.get('sequelizeClient');
+                const sequelize = await this.app.get('sequelizeClient');
                 transaction = sequelize.transaction();
 
                 let newAccount = await super.create({
                     name
                 }, {
                     _internalRequest: true,
-                    sequelize: { transaction }
+                    transaction
                 });
 
                 let user = null;
@@ -76,7 +76,7 @@ exports.Accounts = class Accounts extends Service {
                         password
                     }, {
                         _internalRequest: true,
-                        sequelize: { transaction }
+                        transaction
                     });
                 }
 
@@ -86,7 +86,7 @@ exports.Accounts = class Accounts extends Service {
                     isAccountOwner: true
                 }, {
                     _internalRequest: true,
-                    sequelize: { transaction }
+                    transaction
                 });
 
                 let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
@@ -99,7 +99,6 @@ exports.Accounts = class Accounts extends Service {
                 };
             } catch (error) {
                 if (transaction) {
-                    console.log("TRAn =>", transaction);
                     await transaction.rollback();
                 }
                 throw error;
