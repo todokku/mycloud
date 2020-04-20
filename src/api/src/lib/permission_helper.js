@@ -43,8 +43,11 @@ class PermissionHelper {
                 } else if (response.statusCode < 200 || response.statusCode > 299) {
                     reject(new GeneralError(new Error("Unexpected error")));
                 } else {
-                    console.log(body);
-                    resolve(JSON.parse(body));
+                    if(opt.headers['Content-Type'] == 'application/json' && body && body.length > 0) {
+                        resolve(JSON.parse(body));
+                    } else {
+                        resolve();
+                    }
                 }
             });
         });
