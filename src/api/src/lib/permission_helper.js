@@ -41,7 +41,8 @@ class PermissionHelper {
                 } else if (response.statusCode == 401) {
                     reject(new NotAuthenticated(new Error('Unauthorized')));
                 } else if (response.statusCode != 200) {
-                    reject(new GeneralError(new Error('Unexpected error')));
+                    console.log(response);
+                    reject(new GeneralError(new Error("Unexpected error")));
                 } else {
                     resolve(JSON.parse(body));
                 }
