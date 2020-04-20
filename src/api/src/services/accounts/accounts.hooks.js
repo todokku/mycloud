@@ -63,11 +63,6 @@ module.exports = {
 			}
 
 			let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
-
-			try {
-				
-				
-
 			let accUsers = await context.app.service('acc-users').find({
 				paginate: false,
 				query: {
@@ -76,17 +71,13 @@ module.exports = {
 				_internalRequest: true
 			});
 		
-			console.log(context.result.data);
-			console.log(accUsers);
 			// Itterate over all returned organizations
 			context.result.data = context.result.data.filter((acc, z) => {
-				return accUsers.find(o => o.accountId == acc.accountId);
+				return accUsers.find(o => o.accountId == acc.id);
 			});
 			
 			context.result.total = context.result.data.length;
-		} catch (error) {
-				console.log(error);
-		}
+		
 			return context;
 		}],
 		get: [],
