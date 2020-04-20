@@ -57,8 +57,8 @@ exports.Accounts = class Accounts extends Service {
         if(accounts.total == 0){
             let transaction = null;
             try {
-                const sequelize = await this.app.get('sequelizeClient');
-                transaction = sequelize.transaction();
+                const sequelize = this.app.get('sequelizeClient');
+                transaction = await sequelize.transaction();
 
                 let newAccount = await super.create({
                     name
@@ -99,7 +99,7 @@ exports.Accounts = class Accounts extends Service {
                 };
             } catch (error) {
                 if (transaction) {
-                    console.log(transaction);
+                    // console.log(transaction);
                     await transaction.rollback();
                 }
                 throw error;
