@@ -29,7 +29,7 @@ REGISTRY_IP="$API_IP"
 DB_PASS=$POSTGRES_PASSWORD
 
 echo "[TASK 1] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 git > /dev/null 2>&1 
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 git wget > /dev/null 2>&1 
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1 
 yum install -y -q docker-ce > /dev/null 2>&1 
 usermod -aG docker vagrant > /dev/null 2>&1 
@@ -93,6 +93,21 @@ systemctl reload sshd > /dev/null 2>&1
 
 mkdir -p /opt/docker/containers/nginx/certs
 
+echo "[TASK X] Download all registry images"
+dlAndInstallDockerImg () {
+    GC_FILE_ID=$1
+    GC_FILE_NAME=$2
+    wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate https://docs.google.com/uc?export=download&id=$GC_FILE_ID -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$GC_FILE_ID" -O $GC_FILE_NAME && rm -rf /tmp/cookies.txt
+    chown vagrant $GC_FILE_NAME
+    su - vagrant -c "docker load < $GC_FILE_NAME"
+    rm -rf $GC_FILE_NAME
+}
+dlAndInstallDockerImg "1c4mm3NW7toz3h1521vs1Zi8E4o5cOC46" "eclipse-mosquitto-1.6.tar"
+dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
+dlAndInstallDockerImg "1Y3iDlkmyHHqwhB2LtYat5vC3dRwg5A8q" "nginx-latest.tar"
+dlAndInstallDockerImg "1Zy13ElhkR5srcIu_tFudUvvb1Wh0aq2K" "postgres-latest.tar"
+dlAndInstallDockerImg "1NBD0eQLeEO-xsXiQTBDpZGmqXCEaylCC" "registry-2.7.1.tar"
+
 echo "[TASK 11] Install Docker registry"
 
 mkdir -p /opt/docker/containers/docker-registry/auth
@@ -120,7 +135,7 @@ docker run -d \
     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/docker-registry.crt \
     -e REGISTRY_HTTP_TLS_KEY=/certs/docker-registry.key \
     registry:2.7.1
-'
+' > /dev/null 2>&1
 
 # Install Postgres
 echo "[TASK 12] Install PostgreSQL"
@@ -136,8 +151,8 @@ docker run -d \
     -e KEYCLOAK_PASS='"$KEYCLOAK_PASSWORD"' \
     -e MYCLOUD_USER=mycloud \
     -e MYCLOUD_PASS=mycloudpass \
-    postgres:12.2
-'
+    postgres:12.2-alpine
+' > /dev/null 2>&1
 
 sleep 15 # Give time to Postgres to start and init DB
 
@@ -219,7 +234,7 @@ docker run -d \
     -e DB_ADDR='"$DB_HOST"' \
     -e PROXY_ADDRESS_FORWARDING=true \
     jboss/keycloak:latest
-'
+' > /dev/null 2>&1
 
 # Install Nginx
 echo "[TASK 14] Install NGinx"
@@ -233,16 +248,15 @@ docker run -d \
     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
-    nginx:1.17.9
-'
+    nginx:1.17.9-alpine
+' > /dev/null 2>&1
 
 # Install Mosquitto
 echo "[TASK 15] Install Mosquitto"
-su - vagrant -c '
-touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
-'
+su - vagrant -c 'touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log'
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 chown 1883:1883 /home/vagrant/.mycloud/mosquitto/log -R
+
 su - vagrant -c '
 docker run -d \
     --name mycloud-mosquitto \
@@ -252,7 +266,7 @@ docker run -d \
     -v /home/vagrant/.mycloud/postgres/log:/mosquitto/log \
     -v /etc/localtime:/etc/localtime \
     eclipse-mosquitto:1.6
-'
+' > /dev/null 2>&1
 
 # Run API server
 echo "[TASK 16] Install MyCloud API Server"
@@ -276,7 +290,7 @@ docker run -d \
     -e MC_SERVICES_DIR=/usr/src/app/data/mc_services \
     -v /home/vagrant/mycloud:/usr/src/app/data \
     mycloud-api:0.9
-'
+' > /dev/null 2>&1
 
 # Run controller component
 echo "[TASK 17] Install MyCloud task controller"
@@ -298,7 +312,7 @@ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /home/vagrant/.mycloud/nginx:/usr/src/app/nginx \
     mycloud-ctrl:0.9
-'
+' > /dev/null 2>&1
 
 echo "[TASK 18] Generate client registry setup script"
 M_IP="$(hostname -I | cut -d' ' -f2)"
@@ -345,6 +359,3 @@ chmod +x /home/vagrant/configPrivateRegistry.sh
 # echo "https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#before-you-begin"
 
 echo "[DONE]"
-
-
-
