@@ -64,7 +64,7 @@ exports.Accounts = class Accounts extends Service {
                     name
                 }, {
                     _internalRequest: true,
-                    transaction
+                    sequelize: { transaction }
                 });
 
                 let user = null;
@@ -76,7 +76,7 @@ exports.Accounts = class Accounts extends Service {
                         password
                     }, {
                         _internalRequest: true,
-                        transaction
+                        sequelize: { transaction }
                     });
                 }
 
@@ -86,7 +86,7 @@ exports.Accounts = class Accounts extends Service {
                     isAccountOwner: true
                 }, {
                     _internalRequest: true,
-                    transaction
+                    sequelize: { transaction }
                 });
 
                 let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
@@ -98,7 +98,10 @@ exports.Accounts = class Accounts extends Service {
                     code: 200
                 };
             } catch (error) {
-                if (transaction) await transaction.rollback();
+                if (transaction) {
+                    console.log("TRAn =>", transaction);
+                    await transaction.rollback();
+                }
                 throw error;
             }
         } else {
