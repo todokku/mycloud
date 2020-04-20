@@ -115,10 +115,18 @@ class APIClient {
 
         try{
             let data = await this.app.service('authentication').create({
-                strategy: 'local',
+                strategy: 'keycloak',
                 email: email,
                 password: password
             });
+
+
+
+            console.log(data);
+
+
+
+
             this.sessionJson = data;
             this._saveSession();
             return {
