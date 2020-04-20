@@ -85,7 +85,7 @@ module.exports = {
 					delete context.params._internalRequest;
 					return context;
 				}
-
+console.log(context);
 				let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
 				let orgUsers = await context.app.service('org-users').find({
 					query: {
