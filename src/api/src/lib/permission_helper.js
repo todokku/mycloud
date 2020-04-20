@@ -60,21 +60,24 @@ class PermissionHelper {
      * @param {*} password 
      */
     static async keycloakAuthenticate(email, password, ignoreMissingRoles) {
+        console.log(1);
         // Authenticate with Keycloak
         let _o = JSON.parse(JSON.stringify(authOptions));
         _o.form.username = email;
         _o.form.password = password;
-
+        console.log(1);
         let response = await this.asyncRequest(_o); // If unauthorized, an exception is thrown here
-
+        console.log(1);
         let jwtToken = response.access_token;
         var jwtDecoded = jwtDecode(jwtToken);
-
+        console.log(1);
         // Make sure we have roles for this user
         if(!ignoreMissingRoles && !jwtDecoded.resource_access["kubernetes-cluster"]) {
             throw new GeneralError(new Error("This user does not have proper roles configured"));
         }
+        console.log(1);
         console.log(jwtDecoded);
+        console.log(1);
 		return jwtDecoded;
     }
 
