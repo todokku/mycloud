@@ -43,12 +43,21 @@ class PermissionHelper {
                 } else if (response.statusCode < 200 || response.statusCode > 299) {
                     reject(new GeneralError(new Error("Unexpected error")));
                 } else {
-                    if(opt.headers['Content-Type'] == 'application/json') {
-                        console.log("=======================> RESOLVING BODY");
-                        resolve(JSON.parse(body));
-                    } else {
+                    console.log(opt.headers);
+                    
+                    try {
+                        let _body = JSON.parse(body);
+                        resolve(_body);
+                    } catch (error) {
                         resolve();
                     }
+
+                    // if(opt.headers['Content-Type'] == 'application/json') {
+                    //     console.log("=======================> RESOLVING BODY");
+                    //     resolve(JSON.parse(body));
+                    // } else {
+                    //     resolve();
+                    // }
                 }
             });
         });
