@@ -141,7 +141,6 @@ class PermissionHelper {
         _o.method = "GET";
         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
         let users = await this.asyncRequest(_o);
-        console.log(users);
         if(users .length == 1) {
             return users[0];
         } else {
@@ -164,9 +163,7 @@ class PermissionHelper {
             "enabled": true, 
             "credentials":[{ "type": "password", "value": password, "temporary": false }]
         };
-        let response = await this.asyncRequest(_o);
-
-        console.log(response);
+        await this.asyncRequest(_o);
     }
 
     /**

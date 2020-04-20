@@ -68,6 +68,13 @@ exports.Organizations = class Organizations extends Service {
     async create (data, params) {
         const { name, registryUser, registryPass } = data;
         try{
+
+
+
+            console.log("USER =>", params.user);
+
+
+
             // Check to see if user already exists
             if((await this.app.service('organizations').find({
                 "query": {
