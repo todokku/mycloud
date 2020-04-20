@@ -71,8 +71,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				} 
 				// User exists, logged in
 				else {
-					console.log("HERE =>", jwtDecoded.resource_access);
-					existingUser[0].roles = jwtDecoded.resource_access["kubernetes-cluster"].roles;
+					existingUser[0].roles = jwtDecoded.resource_access["kubernetes-cluster"] ? jwtDecoded.resource_access["kubernetes-cluster"].roles : [];
 					resolve({
 						authentication: { strategy: this.name },
 						user: existingUser[0]
