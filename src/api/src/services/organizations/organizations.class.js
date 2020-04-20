@@ -68,18 +68,11 @@ exports.Organizations = class Organizations extends Service {
     async create (data, params) {
         const { name, registryUser, registryPass } = data;
         try{
-
-
-            console.log("data =>", data);
-            console.log("PARAMS =>", params);
-
-
-
             // Check to see if org already exists
             if((await this.app.service('organizations').find({
                 "query": {
                     "name": name,
-                    "accountId":  params.accountId
+                    "accountId":  data.accountId
                 },
                 "user": params.user
             })).total != 0){
@@ -95,7 +88,7 @@ exports.Organizations = class Organizations extends Service {
                     "registryUser": registryUser,
                     "registryPass": cryptoData.password,
                     "bcryptSalt": cryptoData.salt,
-                    "accountId":  params.accountId
+                    "accountId":  data.accountId
                 }, params);
                
                 // Create org admin user link
