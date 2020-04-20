@@ -95,12 +95,14 @@ mkdir -p /opt/docker/containers/nginx/certs
 
 echo "[TASK X] Download all registry images"
 dlAndInstallDockerImg () {
-    GC_FILE_ID=$1
-    GC_FILE_NAME=$2
-    wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate https://docs.google.com/uc?export=download&id=$GC_FILE_ID -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$GC_FILE_ID" -O $GC_FILE_NAME && rm -rf /tmp/cookies.txt
-    chown vagrant $GC_FILE_NAME
-    su - vagrant -c "docker load < $GC_FILE_NAME"
-    rm -rf $GC_FILE_NAME
+    fileId=$1
+    fileName=$2
+    curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${fileId}" > /dev/null
+    code="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+    curl -Lb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${code}&id=${fileId}" -o ${fileName}
+    chown vagrant $fileName
+    su - vagrant -c "docker load < $fileName"
+    rm -rf $fileName
 }
 dlAndInstallDockerImg "1c4mm3NW7toz3h1521vs1Zi8E4o5cOC46" "eclipse-mosquitto-1.6.tar"
 dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
