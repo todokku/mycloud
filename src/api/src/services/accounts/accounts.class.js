@@ -1,6 +1,6 @@
 const { Service } = require('feathers-sequelize');
 const { Conflict } = require('@feathersjs/errors');
-const PermissionHelper = require("./lib/permission_helper");
+const PermissionHelper = require("../../lib/permission_helper");
 
 exports.Accounts = class Accounts extends Service {
     constructor (options, app) {
