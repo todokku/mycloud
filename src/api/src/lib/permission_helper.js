@@ -171,16 +171,21 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isSysAdmin(context) {
-        if(!context.params.user){
+        if(!context.params.authentication){
             return false;
         }
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
+        if(this.sysAdmins.length == 0) {
+            this.sysAdmins = await context.app.service('users').find({
+                paginate: false,
+                query: {
+                    email: process.env.API_SYSADMIN_USER
+                },
+                _internalRequest: true
+            });
+        }
 
-        // console.log(context.params.user);
-
-        if(context.params.user.roles && context.params.user.roles.find("mc-sysadmin") != -1){
-            return true;
-        } 
-        return false;
+        return this.sysAdmins.find(o => o.id == userId) ? true : false;
     }
 
     /**
@@ -196,12 +201,11 @@ class PermissionHelper {
         } else {
             acc = await DBController.getAccountForWs(wsId);
         }
-
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let accUsers = await context.app.service('acc-users').find({
             query: {
-                userId: context.params.user.id
+                userId: userId
             },
-            user: context.params.user,
             _internalRequest: true
         });
 
@@ -218,11 +222,11 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isAccountOwner(context) {
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let accUsers = await context.app.service('acc-users').find({
             query: {
-                userId: context.params.user.id
+                userId: userId
             },
-            user: context.params.user,
             _internalRequest: true
         });
 
@@ -240,16 +244,17 @@ class PermissionHelper {
      * @param {*} orgId 
      */
     static async userBelongsToAccount_org(context, orgId) {
-        if(!context.params.user){
+        if(!context.params.authentication){
             throw new Forbidden(new Error('You are not logged in'));
         }
+
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         // Make sure user account matches org account
         try{
             let accUsers = await context.app.service('acc-users').find({
                 query: {
-                    userId: context.params.user.id
+                    userId: userId
                 },
-                user: context.params.user,
                 _internalRequest: true
             });
 
@@ -290,11 +295,11 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async isOrgUserAllowed_ws(context, wsId) {
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let orgUsers = await context.app.service('org-users').find({
             query: {
-                userId: context.params.user.id
-            },
-            user: context.params.user
+                userId: userId
+            }
         });
 
         context.params._internalRequest = true;
@@ -314,11 +319,11 @@ class PermissionHelper {
      * @param {*} orgId 
      */
     static async isOrgUserAdmin_ws(context, orgId) {
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let orgUsers = await context.app.service('org-users').find({
             query: {
-                userId: context.params.user.id
-            },
-            user: context.params.user
+                userId: userId
+            }
         });
 
         for(let i=0; i<orgUsers.data.length; i++){
@@ -335,9 +340,10 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async getAccOwnerOrgsInWorkspaceContext(context, wsId) {
-        if(!context.params.user){
+        if(!context.params.authentication){
             return [];
         }
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         try{
             let acc = await DBController.getAccountForWs(wsId);
             return await context.app.service('organizations').find({
@@ -374,5 +380,5 @@ class PermissionHelper {
         return parseInt(jwtDecode(jwt).sub);
     }
 }
-PermissionHelper.roles = null;
+PermissionHelper.sysAdmins = [];
 module.exports = PermissionHelper;

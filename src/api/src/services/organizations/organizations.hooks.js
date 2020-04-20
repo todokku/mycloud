@@ -80,6 +80,14 @@ module.exports = {
 	after: {
 		all: [],
 		find: [
+			async context => {
+				console.log(context);
+				return context;
+			}
+
+
+
+
 			/*async context => {
 				// Is user is sysadmin, return it all
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
