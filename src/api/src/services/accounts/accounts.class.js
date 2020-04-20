@@ -80,6 +80,9 @@ exports.Accounts = class Accounts extends Service {
                     });
                 }
 
+                console.log("user =>", user);
+                console.log("newAccount =>", newAccount);
+
                 // console.log(this.app);
                 await this.app.service('acc-users').create({
                     accountId: newAccount.id, 
@@ -91,9 +94,8 @@ exports.Accounts = class Accounts extends Service {
                 });
 
                 let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
-
                 let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
-                console.log(kcUser);
+                console.log("kcUser =>", kcUser);
                 if(!kcUser) {
                     await PermissionHelper.createKeycloakUser(adminToken, email, password);
                 }
