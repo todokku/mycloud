@@ -34,14 +34,7 @@ exports.Accounts = class Accounts extends Service {
         let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
         let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
         if(kcUser && password) {
-            try {
-                await PermissionHelper.keycloakAuthenticate(email, password, true);
-            } catch (error) {
-                let error = new Error('Wrong username or password');
-                error.statusCode = 403;
-                err.code = 403;
-                return error;
-            }
+            await PermissionHelper.keycloakAuthenticate(email, password, true);
         }
 
         if(potentialUsers.length == 1) {
