@@ -11,7 +11,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				return context;
@@ -23,7 +23,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				return context;
@@ -34,7 +34,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				return context;
@@ -45,7 +45,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				return context;

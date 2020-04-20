@@ -195,16 +195,6 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async isResourceAccountOwner(context, orgId, wsId) {
-
-
-
-
-        console.log(context);
-        console.log(orgId);
-        console.log(wsId);
-
-
-
         let acc = null;
         if(orgId != null && orgId != undefined) {
             acc = await DBController.getAccountForOrg(orgId);
@@ -214,38 +204,28 @@ class PermissionHelper {
         let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let accUsers = await context.app.service('acc-users').find({
             query: {
-                userId: userId
+                userId: userId,
+                isAccountOwner: true
             },
             _internalRequest: true
         });
-
-        for(let i=0; i<accUsers.data.length; i++){
-            if(accUsers.data[i].accountId == acc.id && accUsers.data[i].isAccountOwner) {
-                return true;
-            }
-        }
-        return false;
+        return accUsers.find(o => o.accountId == acc.id);
     }
 
     /**
      * isAccountOwner
      * @param {*} context 
      */
-    static async isAccountOwner(context) {
+    static async isAccountOwner(context, accountId) {
         let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let accUsers = await context.app.service('acc-users').find({
             query: {
-                userId: userId
+                userId: userId,
+                isAccountOwner: true
             },
             _internalRequest: true
         });
-
-        for(let i=0; i<accUsers.data.length; i++){
-            if(accUsers.data[i].accountId == context.id && accUsers.data[i].isAccountOwner) {
-                return true;
-            }
-        }
-        return false;
+        return accUsers.find(o => o.accountId == accountId);
     }
 
     /**
@@ -354,7 +334,7 @@ class PermissionHelper {
         if(!context.params.authentication){
             return [];
         }
-        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
+        // let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         try{
             let acc = await DBController.getAccountForWs(wsId);
             return await context.app.service('organizations').find({
