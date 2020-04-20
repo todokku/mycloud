@@ -22,7 +22,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				jwtDecoded = await PermissionHelper.keycloakAuthenticate(email, password);
 				adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app); 
 			} catch (error) {
-				reject(error);
+				return reject(error);
 			}
 		
 			// Look for user locally
@@ -40,7 +40,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
                 error.statusCode = 401;
                 err.code = 401;
 			
-				reject(new NotAuthenticated(error));
+				return reject(new NotAuthenticated(error));
 
 				// let userAttributes = await PermissionHelper.getKeycloakUserAttributes(adminToken, jwtDecoded.email);
 
