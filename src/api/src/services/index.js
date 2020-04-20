@@ -3,7 +3,6 @@ const accounts = require('./accounts/accounts.service.js');
 const organizations = require('./organizations/organizations.service.js');
 const workspaces = require('./workspaces/workspaces.service.js');
 const orgUsers = require('./org-users/org-users.service.js');
-const roles = require('./roles/roles.service.js');
 const cli = require('./cli/cli.service.js');
 const k8sNodes = require('./k8s_nodes/k8s_nodes.service.js');
 const k8sHosts = require('./k8s_hosts/k8s_hosts.service.js');
@@ -20,7 +19,6 @@ const routes = require('./routes/routes.service.js');
 const settings = require('./settings/settings.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function (app) {
-  app.configure(roles);
   app.configure(accounts);
   app.configure(users);
   app.configure(organizations);

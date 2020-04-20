@@ -232,19 +232,6 @@ install_core_components() {
             -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
 
-        # Update admin email
-        ADMIN_U_ID=$(curl -k --request GET \
-            -H "Accept: application/json" \
-            -H "Content-Type:application/json" \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            https://mycloud.keycloak.com/auth/admin/realms/master/users?username=admin | jq '.[0].id' | sed 's/[\"]//g')
-
-        curl -k -X PUT \
-            https://mycloud.keycloak.com/auth/admin/realms/master/users/$ADMIN_U_ID \
-            -H "Content-Type: application/json"  \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            -d '{"email": "'"$MC_U"'"}'
-
         # Retrieve client UUID
         CLIENT_UUID=$(curl -k --request GET \
             -H "Accept: application/json" \
@@ -289,6 +276,32 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-user | jq '.id' | sed 's/[\"]//g')
         
+
+
+
+        # Update admin email and role
+        ADMIN_U_ID=$(curl -k --request GET \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            https://mycloud.keycloak.com/auth/admin/realms/master/users?username=admin | jq '.[0].id' | sed 's/[\"]//g')
+
+        curl -k -X PUT \
+            https://mycloud.keycloak.com/auth/admin/realms/master/users/$ADMIN_U_ID \
+            -H "Content-Type: application/json"  \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            -d '{"email": "'"$MC_U"'"}'
+
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            --data '[{"name": "mc-sysadmin", "id": "'"$SYSADMIN_ROLE_UUID"'"}]' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/users/$ADMIN_U_ID/role-mappings/clients/$CLIENT_UUID
+
+
+
+
         # Login to MyCloud with sysadmin credentials
         MC_TOKEN=$(curl http://$VM_IP:3030/authentication/ \
             -H 'Content-Type: application/json' \
@@ -307,6 +320,7 @@ install_core_components() {
             -H "Authorization: Bearer $MC_TOKEN" \
             http://$VM_IP:3030/roles?name=mc-sysadmin | jq '.data | .[0].id' | sed 's/[\"]//g')
 
+        # Create / update roles in MyCloud
         curl -k \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $MC_TOKEN" \
@@ -327,6 +341,14 @@ install_core_components() {
             -X POST \
             -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
             http://$VM_IP:3030/roles
+
+
+
+
+
+
+
+
 
         # curl -k --request POST \
         #     -H "Accept: application/json" \

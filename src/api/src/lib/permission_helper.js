@@ -3,27 +3,17 @@ const { Forbidden, NotFound } = require('@feathersjs/errors');
 class PermissionHelper {
 
     /**
-     * initRoles
-     * @param {*} context 
-     */
-    static async initRoles(context) {
-        if(!this.roles){
-            this.roles = (await context.app.service('roles').find({ query: {
-                $or: [{ name: "mc-account-owner" },{ name: "mc-sysadmin" }]
-            }})).data;
-        }
-    }
-
-    /**
      * isSysAdmin
      * @param {*} context 
      */
     static async isSysAdmin(context) {
-        await this.initRoles(context);
         if(!context.params.user){
             return false;
         }
-        if(this.roles.find(r => r.id == context.params.user.roleId && r.name == "mc-sysadmin")){
+
+        console.log(context.params.user);
+
+        if(context.params.user.roles.find("mc-sysadmin") != -1){
             return true;
         } 
         return false;
@@ -34,11 +24,10 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isAccountOwner(context) {
-        await this.initRoles(context);
         if(!context.params.user){
             return false;
         }
-        if(this.roles.find(r => r.id == context.params.user.roleId && r.name == "ACCOUNT_OWNER")){
+        if(context.params.user.roles.find("mc-account-owner") != -1){
             return true;
         }
         return false;

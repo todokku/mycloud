@@ -26,7 +26,6 @@ module.exports = function (app) {
   // eslint-disable-next-line no-unused-vars
   users.associate = function (models) {
     users.belongsTo(models.accounts);
-    users.belongsTo(models.roles);
     users.hasMany(models.org_users, {
       onDelete: "CASCADE"
     });

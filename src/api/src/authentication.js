@@ -49,7 +49,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 	 */
 	async authenticate(data) {
 		let usersService = this.app.service('users');
-		let rolesService = this.app.service('roles');
 		let settingsService = this.app.service('settings');
 
 		return new Promise(async (resolve, reject) => {
@@ -70,16 +69,11 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			let jwtToken = response.access_token;
 			var jwtDecoded = jwtDecode(jwtToken);
 			
-			// console.log(JSON.stringify(jwtDecoded, null, 4));
-			// Look for user locally
-			let existingUser = await usersService.find({
-				paginate: false,
-				query: {
-					$limit: 1,
-					email: jwtDecoded.email
-				}
-			});
-			
+			// Make sure we have roles for this user
+			if(!jwtDecoded.resource_access["kubernetes-cluster"]) {
+				return reject(new GeneralError(new Error("This user does not have proper roles configured")));
+			}
+
 			// Get keycloak secret from DB
 			let keycloakSecret = await settingsService.find({
 				paginate: false,
@@ -90,8 +84,8 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				},
 				_internalRequest: true
 			});
-			
-			if(keycloakSecret.length != 2){
+
+			if(keycloakSecret.length != 1){
 				return reject(new GeneralError(new Error("Keycloak secret not known")));
 			}
 
@@ -107,6 +101,15 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			} catch (error) {
 				return reject(error);
 			}
+			
+			// Look for user locally
+			let existingUser = await usersService.find({
+				paginate: false,
+				query: {
+					$limit: 1,
+					email: jwtDecoded.email
+				}
+			});
 
 			// Does not yet exist, create one
 			if(existingUser.length == 0){
@@ -127,15 +130,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				}
 
 				try {
-					// Get local role ID
-					let roles = await rolesService.find({
-						paginate: false,
-						query: {
-							$limit: 1,
-							name: userRoles[0],
-						}
-					});
-
 					// console.log(JSON.stringify(userDetailList, null, 4));
 					// console.log(JSON.stringify(userRoles, null, 4));
 
@@ -143,7 +137,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 					let user = await usersService.create({
 						"email": jwtDecoded.email,
 						"password": password,
-						"roleId": roles[0].id,
 						"accountId": parseInt(userDetailList[0].attributes.accountId)
 					}, {
 						_internalRequest: true
@@ -160,6 +153,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			} 
 			// User exists, logged in
 			else {
+				existingUser[0].roles = jwtDecoded.resource_access["kubernetes-cluster"].roles;
 				resolve({
 					authentication: { strategy: this.name },
 					user: existingUser[0]
