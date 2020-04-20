@@ -1,5 +1,6 @@
 install/gluster-*.vdi
 install/.vagrant
+install/docker-images
 **/.DS_Store
 .DS_Store
 **/node_modules

@@ -109,6 +109,7 @@ dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
 dlAndInstallDockerImg "1Y3iDlkmyHHqwhB2LtYat5vC3dRwg5A8q" "nginx-latest.tar"
 dlAndInstallDockerImg "1Zy13ElhkR5srcIu_tFudUvvb1Wh0aq2K" "postgres-latest.tar"
 dlAndInstallDockerImg "1NBD0eQLeEO-xsXiQTBDpZGmqXCEaylCC" "registry-2.7.1.tar"
+dlAndInstallDockerImg "1rJiDz_p_-tqlvoO5pLiin_iJ3gzAH8RM" "node-12.tar"
 
 echo "[TASK 11] Install Docker registry"
 
@@ -274,7 +275,11 @@ docker run -d \
 echo "[TASK 16] Install MyCloud API Server"
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/api
-docker build -t mycloud-api:0.9 . > /dev/null 2>&1 
+docker build -t mycloud-api:0.9 . > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error building MyCloud API docker image"
+    exit 1
+fi
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
@@ -298,7 +303,11 @@ docker run -d \
 echo "[TASK 17] Install MyCloud task controller"
 su - vagrant -c '
 cd /home/vagrant/mycloud/src/task-controller
-docker build -t mycloud-ctrl:0.9 . > /dev/null 2>&1 
+docker build -t mycloud-ctrl:0.9 . > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error building MyCloud Ctrl docker image"
+    exit 1
+fi
 docker run -d \
     --name mycloud-ctrl \
     --restart unless-stopped \

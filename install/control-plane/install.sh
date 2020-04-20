@@ -300,12 +300,6 @@ install_core_components() {
             -X POST \
             -d '{"key":"KEYCLOAK_SECRET","value":"'"$KEYCLOAK_SECRET"'"}' \
             http://$VM_IP:3030/settings
-        # curl -k \
-        #     -H "Content-Type: application/json" \
-        #     -H "Authorization: Bearer $MC_TOKEN" \
-        #     -X POST \
-        #     -d '{"key":"KEYCLOAK_PASSWORD","value":"'"$KEYCLOAK_P"'"}' \
-        #     http://$VM_IP:3030/settings
            
         # Get MyCloud sysadmin role ID
         SYSADMIN_ID=$(curl -k --request GET \
