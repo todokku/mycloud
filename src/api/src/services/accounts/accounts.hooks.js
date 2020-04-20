@@ -73,7 +73,9 @@ module.exports = {
 			}
 
 
-			console.log(context);
+			try {
+				
+			
 
 			let accUsers = await context.app.service('acc-users').find({
 				query: {
@@ -89,6 +91,9 @@ module.exports = {
 			});
 			
 			context.result.total = context.result.data.length;
+		} catch (error) {
+				console.log(error);
+		}
 			return context;
 		}],
 		get: [],
