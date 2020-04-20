@@ -11,6 +11,7 @@ module.exports = {
 					delete context.params._internalRequest;
 					return context;
 				} else {
+					console.log("LJGHKFJHGFHJGFJGH");
 					throw new Forbidden(new Error('You need to be a a sys admin to perform this task'));
 				}
 			}
