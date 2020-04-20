@@ -74,7 +74,8 @@ exports.Organizations = class Organizations extends Service {
                     "name": name,
                     "accountId":  data.accountId
                 },
-                "user": params.user
+                "user": params.user,
+                "authentication": params.authentication
             })).total != 0){
                 return new Conflict(new Error('This organization name already exists'));
             } 
