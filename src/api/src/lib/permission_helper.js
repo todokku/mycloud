@@ -153,9 +153,9 @@ class PermissionHelper {
             return false;
         }
 
-        console.log(context.params.user);
+        // console.log(context.params.user);
 
-        if(context.params.user.roles.find("mc-sysadmin") != -1){
+        if(context.params.user.roles && context.params.user.roles.find("mc-sysadmin") != -1){
             return true;
         } 
         return false;
