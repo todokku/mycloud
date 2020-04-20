@@ -169,9 +169,9 @@ class PermissionHelper {
         if(!context.params.user){
             return false;
         }
-        if(context.params.user.roles.find("mc-account-owner") != -1){
-            return true;
-        }
+        // if(context.params.user.roles.find("mc-account-owner") != -1){
+        //     return true;
+        // }
         return false;
     }
 

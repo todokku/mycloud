@@ -9,7 +9,18 @@ const {
 module.exports = {
 	before: {
 		all: [],
-		find: [ authenticate('jwt') ],
+		find: [ 
+			authenticate('jwt'), 
+			async context => {
+				const sequelize = context.app.get('sequelizeClient');
+					if(!context.params.sequelize) {
+						context.params.sequelize = {};
+				}				
+				context.params.sequelize.raw = false;
+				context.params.sequelize.include = { model: sequelize.models.acc_users};
+				return context;
+			},
+		],
 		get: [ authenticate('jwt') ],
 		create: [ hashPassword('password'),
 			async context => {
