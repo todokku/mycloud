@@ -358,9 +358,18 @@ class PermissionHelper {
         var jwtDecoded = jwtDecode(jwt);
         jwtDecoded.sub
 
-        return await app.users.get(parseInt(jwtDecoded.sub), {
-            _internalRequest: true
-        });
+try {
+    let _user = await app.users.get(parseInt(jwtDecoded.sub), {
+        _internalRequest: true
+    });
+    return _user;
+} catch (error) {
+    console.log(error);
+}
+
+        // return await app.users.get(parseInt(jwtDecoded.sub), {
+        //     _internalRequest: true
+        // });
     }
 }
 PermissionHelper.roles = null;
