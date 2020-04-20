@@ -1,7 +1,8 @@
 const { Forbidden, NotFound } = require('@feathersjs/errors');
 const { NotAuthenticated, GeneralError } = require('@feathersjs/errors');
-var request = require("request");
-var jwtDecode = require('jwt-decode');
+const request = require("request");
+const jwtDecode = require('jwt-decode');
+const DBController = require("../controllers/db/index");
 
 var authOptions = {
 	method: 'POST',
@@ -183,22 +184,53 @@ class PermissionHelper {
     }
 
     /**
+     * isResourceAccountOwner
+     * @param {*} context 
+     * @param {*} orgId 
+     * @param {*} wsId 
+     */
+    static async isResourceAccountOwner(context, orgId, wsId) {
+        let acc = null;
+        if(orgId != null && orgId != undefined) {
+            acc = await DBController.getAccountForOrg(orgId);
+        } else {
+            acc = await DBController.getAccountForWs(wsId);
+        }
+
+        let accUsers = await context.app.service('acc-users').find({
+            query: {
+                userId: context.params.user.id
+            },
+            user: context.params.user,
+            _internalRequest: true
+        });
+
+        for(let i=0; i<accUsers.data.length; i++){
+            if(accUsers.data[i].accountId == acc.id && accUsers.data[i].isAccountOwner) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * isAccountOwner
      * @param {*} context 
      */
     static async isAccountOwner(context) {
+        let accUsers = await context.app.service('acc-users').find({
+            query: {
+                userId: context.params.user.id
+            },
+            user: context.params.user,
+            _internalRequest: true
+        });
 
-
-        console.log(context.params);
-
-
-
-        if(!context.params.user){
-            return false;
+        for(let i=0; i<accUsers.data.length; i++){
+            if(accUsers.data[i].accountId == context.id && accUsers.data[i].isAccountOwner) {
+                return true;
+            }
         }
-        // if(context.params.user.roles.find("mc-account-owner") != -1){
-        //     return true;
-        // }
         return false;
     }
 
@@ -213,9 +245,18 @@ class PermissionHelper {
         }
         // Make sure user account matches org account
         try{
+            let accUsers = await context.app.service('acc-users').find({
+                query: {
+                    userId: context.params.user.id
+                },
+                user: context.params.user,
+                _internalRequest: true
+            });
+
             context.params._internalRequest = true;
             let org = await context.app.service('organizations').get(orgId, context.params);
-            if(org.accountId != context.params.user.accountId){
+    
+            if(!accUsers.data.find(o => o.accountId == org.accountId)){
                 throw new Forbidden(new Error('This organization does not belong to your account'));
             }
         } catch(err) {
@@ -232,7 +273,7 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async isAccountOwnerAllowed_ws(context, wsId) {
-        let adminUserOrgs = await this.getAccountOwnerOrganizations(context);
+        let adminUserOrgs = await this.getAccOwnerOrgsInWorkspaceContext(context, wsId);
         let orgIdArray = adminUserOrgs.data.map(o => o.id);
         context.params._internalRequest = true;
         let targetWs = await context.app.service('workspaces').get(wsId, context.params);
@@ -289,20 +330,21 @@ class PermissionHelper {
     }
 
     /**
-     * getAccountOwnerOrganizations
+     * getAccOwnerOrgsInWorkspaceContext
      * @param {*} context 
+     * @param {*} wsId 
      */
-    static async getAccountOwnerOrganizations(context) {
+    static async getAccOwnerOrgsInWorkspaceContext(context, wsId) {
         if(!context.params.user){
             return [];
         }
         try{
-            context.params._internalRequest = true;
+            let acc = await DBController.getAccountForWs(wsId);
             return await context.app.service('organizations').find({
 				query: {
-					accountId: context.params.user.accountId
+					accountId: acc.id
                 },
-                user: context.params.user
+                _internalRequest: true
             });
         } catch(err) {
             if(err.code == 404){

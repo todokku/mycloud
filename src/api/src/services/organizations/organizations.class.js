@@ -75,7 +75,7 @@ exports.Organizations = class Organizations extends Service {
 
 
 
-            // Check to see if user already exists
+            // Check to see if org already exists
             if((await this.app.service('organizations').find({
                 "query": {
                     "name": name,

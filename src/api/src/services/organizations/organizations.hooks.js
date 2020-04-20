@@ -34,7 +34,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isResourceAccountOwner(context, context.id, null))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				return context;
@@ -45,7 +45,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isResourceAccountOwner(context, context.id, null))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				await Permissions.userBelongsToAccount_org(context, context.id);
@@ -57,7 +57,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isResourceAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				}
 				await Permissions.userBelongsToAccount_org(context, context.id);
@@ -69,7 +69,7 @@ module.exports = {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
-				} else if(!(await Permissions.isAccountOwner(context))){
+				} else if(!(await Permissions.isResourceAccountOwner(context, context.id))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
 				} 
 				await Permissions.userBelongsToAccount_org(context, context.id);
@@ -80,7 +80,7 @@ module.exports = {
 	after: {
 		all: [],
 		find: [
-			async context => {
+			/*async context => {
 				// Is user is sysadmin, return it all
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
@@ -89,7 +89,7 @@ module.exports = {
 
 				// Is current user a account owner?
 				let isAccountOwner = false;
-				if(await Permissions.isAccountOwner(context)){
+				if(await Permissions.isResourceAccountOwner(context, context.id)){
 					isAccountOwner = true;
 				}
 
@@ -122,7 +122,7 @@ module.exports = {
 				});
 				context.result.total = context.result.data.length;
 				return context;
-			}
+			}*/
 		],
 		get: [],
 		create: [],

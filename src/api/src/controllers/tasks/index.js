@@ -74,7 +74,7 @@ class TaskController {
         // Is user is sysadmin, return it all
         if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
             delete params._internalRequest;
-        } else if(await Permissions.isAccountOwner(context)){
+        } else if(await Permissions.isResourceAccountOwner(context, null, workspaceId)){
             if(!(await Permissions.isAccountOwnerAllowed_ws(context, workspaceId))){
                 return { "code": 403 }
             }
@@ -99,7 +99,7 @@ class TaskController {
         // Is user is sysadmin, return it all
         if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
             delete params._internalRequest;
-        } else if(!(await Permissions.isAccountOwner(context))){
+        } else if(!(await Permissions.isResourceAccountOwner(context, orgId, null))){
             return { "code": 403 }
         }
         try {

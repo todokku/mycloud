@@ -22,8 +22,6 @@ module.exports = {
 					return context;
 				} else if(!(await Permissions.isAccountOwner(context))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
-				} else if(context.id != context.params.user.accountId){
-					throw new Forbidden(new Error('You are not entitled to view accounts that are not yours'));
 				}
 				return context;
 			}
@@ -36,8 +34,6 @@ module.exports = {
 					return context;
 				} else if(!(await Permissions.isAccountOwner(context))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
-				} else if(context.id != context.params.user.accountId){
-					throw new Forbidden(new Error('You are not entitled to view accounts that are not yours'));
 				}
 				return context;
 			}
@@ -49,8 +45,6 @@ module.exports = {
 					return context;
 				} else if(!(await Permissions.isAccountOwner(context))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
-				} else if(context.id != context.params.user.accountId){
-					throw new Forbidden(new Error('You are not entitled to view accounts that are not yours'));
 				}
 				return context;
 			}
@@ -62,8 +56,6 @@ module.exports = {
 					return context;
 				} else if(!(await Permissions.isAccountOwner(context))){
 					throw new Forbidden(new Error('You need to be an account owner to perform this task'));
-				} else if(context.id != context.params.user.accountId){
-					throw new Forbidden(new Error('You are not entitled to view accounts that are not yours'));
 				}
 				return context;
 			}

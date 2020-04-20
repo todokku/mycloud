@@ -12,7 +12,7 @@ module.exports = {
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
+			} else if((await Permissions.isResourceAccountOwner(context, null, context.id))){
 				if(await Permissions.isAccountOwnerAllowed_ws(context, context.id)){
 					return context;
 				} else {
@@ -33,7 +33,7 @@ module.exports = {
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
+			} else if((await Permissions.isResourceAccountOwner(context, context.data.organizationId, null))){
 				await Permissions.userBelongsToAccount_org(context, context.data.organizationId);
 			} else {
 				if(await Permissions.isOrgUserAdmin_ws(context, context.data.organizationId)){
@@ -50,7 +50,7 @@ module.exports = {
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
+			} else if((await Permissions.isResourceAccountOwner(context, null, context.id))){
 				if(await Permissions.isAccountOwnerAllowed_ws(context, context.id)){
 					return context;
 				} else {
@@ -67,7 +67,7 @@ module.exports = {
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
+			} else if((await Permissions.isResourceAccountOwner(context, null, context.id))){
 				if(await Permissions.isAccountOwnerAllowed_ws(context, context.id)){
 					return context;
 				} else {
@@ -84,7 +84,7 @@ module.exports = {
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
+			} else if((await Permissions.isResourceAccountOwner(context, null, context.id))){
 				if(await Permissions.isAccountOwnerAllowed_ws(context, context.id)){
 					return context;
 				} else {
@@ -99,13 +99,19 @@ module.exports = {
   after: {
     all: [],
     find: [
-		async context => {
+		/*async context => {
 			// Is user is sysadmin, return it all
 			if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
 			} else if(await Permissions.isAccountOwner(context)){
-				let adminUserOrgs = await Permissions.getAccountOwnerOrganizations(context);
+
+
+
+
+
+
+				let adminUserOrgs = await Permissions.getAccOwnerOrgsInWorkspaceContext(context);
 				let orgIdArray = adminUserOrgs.data.map(o => o.id);
 		
 				// Itterate over all returned workspaces
@@ -127,6 +133,26 @@ module.exports = {
 				});
 
 				let agregatedData = [];
+				let accUsers = await context.app.service('acc-users').find({
+					query: {
+						userId: context.params.user.id
+					},
+					user: context.params.user
+				});
+				for(let i=0; i<accUsers.data.length; i++){
+					agregatedData = [...agregatedData, ...(context.result.data.filter((ws) => {
+						
+						let specOrgUserForAcc = orgUsers.data.find(o => o.accountId == accUsers.data[i].accountId);
+
+
+						return ws.organizationId == accUsers.data[i].organizationId;
+					}))]; 
+				}
+
+
+
+
+				
 				for(let i=0; i<orgUsers.data.length; i++){
 					agregatedData = [...agregatedData, ...(context.result.data.filter((ws) => {
 						return ws.organizationId == orgUsers.data[i].organizationId;
@@ -136,7 +162,7 @@ module.exports = {
 				context.result.total = context.result.data.length;
 			}
 			return context;
-		}
+		}*/
 	],
     get: [],
     create: [],

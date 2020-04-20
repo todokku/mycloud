@@ -279,6 +279,27 @@ class DBController {
     }
 
     /**
+     * getAccountForWs
+     * @param {*} wsId 
+     */
+    static async getAccountForWs(wsId) {
+        let client = await this.pool.connect();
+        try {
+            const res = await client.query(`SELECT accounts.* FROM 
+                workspaces, 
+                organizations,
+                accounts 
+            WHERE 
+                workspaces."organizationId" = organizations."id" AND 
+                organizations."accountId" = accounts."id" AND
+                workspaces."id" = $1`, [wsId]);
+            return res.rows.length == 1 ? res.rows[0] : null;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * getGlusterHostsByVolumeId
      * @param {*} vId 
      */
@@ -388,12 +409,12 @@ class DBController {
 
     /**
      * getAccountByName
-     * @param {*} accountId 
+     * @param {*} accountName 
      */
-    static async getAccountByName(accountId) {
+    static async getAccountByName(accountName) {
         let client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM accounts WHERE accounts."name" = $1`, [accountId]);
+            const res = await client.query(`SELECT * FROM accounts WHERE accounts."name" = $1`, [accountName]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
             client.release();

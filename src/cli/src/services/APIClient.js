@@ -65,6 +65,11 @@ class APIClient {
                 "code": 412
             };
         }
+        if (p.acc && !this.sessionJson.account){
+            return {
+                "code": 413
+            };
+        }
     }
 
     /**
@@ -119,14 +124,6 @@ class APIClient {
                 email: email,
                 password: password
             });
-
-
-
-            console.log(data);
-
-
-
-
             this.sessionJson = data;
             this._saveSession();
             return {
@@ -212,6 +209,11 @@ class APIClient {
             return error;
         }
         try{
+            this.sessionJson.organization.id
+
+
+            this.sessionJson.user.acc_users
+
             let result = await this.app.service("organizations").create(data, {
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
@@ -306,6 +308,55 @@ class APIClient {
         }
     }
 
+
+
+
+
+
+
+
+    /**
+     * useAccount
+     * @param {*} accName 
+     */
+    async useAccount(accName) {
+        let error = this._precheckFlight({auth: true});
+        if(error) {
+            return error;
+        }
+        try{
+            let result = await this.app.service("accounts").find({
+                query: {
+                    "name": accName
+                },
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+            if(result.data.length == 0){
+                return {
+                    "code": 404
+                };
+            } else {
+                this.sessionJson.account = result.data[0];
+                this._saveSession();
+                return {
+                    "code": 200
+                };
+            }
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+
+
+
+
+
+
+
+
+
     /**
      * getOrganizations
      * @param {*} query 
@@ -330,6 +381,51 @@ class APIClient {
             };
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * getAccounts
+     * @param {*} query 
+     */
+    async getAccounts(query) {
+        let error = this._precheckFlight({auth: true});
+        if(error) {
+            return error;
+        }
+        try{
+            let result = await this.app.service("accounts").find({
+                query: query ? query : {},
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+            return {
+                "code": 200,
+                "data": result.data
+            };
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
     /**
      * getAvailableServices
