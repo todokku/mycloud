@@ -6,15 +6,10 @@ module.exports = {
 	before: {
 		all: [],
 		find: [
-			/*async context => {
-				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
-					delete context.params._internalRequest;
-					return context;
-				} else {
-					console.log("LJGHKFJHGFHJGFJGH");
-					throw new Forbidden(new Error('You need to be a a sys admin to perform this task'));
-				}
-			}*/
+			async context => {
+				console.log("BEFORE =>", context.params);
+				return context;
+			}
 		],
 		get: [
 			async context => {
