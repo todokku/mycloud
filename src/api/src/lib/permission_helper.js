@@ -54,6 +54,8 @@ class PermissionHelper {
                         console.log("BODY =>", body);
                         resolve(JSON.parse(body));
                     } else {
+                        console.log("BODY =>", body);
+                        console.log("RESPONSE =>", response);
                         resolve();
                     }
                 }
