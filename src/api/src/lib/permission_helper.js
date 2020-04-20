@@ -35,6 +35,13 @@ class PermissionHelper {
      */
     static asyncRequest(opt) {
         return new Promise((resolve, reject) => {
+
+
+
+            console.log(JSON.stringify(opt, null, 4));
+
+
+
             request(opt, (error, response, body) => {
                 if(error) {
                     reject(new GeneralError(error));
@@ -44,6 +51,7 @@ class PermissionHelper {
                     reject(new GeneralError(new Error("Unexpected error")));
                 } else {
                     if(opt.headers['Content-Type'] == 'application/json' && body && body.length > 0) {
+                        console.log("BODY =>", body);
                         resolve(JSON.parse(body));
                     } else {
                         resolve();
