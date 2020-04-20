@@ -4,10 +4,9 @@ const { Forbidden } = require('@feathersjs/errors');
 
 module.exports = {
 	before: {
-		all: [authenticate('jwt')],
+		all: [],
 		find: [
 			async context => {
-				console.log(context);
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;

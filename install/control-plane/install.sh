@@ -252,29 +252,29 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-sysadmin | jq '.id' | sed 's/[\"]//g')
 
-        curl -k --request POST \
-            -H "Accept: application/json" \
-            -H "Content-Type:application/json" \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            --data '{"clientRole": true,"name": "mc-account-owner"}' \
-            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
-        ACCOWNER_ROLE_UUID=$(curl -k --request GET \
-            -H "Accept: application/json" \
-            -H "Content-Type:application/json" \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-owner | jq '.id' | sed 's/[\"]//g')
+        # curl -k --request POST \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $KC_TOKEN" \
+        #     --data '{"clientRole": true,"name": "mc-account-owner"}' \
+        #     https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
+        # ACCOWNER_ROLE_UUID=$(curl -k --request GET \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $KC_TOKEN" \
+        #     https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-owner | jq '.id' | sed 's/[\"]//g')
 
-        curl -k --request POST \
-            -H "Accept: application/json" \
-            -H "Content-Type:application/json" \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            --data '{"clientRole": true,"name": "mc-account-user"}' \
-            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
-        ACCUSER_ROLE_UUID=$(curl -k --request GET \
-            -H "Accept: application/json" \
-            -H "Content-Type:application/json" \
-            -H "Authorization: Bearer $KC_TOKEN" \
-            https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-user | jq '.id' | sed 's/[\"]//g')
+        # curl -k --request POST \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $KC_TOKEN" \
+        #     --data '{"clientRole": true,"name": "mc-account-user"}' \
+        #     https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles
+        # ACCUSER_ROLE_UUID=$(curl -k --request GET \
+        #     -H "Accept: application/json" \
+        #     -H "Content-Type:application/json" \
+        #     -H "Authorization: Bearer $KC_TOKEN" \
+        #     https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-user | jq '.id' | sed 's/[\"]//g')
         
 
 
@@ -328,19 +328,19 @@ install_core_components() {
             -d '{"kcUUID":"'$SYSADMIN_ROLE_UUID'"}' \
             http://$VM_IP:3030/roles/$SYSADMIN_ID
 
-        curl -k \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $MC_TOKEN" \
-            -X POST \
-            -d '{"name": "mc-account-owner", "kcUUID":"'$ACCOWNER_ROLE_UUID'"}' \
-            http://$VM_IP:3030/roles
+        # curl -k \
+        #     -H "Content-Type: application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     -X POST \
+        #     -d '{"name": "mc-account-owner", "kcUUID":"'$ACCOWNER_ROLE_UUID'"}' \
+        #     http://$VM_IP:3030/roles
 
-        curl -k \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $MC_TOKEN" \
-            -X POST \
-            -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
-            http://$VM_IP:3030/roles
+        # curl -k \
+        #     -H "Content-Type: application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     -X POST \
+        #     -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
+        #     http://$VM_IP:3030/roles
 
 
 

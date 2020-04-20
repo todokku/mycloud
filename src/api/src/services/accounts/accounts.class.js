@@ -1,5 +1,6 @@
 const { Service } = require('feathers-sequelize');
 const { Conflict } = require('@feathersjs/errors');
+const PermissionHelper = require("./lib/permission_helper");
 
 exports.Accounts = class Accounts extends Service {
     constructor (options, app) {
@@ -15,52 +16,92 @@ exports.Accounts = class Accounts extends Service {
     async create (data, params) {
         const { name, email, password } = data;
 
-
-
-        
-
-
-
-
-        // Check to see if user already exists
-        if((await this.app.service('users').find({
-            "query": {
+        // If user exists, make sure he has not his own account
+        let potentialUsers = await this.app.service('users').find({
+            paginate: false,
+            query: {
                 "email": email
-            }
-        })).total != 0){
-            let err = new Error('This user already exists');
+            },
+            _internalRequest: true
+        });
+
+        if(potentialUsers.length == 1 && password) {
+            let error = new Error('This user already has an account');
+            error.statusCode = 412;
             err.code = 412;
-            return err;
-        } 
-        // Otherwise, create user, then account
-        else {
-            params._internalRequest = true;
-            if((await this.app.service('accounts').find({
-                "query": {
-                    "name": name
+            return error;
+        }
+
+        if(potentialUsers.length == 1) {
+            let accountUsers = await this.app.service('acc_users').find({
+                paginate: false,
+                query: {
+                    "userId": potentialUsers[0].id
                 },
-                "user": params.user,
-                "_internalRequest": true
-            })).total == 0){
-                // Call the original `create` method with existing `params` and new data
+                _internalRequest: true
+            });
+            if(accountUsers.find(o => o.isAccountOwner)){
+                let error = new Error('This user already has an account');
+                error.statusCode = 412;
+                err.code = 412;
+                return error;
+            }
+        }
+
+        if((await this.app.service('accounts').find({
+            query: {
+                "name": name
+            },
+            _internalRequest: true
+        })).total == 0){
+            let transaction = null;
+            try {
+                const sequelize = this.app.get('sequelizeClient');
+                transaction = sequelize.transaction();
+
                 let newAccount = await super.create({
                     name
-                }, params);
-                let roles = await this.app.service('roles').find({ "query": {name: "ACCOUNT_OWNER"}, "user": params.user });
-                // Then create the admin user object
-                params._internalRequest = true;
-                await this.app.service('users').create({
-                    email, 
-                    password, 
-                    roleId: roles.data[0].id, 
-                    accountId: newAccount.id
-                }, params);
+                }, {
+                    _internalRequest: true,
+                    transaction
+                });
+
+                let user = null;
+                if(potentialUsers.length == 1){
+                    user = potentialUsers[0];
+                } else {
+                    user = await this.app.service('users').create({
+                        email, 
+                        password
+                    }, {
+                        _internalRequest: true,
+                        transaction
+                    });
+                }
+
+                await this.app.service('acc_users').create({
+                    accountId: newAccount.id, 
+                    userId: user.id,
+                    isAccountOwner: true
+                }, {
+                    _internalRequest: true,
+                    transaction
+                });
+
+                let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
+                await PermissionHelper.createKeycloakUser(adminToken, email, password)
+
+                await transaction.commit();
+                
                 return {
                     code: 200
                 };
-            } else {
-                return new Conflict(new Error('This account already exists'));
+            } catch (error) {
+                if (transaction) await transaction.rollback();
+                throw error;
             }
+        } else {
+            return new Conflict(new Error('This account already exists'));
         }
     }
 };

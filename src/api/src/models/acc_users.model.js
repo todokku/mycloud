@@ -5,16 +5,11 @@ const DataTypes = Sequelize.DataTypes;
 
 module.exports = function (app) {
   const sequelizeClient = app.get('sequelizeClient');
-  const users = sequelizeClient.define('users', {
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    password: {
-      type: DataTypes.STRING,
+  const accUsers = sequelizeClient.define('acc_users', {
+    isAccountOwner: {
+      type: DataTypes.BOOLEAN,
       allowNull: false
-    }
+    },
   }, {
     hooks: {
       beforeCount(options) {
@@ -24,11 +19,10 @@ module.exports = function (app) {
   });
 
   // eslint-disable-next-line no-unused-vars
-  users.associate = function (models) {
-    users.hasMany(models.org_users, {
-      onDelete: "CASCADE"
-    });
+  accUsers.associate = function (models) {
+    accUsers.belongsTo(models.users);
+    accUsers.belongsTo(models.accounts);
   };
 
-  return users;
+  return accUsers;
 };

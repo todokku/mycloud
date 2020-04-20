@@ -20,9 +20,6 @@ module.exports = function (app) {
 
   // eslint-disable-next-line no-unused-vars
   accounts.associate = function (models) {
-    accounts.hasMany(models.users, {
-      onDelete: "CASCADE"
-    });
     accounts.hasMany(models.organizations, {
       onDelete: "CASCADE"
     });
