@@ -353,6 +353,13 @@ class PermissionHelper {
             throw err;
         }
     }
+
+    static async getAuthUserFromJwt(app, jwt) {
+        var jwtDecoded = jwtDecode(jwt);
+
+
+        console.log(jwtDecoded);
+    }
 }
 PermissionHelper.roles = null;
 module.exports = PermissionHelper;

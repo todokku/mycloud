@@ -7,7 +7,8 @@ module.exports = {
 		all: [],
 		find: [
 			async context => {
-				console.log("BEFORE =>", context.params);
+				await Permissions.getAuthUserFromJwt(context.app, context.params.authentication.accessToken);
+				// console.log("BEFORE =>", context.params.authentication.accessToken);
 				return context;
 			}
 		],
