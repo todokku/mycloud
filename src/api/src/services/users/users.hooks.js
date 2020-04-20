@@ -22,16 +22,7 @@ module.exports = {
 			},
 		],
 		get: [ authenticate('jwt') ],
-		create: [ hashPassword('password')/*,
-			async context => {
-				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
-					delete context.params._internalRequest;
-					return context;
-				}
-				context.data.accountId = context.params.user.accountId;
-				return context;
-			}*/
-		],
+		create: [ hashPassword('password')],
 		update: [ hashPassword('password'),  authenticate('jwt'),
 			async context => {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){

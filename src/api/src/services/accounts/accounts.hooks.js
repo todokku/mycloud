@@ -52,7 +52,6 @@ module.exports = {
 			}
 		]
 	},
-
 	after: {
 		all: [],
 		find: [async context => {
@@ -75,9 +74,7 @@ module.exports = {
 			context.result.data = context.result.data.filter((acc, z) => {
 				return accUsers.find(o => o.accountId == acc.id);
 			});
-			
 			context.result.total = context.result.data.length;
-		
 			return context;
 		}],
 		get: [],

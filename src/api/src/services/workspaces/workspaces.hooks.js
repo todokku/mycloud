@@ -99,70 +99,27 @@ module.exports = {
   after: {
     all: [],
     find: [
-		/*async context => {
-			// Is user is sysadmin, return it all
+		async context => {
 			if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 				delete context.params._internalRequest;
 				return context;
-			} else if(await Permissions.isAccountOwner(context)){
-
-
-
-
-
-
-				let adminUserOrgs = await Permissions.getAccOwnerOrgsInWorkspaceContext(context);
-				let orgIdArray = adminUserOrgs.data.map(o => o.id);
-		
-				// Itterate over all returned workspaces
-				context.result.data = context.result.data.filter((ws, z) => {
-					// User is account owner for this ws, permission granted
-					if(orgIdArray.indexOf(ws.organizationId) != -1){
-						return true;
-					}
-					return false;
-				});
-				
-				context.result.total = context.result.data.length;
-			} else {
-				let orgUsers = await context.app.service('org-users').find({
-					query: {
-						userId: context.params.user.id
-					},
-					user: context.params.user
-				});
-
-				let agregatedData = [];
-				let accUsers = await context.app.service('acc-users').find({
-					query: {
-						userId: context.params.user.id
-					},
-					user: context.params.user
-				});
-				for(let i=0; i<accUsers.data.length; i++){
-					agregatedData = [...agregatedData, ...(context.result.data.filter((ws) => {
-						
-						let specOrgUserForAcc = orgUsers.data.find(o => o.accountId == accUsers.data[i].accountId);
-
-
-						return ws.organizationId == accUsers.data[i].organizationId;
-					}))]; 
-				}
-
-
-
-
-				
-				for(let i=0; i<orgUsers.data.length; i++){
-					agregatedData = [...agregatedData, ...(context.result.data.filter((ws) => {
-						return ws.organizationId == orgUsers.data[i].organizationId;
-					}))]; 
-				}
-				context.result.data = agregatedData;
-				context.result.total = context.result.data.length;
 			}
+
+			let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
+			let orgUsers = await context.app.service('org-users').find({
+				query: {
+					userId: userId
+				}
+			});
+	
+			// Itterate over all returned organizations
+			context.result.data = context.result.data.filter((ws) => {
+				return orgUsers.find(o => o.organizationId == ws.organizationId) ? true : false;
+				
+			});
+			context.result.total = context.result.data.length;
 			return context;
-		}*/
+		}
 	],
     get: [],
     create: [],

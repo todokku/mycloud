@@ -321,15 +321,16 @@ class PermissionHelper {
     static async isOrgUserAdmin_ws(context, orgId) {
         let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
         let orgUsers = await context.app.service('org-users').find({
+            paginate: false,
             query: {
-                userId: userId
+                userId: userId,
+                organizationId: orgId
             }
         });
-
-        for(let i=0; i<orgUsers.data.length; i++){
-            if(orgUsers.data[i].organizationId == orgId && orgUsers.data[i].permissions.split(";").indexOf("ORG_ADMIN") != -1) {
-                return true;
-            }
+        if(orgUsers.length == 0) {
+            return false;
+        } else if(orgUsers.data[0].permissions.split(";").indexOf("ORG_ADMIN") != -1) {
+            return true;
         }
         return false;
     }

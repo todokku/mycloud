@@ -81,56 +81,26 @@ module.exports = {
 		all: [],
 		find: [
 			async context => {
-				console.log(context);
-				return context;
-			}
-
-
-
-
-			/*async context => {
-				// Is user is sysadmin, return it all
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
 				}
 
-				// Is current user a account owner?
-				let isAccountOwner = false;
-				if(await Permissions.isResourceAccountOwner(context, context.id)){
-					isAccountOwner = true;
-				}
-
+				let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
+				let orgUsers = await context.app.service('org-users').find({
+					query: {
+						userId: userId
+					}
+				});
+		
 				// Itterate over all returned organizations
-				context.result.data = context.result.data.filter((org, z) => {
-					// User is account owner for this org, permission granted
-					if(isAccountOwner && org.accountId == context.params.user.accountId){
-						return true;
-					} 
-					// User is regular user and does not belong to the org account
-					else if(!isAccountOwner && org.accountId != context.params.user.accountId){
-						return false;
-					}
-					// Filter out org users if current user does not 
-					// have sufficient permissions to view the data
-					let authOrgUser = org.org_users.find(ou => ou.userId == context.params.user.id);
-					if(authOrgUser){
-						for(let y=0; y<org.org_users.length; y++){
-							if( authOrgUser.permissions.split(';').indexOf("ORG_ADMIN") == -1 && 
-								org.org_users[y].userId != context.params.user.id
-							) {
-								org.org_users.splice(z, 1);
-								y--;
-							}
-						}
-						// context.result.data[z] = org;
-						return true;
-					}
-					return false;
+				context.result.data = context.result.data.filter((org) => {
+					return orgUsers.find(o => o.organizationId == org.id) ? true : false;
+					
 				});
 				context.result.total = context.result.data.length;
 				return context;
-			}*/
+			}
 		],
 		get: [],
 		create: [],
