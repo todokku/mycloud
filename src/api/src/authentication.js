@@ -14,7 +14,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 
 		return new Promise(async (resolve, reject) => {
 			const { email, password } = data;
-			console.log(1);
+			
 			// Authenticate with Keycloak
 			var jwtDecoded = null;
 			let adminToken = null;
@@ -24,7 +24,8 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			} catch (error) {
 				reject(error);
 			}
-			console.log(1);
+		
+			console.log("jwtDecoded =>", jwtDecoded);
 			// Look for user locally
 			let existingUser = await usersService.find({
 				paginate: false,
@@ -33,10 +34,9 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 					email: jwtDecoded.email
 				}
 			});
-			console.log(1);
+			
 			// Does not yet exist, create one
 			if(existingUser.length == 0){
-				console.log(2);
 				let error = new Error('Unknown user');
                 error.statusCode = 401;
                 err.code = 401;
@@ -74,7 +74,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			} 
 			// User exists, logged in
 			else {
-				console.log(3);
 				existingUser[0].roles = jwtDecoded.resource_access["kubernetes-cluster"].roles;
 				resolve({
 					authentication: { strategy: this.name },
