@@ -15,7 +15,7 @@ exports.Accounts = class Accounts extends Service {
      */
     async create (data, params) {
         const { name, email, password } = data;
-
+        console.log("=========> 1");
         // If user exists, make sure he has not his own account
         let potentialUsers = await this.app.service('users').find({
             paginate: false,
@@ -24,15 +24,16 @@ exports.Accounts = class Accounts extends Service {
             },
             _internalRequest: true
         });
-
+        console.log("=========> 1");
         if(potentialUsers.length == 1 && password) {
             let error = new Error('This user already has an account');
             error.statusCode = 412;
             err.code = 412;
             return error;
         }
-
+        console.log("=========> 1");
         if(potentialUsers.length == 1) {
+            console.log("=========> 2");
             let accountUsers = await this.app.service('acc_users').find({
                 paginate: false,
                 query: {
@@ -40,12 +41,14 @@ exports.Accounts = class Accounts extends Service {
                 },
                 _internalRequest: true
             });
+            console.log("=========> 2");
             if(accountUsers.find(o => o.isAccountOwner)){
                 let error = new Error('This user already has an account');
                 error.statusCode = 412;
                 err.code = 412;
                 return error;
             }
+            console.log("=========> 2");
         }
         console.log("=========> 1");
         let accounts = await this.app.service('accounts').find({
