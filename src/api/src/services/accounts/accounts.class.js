@@ -24,12 +24,24 @@ exports.Accounts = class Accounts extends Service {
             },
             _internalRequest: true
         });
-
         if(potentialUsers.length == 1 && password) {
             let error = new Error('This user already has an account');
             error.statusCode = 412;
             err.code = 412;
             return error;
+        }
+
+        let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
+        let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
+        if(kcUser && password) {
+            try {
+                await PermissionHelper.keycloakAuthenticate(email, password, true);
+            } catch (error) {
+                let error = new Error('Wrong username or password');
+                error.statusCode = 403;
+                err.code = 403;
+                return error;
+            }
         }
 
         if(potentialUsers.length == 1) {
@@ -80,10 +92,6 @@ exports.Accounts = class Accounts extends Service {
                     });
                 }
 
-                console.log("user =>", user);
-                console.log("newAccount =>", newAccount);
-
-                // console.log(this.app);
                 await this.app.service('acc-users').create({
                     accountId: newAccount.id, 
                     userId: user.id,
@@ -93,15 +101,11 @@ exports.Accounts = class Accounts extends Service {
                     sequelize: { transaction}
                 });
 
-                let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
-                let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
-                console.log("kcUser =>", kcUser);
                 if(!kcUser) {
                     await PermissionHelper.createKeycloakUser(adminToken, email, password);
                 }
             
                 await transaction.commit();
-                
                 return {
                     code: 200
                 };

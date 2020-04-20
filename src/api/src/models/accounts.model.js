@@ -23,6 +23,9 @@ module.exports = function (app) {
     accounts.hasMany(models.organizations, {
       onDelete: "CASCADE"
     });
+    accounts.hasMany(models.acc_users, {
+      onDelete: "CASCADE"
+    });
   };
 
   return accounts;
