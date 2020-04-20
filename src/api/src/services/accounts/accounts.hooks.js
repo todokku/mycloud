@@ -71,7 +71,10 @@ module.exports = {
 				delete context.params._internalRequest;
 				return context;
 			}
-console.log("1");
+
+
+			console.log(context);
+
 			let accUsers = await context.app.service('acc-users').find({
 				query: {
 					userId: context.params.user.id
@@ -79,12 +82,12 @@ console.log("1");
 				user: context.params.user,
 				_internalRequest: true
 			});
-			console.log("2");
+		
 			// Itterate over all returned organizations
 			context.result.data = context.result.data.filter((acc, z) => {
 				return accUsers.find(o => o.accountId == acc.accountId);
 			});
-			console.log("3");
+			
 			context.result.total = context.result.data.length;
 			return context;
 		}],
