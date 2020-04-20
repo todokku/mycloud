@@ -354,22 +354,24 @@ class PermissionHelper {
         }
     }
 
+    /**
+     * getAuthUserFromJwt
+     * @param {*} app 
+     * @param {*} jwt 
+     */
     static async getAuthUserFromJwt(app, jwt) {
         var jwtDecoded = jwtDecode(jwt);
-        jwtDecoded.sub
+        return await app.service('users').get(parseInt(jwtDecoded.sub), {
+            _internalRequest: true
+        });
+    }
 
-try {
-    let _user = await app.service('users').get(parseInt(jwtDecoded.sub), {
-        _internalRequest: true
-    });
-    return _user;
-} catch (error) {
-    console.log(error);
-}
-
-        // return await app.users.get(parseInt(jwtDecoded.sub), {
-        //     _internalRequest: true
-        // });
+    /**
+     * getUserIdFromJwt
+     * @param {*} jwt 
+     */
+    static getUserIdFromJwt(jwt) {
+        return parseInt(jwtDecode(jwt).sub);
     }
 }
 PermissionHelper.roles = null;

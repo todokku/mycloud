@@ -5,14 +5,7 @@ const { Forbidden } = require('@feathersjs/errors');
 module.exports = {
 	before: {
 		all: [],
-		find: [
-			async context => {
-				let _user = await Permissions.getAuthUserFromJwt(context.app, context.params.authentication.accessToken);
-				console.log(_user);
-				// console.log("BEFORE =>", context.params.authentication.accessToken);
-				return context;
-			}
-		],
+		find: [],
 		get: [
 			async context => {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
@@ -69,16 +62,16 @@ module.exports = {
 				return context;
 			}
 
+			let userId = Permissions.getUserIdFromJwt(context.params.authentication.accessToken);
 
 			try {
 				
-			
+				
 
 			let accUsers = await context.app.service('acc-users').find({
 				query: {
-					userId: context.params.user.id
+					userId: userId
 				},
-				user: context.params.user,
 				_internalRequest: true
 			});
 		
