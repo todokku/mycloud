@@ -25,7 +25,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				reject(error);
 			}
 		
-			console.log("jwtDecoded =>", jwtDecoded);
 			// Look for user locally
 			let existingUser = await usersService.find({
 				paginate: false,

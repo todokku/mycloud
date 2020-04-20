@@ -74,6 +74,7 @@ class PermissionHelper {
         if(!ignoreMissingRoles && !jwtDecoded.resource_access["kubernetes-cluster"]) {
             throw new GeneralError(new Error("This user does not have proper roles configured"));
         }
+        console.log(jwtDecoded);
 		return jwtDecoded;
     }
 

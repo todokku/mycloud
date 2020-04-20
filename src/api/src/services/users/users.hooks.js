@@ -12,15 +12,12 @@ module.exports = {
 		find: [ 
 			authenticate('jwt'), 
 			async context => {
-				console.log(1);
 				const sequelize = context.app.get('sequelizeClient');
 					if(!context.params.sequelize) {
 						context.params.sequelize = {};
-				}
-				console.log(1);			
+				}	
 				context.params.sequelize.raw = false;
 				context.params.sequelize.include = { model: sequelize.models.acc_users};
-				console.log(1);
 				return context;
 			},
 		],
