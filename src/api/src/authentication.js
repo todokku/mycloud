@@ -19,7 +19,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			var jwtDecoded = null;
 			let adminToken = null;
 			try {
-				jwtDecoded = await PermissionHelper.keycloakAuthenticate(email, password);
+				jwtDecoded = await PermissionHelper.keycloakAuthenticate(email, password, true);
 				adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app); 
 			} catch (error) {
 				return reject(error);
