@@ -14,12 +14,19 @@ exports.Accounts = class Accounts extends Service {
      */
     async create (data, params) {
         const { name, email, password } = data;
+
+
+
+        
+
+
+
+
         // Check to see if user already exists
         if((await this.app.service('users').find({
             "query": {
                 "email": email
-            },
-            "user": params.user
+            }
         })).total != 0){
             let err = new Error('This user already exists');
             err.code = 412;

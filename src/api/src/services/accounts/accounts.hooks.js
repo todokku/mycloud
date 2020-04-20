@@ -7,6 +7,7 @@ module.exports = {
 		all: [authenticate('jwt')],
 		find: [
 			async context => {
+				console.log(context);
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
 					delete context.params._internalRequest;
 					return context;
