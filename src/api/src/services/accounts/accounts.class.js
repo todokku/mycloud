@@ -33,7 +33,7 @@ exports.Accounts = class Accounts extends Service {
         }
 
         if(potentialUsers.length == 1) {
-            let accountUsers = await this.app.service('acc_users').find({
+            let accountUsers = await this.app.service('acc-users').find({
                 paginate: false,
                 query: {
                     "userId": potentialUsers[0].id
@@ -81,7 +81,7 @@ exports.Accounts = class Accounts extends Service {
                 }
 
                 console.log(this.app);
-                await this.app.service('acc_users').create({
+                await this.app.service('acc-users').create({
                     accountId: newAccount.id, 
                     userId: user.id,
                     isAccountOwner: true
