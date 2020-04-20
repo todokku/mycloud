@@ -296,7 +296,8 @@ class TaskController {
                 "instanceName": serviceName,
                 "namespace": ns
             },
-            "user": params.user
+            "user": params.user,
+            "authentication": params.authentication
         });
 
         if(service.total == 0) {
