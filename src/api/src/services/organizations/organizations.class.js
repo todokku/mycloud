@@ -79,7 +79,7 @@ exports.Organizations = class Organizations extends Service {
             if((await this.app.service('organizations').find({
                 "query": {
                     "name": name,
-                    "accountId":  params.user.accountId
+                    "accountId":  params.accountId
                 },
                 "user": params.user
             })).total != 0){
@@ -95,7 +95,7 @@ exports.Organizations = class Organizations extends Service {
                     "registryUser": registryUser,
                     "registryPass": cryptoData.password,
                     "bcryptSalt": cryptoData.salt,
-                    "accountId":  params.user.accountId
+                    "accountId":  params.accountId
                 }, params);
                
                 // Create org admin user link

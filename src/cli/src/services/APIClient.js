@@ -204,16 +204,12 @@ class APIClient {
      * @param {*} data 
      */
     async createOrganization(data) {
-        let error = this._precheckFlight({auth: true});
+        let error = this._precheckFlight({auth: true, acc: true});
         if(error) {
             return error;
         }
         try{
-            this.sessionJson.organization.id
-
-
-            this.sessionJson.user.acc_users
-
+            data.accountId = this.sessionJson.account.id;
             let result = await this.app.service("organizations").create(data, {
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
