@@ -207,6 +207,7 @@ class PermissionHelper {
                 userId: userId,
                 isAccountOwner: true
             },
+            paginate: false,
             _internalRequest: true
         });
         return accUsers.find(o => o.accountId == acc.id);
@@ -217,23 +218,16 @@ class PermissionHelper {
      * @param {*} context 
      */
     static async isAccountOwner(context, accountId) {
-
-
-        try {
-            let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
-            let accUsers = await context.app.service('acc-users').find({
-                query: {
-                    userId: userId,
-                    isAccountOwner: true
-                },
-                _internalRequest: true
-            });
-            return accUsers.find(o => o.accountId == accountId);
-        } catch (error) {
-            console.log(error);
-            return false;
-        }
-        
+        let userId = this.getUserIdFromJwt(context.params.authentication.accessToken);
+        let accUsers = await context.app.service('acc-users').find({
+            paginate: false,
+            query: {
+                userId: userId,
+                isAccountOwner: true
+            },
+            _internalRequest: true
+        });
+        return accUsers.find(o => o.accountId == accountId);
     }
 
     /**
@@ -250,6 +244,7 @@ class PermissionHelper {
         // Make sure user account matches org account
         try{
             let accUsers = await context.app.service('acc-users').find({
+                paginate: false,
                 query: {
                     userId: userId
                 },
@@ -259,7 +254,7 @@ class PermissionHelper {
             context.params._internalRequest = true;
             let org = await context.app.service('organizations').get(orgId, context.params);
     
-            if(!accUsers.data.find(o => o.accountId == org.accountId)){
+            if(!accUsers.find(o => o.accountId == org.accountId)){
                 throw new Forbidden(new Error('This organization does not belong to your account'));
             }
         } catch(err) {
