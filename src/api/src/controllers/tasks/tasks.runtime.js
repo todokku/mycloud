@@ -262,11 +262,9 @@ class TaskRuntimeController {
             );
 
 
-
-            console.log(configFileContent.data.config);
-
-
-
+            let buff = new Buffer(configFileContent.data.config, 'base64');
+            let text = buff.toString('ascii');
+            console.log(text);
 
 
 

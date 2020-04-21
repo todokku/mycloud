@@ -668,7 +668,8 @@ class APIClient {
                             "--oidc-redirect-url-hostname=127.0.0.1",
                             "--listen-address=127.0.0.1:12345",
                             "- --oidc-extra-scope=email",
-                            "- --oidc-extra-scope=profile"
+                            "- --oidc-extra-scope=profile",
+                            "- --username=" + this.sessionJson.user.email
                         ]
                     }
                 };
