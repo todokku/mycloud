@@ -57,6 +57,8 @@ class TaskRuntimeController {
         //     permissions: [ 'ORG_ADMIN' ],
         //     organizationId: 2
         // }
+        try {
+    
 
         let org = await this.app.service('organizations').get(data.params.organizationId, params);
         // Make sure current user has permissions to do this
@@ -97,6 +99,7 @@ class TaskRuntimeController {
         }
 
         // Sort by existing vs new users for this org
+       
         let accUsers = await this.app.service('acc-users').find({
             "user": params.user,
             "authentication": params.authentication,
@@ -128,7 +131,7 @@ class TaskRuntimeController {
         });
 
         let transaction = null;
-        try {
+       
             const sequelize = this.app.get('sequelizeClient');
             transaction = await sequelize.transaction();
 
