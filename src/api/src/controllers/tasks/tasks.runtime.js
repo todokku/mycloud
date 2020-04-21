@@ -1,6 +1,5 @@
-// const shortid = require('shortid');
 const MQTTController = require("../mqtt/index");
-// const DBController = require("../db/index");
+const YAML = require('yaml');
 const { NotFound, Unprocessable } = require('@feathersjs/errors');
 const Permissions = require('../../lib/permission_helper');
 
@@ -261,17 +260,17 @@ class TaskRuntimeController {
                 }
             );
 
-
+            // Remove admin certificate from file so that we can inject the target user on the CLI side for RBAC authentication
             let buff = new Buffer(configFileContent.data.config, 'base64');
-            let text = buff.toString('ascii');
-            console.log("=> ", text);
-
-
-
+            let kubecfgText = buff.toString('ascii');
+            let cfgFile = YAML.parse(fs.readFileSync(kubecfgText, 'utf8'));
+            cfgFile.users[0].user = {};
+            
+            // Now return file to cli 
             if(configFileContent.data.status == 200){
                 return {
                     "code": 200,
-                    "data": configFileContent.data.config
+                    "data": new Buffer(YAML.stringify(cfgFile)).toString('base64')
                 };
             } else {
                 return { "code": configFileContent.data.status };
