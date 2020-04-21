@@ -640,19 +640,36 @@ class APIClient {
             });
 
             if(result.code == 200 && !result.clusterStatus) {
-                let targetName = `config-${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}`;
-                let targetPath = path.join(os.homedir(), ".kube", targetName);
+                let clusterName = `${this.sessionJson.account.name}-${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}`;
+                let targetPath = path.join(os.homedir(), ".kube", `config-${clusterName}`);
                 if (fs.existsSync(targetPath)) {
                     fs.unlinkSync(targetPath);
                 }
                 fs.writeFileSync(targetPath, result.data, {encoding: 'base64'});
                 let cfgFile = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
                 
-                cfgFile.clusters[0].name = `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}-cluster`;
-                cfgFile.users[0].name = `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}-admin`;
-                cfgFile.contexts[0].context.cluster = `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}-cluster`;
-                cfgFile.contexts[0].context.user = `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}-admin`;
-                cfgFile.contexts[0].name = `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}`;
+                cfgFile['current-context'] = this.sessionJson.user.email;
+                cfgFile.clusters[0].name = `${clusterName}-cluster`;
+                cfgFile.contexts[0].context.cluster = `${clusterName}-cluster`;
+                cfgFile.contexts[0].context.user = this.sessionJson.user.email;
+                cfgFile.contexts[0].name = clusterName;
+
+                cfgFile.users[0].name = this.sessionJson.user.email;
+                cfgFile.users[0].user = {
+                    exec: {
+                        apiVersion: "client.authentication.k8s.io/v1beta1",
+                        command: "kubectl",
+                        args: [
+                            "oidc-login",
+                            "get-token",
+                            "--oidc-issuer-url=https://mycloud.keycloak.com/auth/realms/master",
+                            "--oidc-client-id=kubernetes-cluster",
+                            "--insecure-skip-tls-verify=true",
+                            "--oidc-redirect-url-hostname=127.0.0.1",
+                            "--listen-address=127.0.0.1:12345"
+                        ]
+                    }
+                };
 
                 fs.writeFileSync(targetPath, YAML.stringify(cfgFile));
 
@@ -664,8 +681,8 @@ class APIClient {
                     bashProfileArray = bashProfileArray.map(l => {
                         if(l.trim().startsWith("export KUBECONFIG=")){
                             foundKubeCfg = true;
-                            if(l.indexOf(`$HOME/.kube/${targetName}`) == -1){
-                                l += `:$HOME/.kube/${targetName}`;
+                            if(l.indexOf(`$HOME/.kube/config-${clusterName}`) == -1){
+                                l += `:$HOME/.kube/config-${clusterName}`;
                             }
                             return l;
                         } else {
@@ -674,21 +691,21 @@ class APIClient {
                     });
                     
                     if(!foundKubeCfg){
-                        bashProfileArray.push(`export KUBECONFIG=$HOME/.kube/${targetName}`);
+                        bashProfileArray.push(`export KUBECONFIG=$HOME/.kube/config-${clusterName}`);
                     }
                     OSController.writeArrayToFile(bash_profile_path, bashProfileArray);
                     return {
                         "code": 200,
                         "path": targetPath,
                         "sourcePath": bash_profile_path,
-                        "config": `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}`,
+                        "config": clusterName,
                         "bash_profile_updated": true
                     };
                 } else {
                     return {
                         "code": 200,
                         "path": targetPath,
-                        "config": `${this.sessionJson.organization.name}-${this.sessionJson.workspace.name}`,
+                        "config": clusterName,
                         "bash_profile_updated": false
                     };
                 }          

@@ -261,6 +261,15 @@ class TaskRuntimeController {
                 }
             );
 
+
+
+            console.log(configFileContent.data.config);
+
+
+
+
+
+
             if(configFileContent.data.status == 200){
                 return {
                     "code": 200,

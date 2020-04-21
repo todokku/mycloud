@@ -44,23 +44,24 @@ export default class OrganizationUsersAdd extends Command {
 			params.emails = flags.users.toLowerCase().split(",")
 		}
 
-		// Select permissions to apply
 		let permissionChoices: any = await inquirer.prompt([{
-			name: 'permission',
-			message: 'What permission do you want to assign to those users:',
-			type: 'list',
+			type: 'checkbox',
+			name: 'permissions',
+			message: 'What permissions do you want to assign to those users:',
 			choices: [
 				{
 					name: "Organization administrator",
 					value: "ORG_ADMIN"
-				},
-				{
+				}, {
 					name: "Organization developer",
 					value: "ORG_DEVELOPER"
 				}
-			]
+			],
 		}]);
-		params.permissions.push(permissionChoices.permission);
+		params.permissions = permissionChoices.permissions;
+		if(params.permissions.length == 0) {
+			return this.logError("You need to add at least one permission. To remove all permissions for a user, use the command 'mc org:users:remove <org name>'");
+		}
 
 		let result = await this.api("organization", {
 			method: "add_users",
