@@ -66,7 +66,7 @@ export default class OrganizationUsersAdd extends Command {
 			method: "add_users",
 			data: params
 		});
-		console.log(result);
+		
 		if(result.code == 200){
 			this.log("Done");
 		} else if(result.code == 401){

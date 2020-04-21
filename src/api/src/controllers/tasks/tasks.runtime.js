@@ -90,13 +90,7 @@ class TaskRuntimeController {
             "paginate": false
         });
 
-
-        console.log("targetUsers =>", targetUsers);
-        console.log("data.params.emails =>", data.params.emails);
-
-
         if(targetUsers.length != data.params.emails.length) {
-            console.log("HERE");
             return {
                 "code": 405
             };

@@ -605,10 +605,7 @@ class APIClient {
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
            
-            return {
-                "code": 200,
-                "data": result.data
-            };
+            return result;
         } catch(err) {
             return {
                 "code": err.code
