@@ -18,6 +18,7 @@ export default class Status extends Command {
 		if(result.code == 200){
 			this.log(result.user ? `You are logged in as ${result.user.email}` : "You are not logged in");
 			if(result.user){
+				this.log(result.account ? `The current selected account is "${result.account.name}"` : "No account selected");
 				this.log(result.organization ? `The current selected organization is "${result.organization.name}"` : "No organization selected");
 				this.log(result.workspace ? `The current selected workspace is "${result.workspace.name}"` : "No workspace selected");
 			}

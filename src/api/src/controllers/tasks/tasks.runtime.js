@@ -97,7 +97,7 @@ class TaskRuntimeController {
         }
 
         // Sort by existing vs new users for this org
-        let orgUsers = await context.app.service('org-users').find({
+        let orgUsers = await this.app.service('org-users').find({
             "user": params.user,
             "authentication": params.authentication,
             "paginate": false,
@@ -116,12 +116,12 @@ class TaskRuntimeController {
 
         let transaction = null;
         try {
-            const sequelize = context.app.get('sequelizeClient');
+            const sequelize = this.app.get('sequelizeClient');
             transaction = await sequelize.transaction();
 
             // Create new user org bindings
             for(let i=0; i<newTargetUsers.length; i++) {
-                await context.app.service('org-users').create({
+                await this.app.service('org-users').create({
                     organizationId: org.id, 
                     userId: newTargetUsers[i].id,
                     permissions: data.params.permissions.join(',')
@@ -133,7 +133,7 @@ class TaskRuntimeController {
 
             for(let i=0; i<existingTargetUsers.length; i++) {
                 let existingOrgAcc = orgUsers.find(o => o.userId == existingTargetUsers[i].id);
-                await context.app.service('org-users').update(existingOrgAcc.id, {
+                await this.app.service('org-users').update(existingOrgAcc.id, {
                     organizationId: org.id, 
                     userId: existingTargetUsers[i].id,
                     permissions: data.params.permissions.join(',')

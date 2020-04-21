@@ -193,6 +193,7 @@ class APIClient {
             return {
                 "code": 200,
                 "user": this.sessionJson.user,
+                "account": this.sessionJson.account ? this.sessionJson.account : null,
                 "organization": this.sessionJson.organization ? this.sessionJson.organization : null,
                 "workspace": this.sessionJson.workspace ? this.sessionJson.workspace : null
             };
@@ -345,6 +346,7 @@ class APIClient {
      */
     async getOrganizations(query) {
         let error = this._precheckFlight({auth: true, acc: true});
+        
         if(error) {
             return error;
         }
