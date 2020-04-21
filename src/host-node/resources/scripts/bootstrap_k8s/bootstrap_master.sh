@@ -15,18 +15,18 @@ echo "[TASK 9] Configuring Docker registry on IP $1"
 sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/home/vagrant/configPrivateRegistry.sh /configPrivateRegistry.sh
 /configPrivateRegistry.sh
 
-echo "[TASK 10] Configuring Keycloak"
-sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/opt/docker/containers/nginx/certs/rootCA.crt /etc/kubernetes/pki
-
 # Initialize Kubernetes cluster
-echo "[TASK M.1] Initialize Kubernetes Cluster"
+echo "[TASK 10] Initialize Kubernetes Cluster"
 M_IP="$(hostname -I | cut -d' ' -f2)"
 echo "Initializing kubeadm on IP $M_IP"
 # kubeadm init --apiserver-advertise-address=$M_IP --pod-network-cidr=192.168.0.0/16
 kubeadm init --apiserver-advertise-address=$M_IP --pod-network-cidr=10.244.0.0/16
 
+echo "[TASK 11] Configuring Keycloak"
+sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/opt/docker/containers/nginx/certs/rootCA.crt /etc/kubernetes/pki/rootCA.crt
+
 # Copy Kube admin config
-echo "[TASK M.2] Copy kube admin config to Vagrant user .kube directory"
+echo "[TASK 12] Copy kube admin config to Vagrant user .kube directory"
 mkdir /home/vagrant/.kube
 cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
 chown -R vagrant:vagrant /home/vagrant/.kube
@@ -37,7 +37,7 @@ echo "export KUBECONFIG=/home/vagrant/.kube/admin.conf" | tee -a ~/.bashrc
 source ~/.bashrc
 
 # Deploy flannel network
-echo "[TASK M.3] Deploy Calico network"
+echo "[TASK 13] Deploy Calico network"
 # su - vagrant -c "kubectl create -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
 su - vagrant -c "kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml"
 
@@ -55,7 +55,7 @@ sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-client-id=kubernetes-cluster' /etc/k
 sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-ca-file=/etc/kubernetes/pki/rootCA.crt' /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Install Gluster client
-echo "[TASK M.4] Install Gluster engine"
+echo "[TASK 14] Install Gluster engine"
 yum install -y -q centos-release-gluster
 yum install -y -q glusterfs-server
 systemctl disable glusterd
