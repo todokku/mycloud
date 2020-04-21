@@ -97,6 +97,19 @@ class TaskRuntimeController {
         }
 
         // Sort by existing vs new users for this org
+        let accUsers = await this.app.service('acc-users').find({
+            "user": params.user,
+            "authentication": params.authentication,
+            "paginate": false,
+            "query": {
+                accountId: org.accountId
+            }
+        });
+        let newAccTargetUsers = targetUsers.filter(u => {
+            let existingU = accUsers.find(ou => ou.userId == u.id);
+            return !existingU;
+        });
+
         let orgUsers = await this.app.service('org-users').find({
             "user": params.user,
             "authentication": params.authentication,
@@ -105,11 +118,11 @@ class TaskRuntimeController {
                 organizationId: org.id
             }
         });
-        let newTargetUsers = targetUsers.filter(u => {
+        let newOrgTargetUsers = targetUsers.filter(u => {
             let existingU = orgUsers.find(ou => ou.userId == u.id);
             return !existingU;
         });
-        let existingTargetUsers = targetUsers.filter(u => {
+        let existingOrgTargetUsers = targetUsers.filter(u => {
             let existingU = orgUsers.find(ou => ou.userId == u.id);
             return existingU;
         });
@@ -119,11 +132,23 @@ class TaskRuntimeController {
             const sequelize = this.app.get('sequelizeClient');
             transaction = await sequelize.transaction();
 
+            // Create new user acc bindings
+            for(let i=0; i<newAccTargetUsers.length; i++) {
+                await this.app.service('acc-users').create({
+                    accountId: org.accountId, 
+                    userId: newOrgTargetUsers[i].id,
+                    isAccountOwner: false
+                }, {
+                    _internalRequest: true,
+                    sequelize: { transaction }
+                });
+            }
+
             // Create new user org bindings
-            for(let i=0; i<newTargetUsers.length; i++) {
+            for(let i=0; i<newOrgTargetUsers.length; i++) {
                 await this.app.service('org-users').create({
                     organizationId: org.id, 
-                    userId: newTargetUsers[i].id,
+                    userId: newOrgTargetUsers[i].id,
                     permissions: data.params.permissions.join(',')
                 }, {
                     _internalRequest: true,
@@ -131,11 +156,12 @@ class TaskRuntimeController {
                 });
             }
 
-            for(let i=0; i<existingTargetUsers.length; i++) {
-                let existingOrgAcc = orgUsers.find(o => o.userId == existingTargetUsers[i].id);
+            // Update new user org bindings
+            for(let i=0; i<existingOrgTargetUsers.length; i++) {
+                let existingOrgAcc = orgUsers.find(o => o.userId == existingOrgTargetUsers[i].id);
                 await this.app.service('org-users').update(existingOrgAcc.id, {
                     organizationId: org.id, 
-                    userId: existingTargetUsers[i].id,
+                    userId: existingOrgTargetUsers[i].id,
                     permissions: data.params.permissions.join(',')
                 }, {
                     _internalRequest: true,
