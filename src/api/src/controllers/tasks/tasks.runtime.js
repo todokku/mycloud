@@ -49,8 +49,8 @@ class TaskRuntimeController {
      * @param {*} params 
      */
     static async addOrgUsers(data, params) {
-        console.log("params => ", params.authentication.accessToken);
-        console.log("data => ", data.params);
+        // console.log("params => ", params.authentication.accessToken);
+        // console.log("data => ", data.params);
         // {
         //     emails: [ 'foo@bar.com' ],
         //     orgName: 'dto',
@@ -89,6 +89,11 @@ class TaskRuntimeController {
             "authentication": params.authentication,
             "paginate": false
         });
+
+
+        console.log("targetUsers =>", targetUsers);
+
+
         if(targetUsers.length != data.params.emails.length) {
             return {
                 "code": 405
