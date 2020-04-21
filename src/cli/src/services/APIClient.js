@@ -598,7 +598,7 @@ class APIClient {
         }
         try{
             let _q = query ? query : {};
-            _q.organizationId = this.sessionJson.organization.id;
+            _q.accountId = this.sessionJson.account.id;
            
             let result = await this.app.service("cli").update(0, {
                 "action": "add_org_users",

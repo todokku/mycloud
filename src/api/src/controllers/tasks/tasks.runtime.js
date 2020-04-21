@@ -58,7 +58,22 @@ class TaskRuntimeController {
         //     organizationId: 2
         // }
         try {
-            let org = await this.app.service('organizations').get(data.params.organizationId, params);
+            let targetOrgs = await this.app.service('organizations').find({
+                "query": {
+                    "name": data.params.orgName,
+                    "accountId": data.params.accountId
+                },
+                "user": params.user,
+                "authentication": params.authentication,
+                "paginate": false
+            });
+            if(targetOrgs.length != 1) {
+                return {
+                    "code": 404
+                };
+            }
+
+            let org = targetOrgs[0];
             // Make sure current user has permissions to do this
             let isAccOwner = await Permissions.isAccountOwner({
                 app: this.app,
