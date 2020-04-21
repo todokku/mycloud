@@ -92,6 +92,7 @@ class TaskRuntimeController {
 
 
         console.log("targetUsers =>", targetUsers);
+        console.log("data.params.emails =>", data.params.emails);
 
 
         if(targetUsers.length != data.params.emails.length) {
