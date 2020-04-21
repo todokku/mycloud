@@ -151,7 +151,7 @@ class TaskRuntimeController {
             for(let i=0; i<newAccTargetUsers.length; i++) {
                 await this.app.service('acc-users').create({
                     accountId: org.accountId, 
-                    userId: newOrgTargetUsers[i].id,
+                    userId: newAccTargetUsers[i].id,
                     isAccountOwner: false
                 }, {
                     _internalRequest: true,
