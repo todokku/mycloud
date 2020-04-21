@@ -263,7 +263,7 @@ class TaskRuntimeController {
             // Remove admin certificate from file so that we can inject the target user on the CLI side for RBAC authentication
             let buff = new Buffer(configFileContent.data.config, 'base64');
             let kubecfgText = buff.toString('ascii');
-            let cfgFile = YAML.parse(fs.readFileSync(kubecfgText, 'utf8'));
+            let cfgFile = YAML.parse(kubecfgText);
             cfgFile.users[0].user = {};
             
             // Now return file to cli 
