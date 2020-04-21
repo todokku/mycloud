@@ -71,10 +71,16 @@ module.exports = {
 			});
 		
 			// Itterate over all returned organizations
-			context.result.data = context.result.data.filter((acc, z) => {
-				return accUsers.find(o => o.accountId == acc.id);
-			});
-			context.result.total = context.result.data.length;
+			if(context.result.data){
+				context.result.data = context.result.data.filter((acc, z) => {
+					return accUsers.find(o => o.accountId == acc.id);
+				});
+				context.result.total = context.result.data.length;
+			} else {
+				context.result = context.result.filter((acc, z) => {
+					return accUsers.find(o => o.accountId == acc.id);
+				});
+			}
 			return context;
 		}],
 		get: [],

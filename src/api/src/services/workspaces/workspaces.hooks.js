@@ -114,11 +114,18 @@ module.exports = {
 			});
 	
 			// Itterate over all returned organizations
-			context.result.data = context.result.data.filter((ws) => {
-				return orgUsers.find(o => o.organizationId == ws.organizationId) ? true : false;
-				
-			});
-			context.result.total = context.result.data.length;
+			if(context.result.data){
+				context.result.data = context.result.data.filter((ws) => {
+					return orgUsers.find(o => o.organizationId == ws.organizationId) ? true : false;
+					
+				});
+				context.result.total = context.result.data.length;
+			} else {
+				context.result = context.result.filter((ws) => {
+					return orgUsers.find(o => o.organizationId == ws.organizationId) ? true : false;
+					
+				});
+			}
 			return context;
 		}
 	],
