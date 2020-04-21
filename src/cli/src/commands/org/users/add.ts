@@ -27,7 +27,7 @@ export default class OrganizationUsersAdd extends Command {
 	async run() {
 		const {args, flags} = this.parse(OrganizationUsersAdd);
 		let params = {
-			emails: "",
+			emails: new Array<any>(),
 			orgName: "",
 			permissions: new Array<any>() 
 		}
@@ -39,9 +39,9 @@ export default class OrganizationUsersAdd extends Command {
 		}
 		
 		if(!flags.users){
-			params.emails = await cli.prompt('Enter user emails to add, separated by comma (,)')
+			params.emails = (await cli.prompt('Enter user emails to add, separated by comma (,)')).toLowerCase().split(",")
 		} else {
-			params.emails = flags.users
+			params.emails = flags.users.toLowerCase().split(",")
 		}
 
 		// Select permissions to apply
@@ -66,15 +66,17 @@ export default class OrganizationUsersAdd extends Command {
 			method: "add_users",
 			data: params
 		});
+		console.log(result);
 		if(result.code == 200){
 			this.log("Done");
 		} else if(result.code == 401){
 			this.logError(`You are not logged in`);
 		} else if(result.code == 403){
 			this.logError(`You do not have sufficient permissions to add users`);
-			return false;
 		} else if(result.code == 404){
 			this.logError(`The organization '${params.orgName}' does not exist`);
+		} else if(result.code == 405){
+			this.logError(`Some emails you provided do not have an account`);
 		} else if(result.code == 417){
 			this.logError(`The cli API host has not been defined. Please run the command "mycloud join" to specity a target host for MyCloud.`);
 		} else if(result.code == 503){

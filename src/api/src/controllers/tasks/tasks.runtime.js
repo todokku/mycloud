@@ -96,6 +96,7 @@ class TaskRuntimeController {
 
 
         if(targetUsers.length != data.params.emails.length) {
+            console.log("HERE");
             return {
                 "code": 405
             };
