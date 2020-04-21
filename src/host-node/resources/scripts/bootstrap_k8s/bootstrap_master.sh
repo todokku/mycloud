@@ -16,7 +16,7 @@ sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKey
 /configPrivateRegistry.sh
 
 echo "[TASK 10] Configuring Keycloak"
-sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/opt/docker/containers/nginx/certs/rootCA.crt /etc/kubernetes/pki/rootCA.crt
+sshpass -p 'kubeadmin' sudo scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@$1:/opt/docker/containers/nginx/certs/rootCA.crt /etc/kubernetes/pki
 
 # Initialize Kubernetes cluster
 echo "[TASK M.1] Initialize Kubernetes Cluster"
