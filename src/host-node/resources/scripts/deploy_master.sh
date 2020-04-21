@@ -8,7 +8,6 @@ cd $_DIR && cd ../../workplaces/$1/$2
 _onError () {
     vagrant halt
     vagrant destroy --force
-    exit 1
 }
 
 echo "[TASK 0] Start VM"
@@ -19,13 +18,13 @@ if [ $? -eq 0 ]; then
     vagrant ssh -c "kubectl taint nodes --all node-role.kubernetes.io/master-"
     if [ $? -eq 1 ]; then
         echo "[ERROR] Could not untaint master node workplaces/$1/$2"
-        _onError
-    fi
-
-    vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org --docker-username=$3 --docker-password=$4 --docker-email=mycloud@mycloud.com" 2>/dev/null
-    if [ $? -eq 1 ]; then
-        echo "[ERROR] Could not create private registry secret"
-        _onError
+        # _onError
+    else
+        vagrant ssh -c "kubectl create secret docker-registry regcred --docker-server=registry.mycloud.org --docker-username=$3 --docker-password=$4 --docker-email=mycloud@mycloud.com" 2>/dev/null
+        if [ $? -eq 1 ]; then
+            echo "[ERROR] Could not create private registry secret"
+            _onError
+        fi
     fi
     echo "[DONE]"
 else

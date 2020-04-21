@@ -411,7 +411,7 @@ class EngineController {
         } catch(errArray) {
             let created = await this.vmExists(`master.${hash}`);
             if(created){
-                await this.stopDeleteVm(`master.${hash}`, workspaceId);
+                // await this.stopDeleteVm(`master.${hash}`, workspaceId);
             }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
