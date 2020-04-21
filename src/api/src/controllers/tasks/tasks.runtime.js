@@ -2,7 +2,7 @@
 const MQTTController = require("../mqtt/index");
 // const DBController = require("../db/index");
 const { NotFound, Unprocessable } = require('@feathersjs/errors');
-// const Permissions = require('../../lib/permission_helper');
+const Permissions = require('../../lib/permission_helper');
 
 class TaskRuntimeController {
 
@@ -49,11 +49,110 @@ class TaskRuntimeController {
      * @param {*} params 
      */
     static async addOrgUsers(data, params) {
-        console.log("data => ", data);
-        console.log("params => ", params);
-        return {
-            "code": 200
-        };
+        console.log("params => ", params.authentication.accessToken);
+        console.log("data => ", data.params);
+        // {
+        //     emails: [ 'foo@bar.com' ],
+        //     orgName: 'dto',
+        //     permissions: [ 'ORG_ADMIN' ],
+        //     organizationId: 2
+        // }
+
+        let org = await this.app.service('organizations').get(data.params.organizationId, params);
+        // Make sure current user has permissions to do this
+        let isAccOwner = await Permissions.isAccountOwner({
+            app: this.app,
+            params
+        }, org.accountId);
+        if(!isAccOwner) {
+            let isOrgAdmin = await Permissions.isOrgUserAdmin_ws({
+                app: this.app,
+                params
+            }, org.id);
+
+            if(!isOrgAdmin) {
+                return {
+                    "code": 403
+                };
+            }
+        }
+
+        // Make sure all users exist
+        data.params.emails = [...new Set(data.params.emails)]; // Filter out duplicates
+        let targetUsers = await this.app.service('users').find({
+            "query": {
+                "email": {
+                    $in: data.params.emails
+                }
+            },
+            "user": params.user,
+            "authentication": params.authentication,
+            "paginate": false
+        });
+        if(targetUsers.length != data.params.emails.length) {
+            return {
+                "code": 405
+            };
+        }
+
+        // Sort by existing vs new users for this org
+        let orgUsers = await context.app.service('org-users').find({
+            "user": params.user,
+            "authentication": params.authentication,
+            "paginate": false,
+            "query": {
+                organizationId: org.id
+            }
+        });
+        let newTargetUsers = targetUsers.filter(u => {
+            let existingU = orgUsers.find(ou => ou.userId == u.id);
+            return !existingU;
+        });
+        let existingTargetUsers = targetUsers.filter(u => {
+            let existingU = orgUsers.find(ou => ou.userId == u.id);
+            return existingU;
+        });
+
+        let transaction = null;
+        try {
+            const sequelize = context.app.get('sequelizeClient');
+            transaction = await sequelize.transaction();
+
+            // Create new user org bindings
+            for(let i=0; i<newTargetUsers.length; i++) {
+                await context.app.service('org-users').create({
+                    organizationId: org.id, 
+                    userId: newTargetUsers[i].id,
+                    permissions: data.params.permissions.join(',')
+                }, {
+                    _internalRequest: true,
+                    sequelize: { transaction }
+                });
+            }
+
+            for(let i=0; i<existingTargetUsers.length; i++) {
+                let existingOrgAcc = orgUsers.find(o => o.userId == existingTargetUsers[i].id);
+                await context.app.service('org-users').update(existingOrgAcc.id, {
+                    organizationId: org.id, 
+                    userId: existingTargetUsers[i].id,
+                    permissions: data.params.permissions.join(',')
+                }, {
+                    _internalRequest: true,
+                    sequelize: { transaction }
+                });
+            }
+
+            await transaction.commit();
+            return {
+                code: 200
+            };
+        } catch (error) {
+            if (transaction) {
+                // console.log(transaction);
+                await transaction.rollback();
+            }
+            return { "code": 500 };
+        }
     }
     
     /**
