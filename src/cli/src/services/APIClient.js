@@ -592,7 +592,7 @@ class APIClient {
      * @param {*} query 
      */
     async addOrgUsers(query) {
-        let error = this._precheckFlight({auth: true, org: true});
+        let error = this._precheckFlight({auth: true, acc: true});
         if(error) {
             return error;
         }

@@ -58,82 +58,78 @@ class TaskRuntimeController {
         //     organizationId: 2
         // }
         try {
-    
-
-        let org = await this.app.service('organizations').get(data.params.organizationId, params);
-        // Make sure current user has permissions to do this
-        let isAccOwner = await Permissions.isAccountOwner({
-            app: this.app,
-            params
-        }, org.accountId);
-        if(!isAccOwner) {
-            let isOrgAdmin = await Permissions.isOrgUserAdmin_ws({
+            let org = await this.app.service('organizations').get(data.params.organizationId, params);
+            // Make sure current user has permissions to do this
+            let isAccOwner = await Permissions.isAccountOwner({
                 app: this.app,
                 params
-            }, org.id);
+            }, org.accountId);
+            if(!isAccOwner) {
+                let isOrgAdmin = await Permissions.isOrgUserAdmin_ws({
+                    app: this.app,
+                    params
+                }, org.id);
 
-            if(!isOrgAdmin) {
+                if(!isOrgAdmin) {
+                    return {
+                        "code": 403
+                    };
+                }
+            }
+
+            // Make sure all users exist
+            data.params.emails = [...new Set(data.params.emails)]; // Filter out duplicates
+            let targetUsers = await this.app.service('users').find({
+                "query": {
+                    "email": {
+                        $in: data.params.emails
+                    }
+                },
+                "user": params.user,
+                "authentication": params.authentication,
+                "paginate": false
+            });
+
+            if(targetUsers.length != data.params.emails.length) {
                 return {
-                    "code": 403
+                    "code": 405
                 };
             }
-        }
 
-        // Make sure all users exist
-        data.params.emails = [...new Set(data.params.emails)]; // Filter out duplicates
-        let targetUsers = await this.app.service('users').find({
-            "query": {
-                "email": {
-                    $in: data.params.emails
+            // Sort by existing vs new users for this org
+        
+            let accUsers = await this.app.service('acc-users').find({
+                "user": params.user,
+                "authentication": params.authentication,
+                "paginate": false,
+                "query": {
+                    accountId: org.accountId
                 }
-            },
-            "user": params.user,
-            "authentication": params.authentication,
-            "paginate": false
-        });
+            });
+            let newAccTargetUsers = targetUsers.filter(u => {
+                let existingU = accUsers.find(ou => ou.userId == u.id);
+                return !existingU;
+            });
 
-        if(targetUsers.length != data.params.emails.length) {
-            return {
-                "code": 405
-            };
-        }
+            let orgUsers = await this.app.service('org-users').find({
+                "user": params.user,
+                "authentication": params.authentication,
+                "paginate": false,
+                "query": {
+                    organizationId: org.id
+                }
+            });
+            let newOrgTargetUsers = targetUsers.filter(u => {
+                let existingU = orgUsers.find(ou => ou.userId == u.id);
+                return !existingU;
+            });
+            let existingOrgTargetUsers = targetUsers.filter(u => {
+                let existingU = orgUsers.find(ou => ou.userId == u.id);
+                return existingU;
+            });
 
-        // Sort by existing vs new users for this org
-       
-        let accUsers = await this.app.service('acc-users').find({
-            "user": params.user,
-            "authentication": params.authentication,
-            "paginate": false,
-            "query": {
-                accountId: org.accountId
-            }
-        });
-        let newAccTargetUsers = targetUsers.filter(u => {
-            let existingU = accUsers.find(ou => ou.userId == u.id);
-            return !existingU;
-        });
-
-        let orgUsers = await this.app.service('org-users').find({
-            "user": params.user,
-            "authentication": params.authentication,
-            "paginate": false,
-            "query": {
-                organizationId: org.id
-            }
-        });
-        let newOrgTargetUsers = targetUsers.filter(u => {
-            let existingU = orgUsers.find(ou => ou.userId == u.id);
-            return !existingU;
-        });
-        let existingOrgTargetUsers = targetUsers.filter(u => {
-            let existingU = orgUsers.find(ou => ou.userId == u.id);
-            return existingU;
-        });
-
-        let transaction = null;
-       
             const sequelize = this.app.get('sequelizeClient');
-            transaction = await sequelize.transaction();
+            let transaction = await sequelize.transaction();
 
             // Create new user acc bindings
             for(let i=0; i<newAccTargetUsers.length; i++) {
@@ -177,6 +173,7 @@ class TaskRuntimeController {
                 code: 200
             };
         } catch (error) {
+            console.log(error);
             if (transaction) {
                 // console.log(transaction);
                 await transaction.rollback();

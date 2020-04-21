@@ -77,12 +77,14 @@ export default class OrganizationUsersAdd extends Command {
 			this.logError(`The organization '${params.orgName}' does not exist`);
 		} else if(result.code == 405){
 			this.logError(`Some emails you provided do not have an account`);
+		} else if(result.code == 413){
+			this.logError(`You need to set an account first, using the commabd 'mc accounts:use <account name>'`);
 		} else if(result.code == 417){
 			this.logError(`The cli API host has not been defined. Please run the command "mycloud join" to specity a target host for MyCloud.`);
 		} else if(result.code == 503){
 			this.logError(`MyCloud is not accessible. Please make sure that you are connected to the right network and try again.`);
 		} else {
-			// console.log(JSON.stringify(result, null, 4));
+			console.log(JSON.stringify(result, null, 4));
 			this.logError("Something went wrong... Please inform the system administrator.");
 		}
 	}
