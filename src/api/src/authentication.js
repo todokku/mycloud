@@ -22,7 +22,6 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 				jwtDecoded = await PermissionHelper.keycloakAuthenticate(email, password, true);
 				adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app); 
 			
-		
 				// Look for user locally
 				let existingUser = await usersService.find({
 					paginate: false,
@@ -38,36 +37,7 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 					error.statusCode = 401;
 					err.code = 401;
 				
-					return reject(new NotAuthenticated(error));
-
-					// let userAttributes = await PermissionHelper.getKeycloakUserAttributes(adminToken, jwtDecoded.email);
-
-					// // Make sure we have a user returned
-					// if(!userAttributes.accountId == undefined || userAttributes.accountId == null) {
-					// 	return reject(new GeneralError(new Error("User is known, but has no account ID attribute")));
-					// }
-
-					// try {
-					// 	// console.log(JSON.stringify(userDetailList, null, 4));
-					// 	// console.log(JSON.stringify(userRoles, null, 4));
-
-					// 	// Use the existing user or create new one.
-					// 	let user = await usersService.create({
-					// 		"email": jwtDecoded.email,
-					// 		"password": password,
-					// 		"accountId": parseInt(userAttributes.accountId)
-					// 	}, {
-					// 		_internalRequest: true
-					// 	});
-
-					// 	// Logged in
-					// 	resolve({
-					// 		authentication: { strategy: this.name },
-					// 		user
-					// 	});
-					// } catch (error) {
-					// 	reject(new GeneralError(error));
-					// }				
+					return reject(new NotAuthenticated(error));		
 				} 
 				// User exists, logged in
 				else {

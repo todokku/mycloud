@@ -516,8 +516,18 @@ class TaskController {
                 for(let i=0; i<orgWorkspaces.data.length; i++) {
                     await this.scheduleWorkspaceDelete(orgWorkspaces.data[i].name, targetOrg.data[0].id, params);
                 }
-                // Now safe to delete org
-                await this.app.service('organizations').remove(targetOrg.data[0].id, params);
+
+                await this.schedule(
+                    "DEPROVISION-ORGANIZATION",
+                    "organization",
+                    targetOrg.data[0].id,
+                    [{
+                        "type": "INFO",
+                        "step": "DEPROVISION-ORGANIZATION",
+                        "ts": new Date().toISOString()
+                    }],
+                    params
+                );
             } catch(err){
                 console.log(err);
                 return {"code": err.code};

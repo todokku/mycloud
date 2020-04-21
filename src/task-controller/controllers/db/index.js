@@ -88,6 +88,20 @@ class DBController {
     }
 
     /**
+     * getWorkspacesForOrg
+     * @param {*} id 
+     */
+    static async getWorkspacesForOrg(id) {
+        this.client = await this.pool.connect();
+        try {
+            const res = await this.client.query('SELECT * FROM workspaces WHERE "organizationId" = $1', [id]);
+            return res.rows;
+        } finally {
+            this.client.release();
+        }
+    }
+
+    /**
      * deleteWorkspace
      * @param {*} id 
      */
@@ -95,6 +109,19 @@ class DBController {
         this.client = await this.pool.connect();
         try {
             await this.client.query('DELETE FROM workspaces WHERE "id" = $1', [id]);
+        } finally {
+            this.client.release();
+        }
+    }
+
+    /**
+     * deleteOrganization
+     * @param {*} id 
+     */
+    static async deleteOrganization(id) {
+        this.client = await this.pool.connect();
+        try {
+            await this.client.query('DELETE FROM organizations WHERE "id" = $1', [id]);
         } finally {
             this.client.release();
         }

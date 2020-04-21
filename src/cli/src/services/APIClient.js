@@ -232,16 +232,21 @@ class APIClient {
      * @param {*} data 
      */
     async deleteOrganization(data) {
-        let error = this._precheckFlight({auth: true});
+        let error = this._precheckFlight({auth: true, acc: true});
         if(error) {
             return error;
         }
         try{
+
+
+
+
+
             let result = await this.app.service("cli").update(0, {
                 "action": "delete_organization",
                 "params": {
                     "name": data.name,
-                    "accountId": this.sessionJson.user.accountId
+                    "accountId": this.sessionJson.account.id
                 }
             }, {
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
@@ -264,7 +269,7 @@ class APIClient {
      * @param {*} orgName 
      */
     async useOrganization(orgName) {
-        let error = this._precheckFlight({auth: true});
+        let error = this._precheckFlight({auth: true, acc: true});
         if(error) {
             return error;
         }
@@ -272,7 +277,7 @@ class APIClient {
             let result = await this.app.service("organizations").find({
                 query: {
                     "name": orgName,
-                    "accountId": this.sessionJson.user.accountId
+                    "accountId": this.sessionJson.account.id
                 },
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
@@ -358,7 +363,7 @@ class APIClient {
      * @param {*} query 
      */
     async getOrganizations(query) {
-        let error = this._precheckFlight({auth: true});
+        let error = this._precheckFlight({auth: true, acc: true});
         if(error) {
             return error;
         }

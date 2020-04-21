@@ -80,7 +80,9 @@ class TaskController {
                 if(this.bussyTaskIds.indexOf(taskList[i].id) == -1) {
                     try{
                         this.bussyTaskIds.push(taskList[i].id);
-                        if(taskList[i].taskType == "DEPROVISION-WORKSPACE-RESOURCES") {
+                        if(taskList[i].taskType == "DEPROVISION-ORGANIZATION") {
+                            await this.processScheduledDeprovisionOrganization(taskList[i]);
+                        } else if(taskList[i].taskType == "DEPROVISION-WORKSPACE-RESOURCES") {
                             await this.processScheduledDeprovisionWorkspaceResources(taskList[i]);
                         } else if(taskList[i].taskType == "CREATE-K8S-CLUSTER") {
                             await TaskRuntimeController.processScheduledInitiateK8sCluster(taskList[i]);
@@ -203,15 +205,53 @@ class TaskController {
     }
 
     /**
+     * processScheduledDeprovisionOrganization
+     * @param {*} task 
+     */
+    static async processScheduledDeprovisionOrganization(task) {
+        task.payload = JSON.parse(task.payload);
+        console.log(JSON.stringify(task, null, 4));
+
+        try {
+            let remainingWss = await DBController.getWorkspacesForOrg(task.targetId);
+            if(remainingWss.length == 0){
+                // Only once all workspaces have been deprovisioned, we delete this organization
+                await DBController.updateTaskStatus(task, "IN_PROGRESS", {
+                    "type": "INFO",
+                    "step": "DEPROVISION-ORGANIZATION",
+                    "component": "task-controller",
+                    "ts": new Date().toISOString()
+                });
+                // Delete Organization DB entry
+                await DBController.deleteOrganization(task.targetId);
+                            
+                await DBController.updateTaskStatus(task, "DONE", {
+                    "type": "INFO",
+                    "step": "DEPROVISION-ORGANIZATION",
+                    "component": "task-controller",
+                    "ts": new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            await DBController.updateTaskStatus(task, "ERROR", {
+                "type": "ERROR",
+                "step": "DEPROVISION-ORGANIZATION",
+                "component": "task-controller",
+                "message": error.message ? error.message : "Could not create k8s cluster",
+                "ts": new Date().toISOString()
+            });
+        }
+    }
+
+    /**
      * processScheduledDeprovisionWorkspaceResources
      * @param {*} task 
      */
     static async processScheduledDeprovisionWorkspaceResources(task) {
         task.payload = JSON.parse(task.payload);
-        console.log(JSON.stringify(task.payload, null, 4));
+        // console.log(JSON.stringify(task.payload, null, 4));
 
         try {
-            // All good, create workspace cluster
             await DBController.updateTaskStatus(task, "IN_PROGRESS", {
                 "type": "INFO",
                 "step": "DEPROVISION-WORKSPACE",
@@ -251,7 +291,7 @@ class TaskController {
             }
 
             // Delete Workspace DB entry
-            await DBController.deleteWorkspace(task.payload[0].params.k8sNodes[0].workspaceId)
+            await DBController.deleteWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
             
             await DBController.updateTaskStatus(task, "DONE", {
                 "type": "INFO",
