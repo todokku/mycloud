@@ -210,7 +210,6 @@ class TaskController {
      */
     static async processScheduledDeprovisionOrganization(task) {
         task.payload = JSON.parse(task.payload);
-        console.log(JSON.stringify(task, null, 4));
 
         try {
             let remainingWss = await DBController.getWorkspacesForOrg(task.targetId);
@@ -222,6 +221,7 @@ class TaskController {
                     "component": "task-controller",
                     "ts": new Date().toISOString()
                 });
+
                 // Delete Organization DB entry
                 await DBController.deleteOrganization(task.targetId);
                             

@@ -17,10 +17,6 @@ export default class Login extends Command {
 		}),
 	}
 
-	// static args = [
-	//   {name: 'file'}
-	// ]
-
 	/**
 	 * run
 	 */
@@ -32,7 +28,7 @@ export default class Login extends Command {
 		}
 		
 		if(!flags.user){
-			params.email = await cli.prompt('What is your username?')
+			params.email = await cli.prompt('What is your username')
 		} else {
 			params.email = flags.user
 		}

@@ -237,11 +237,6 @@ class APIClient {
             return error;
         }
         try{
-
-
-
-
-
             let result = await this.app.service("cli").update(0, {
                 "action": "delete_organization",
                 "params": {
@@ -252,6 +247,7 @@ class APIClient {
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
             if(this.sessionJson.organization && this.sessionJson.organization.id == result.id){
+                delete this.sessionJson.workspace;
                 delete this.sessionJson.organization;
                 delete this.sessionJson.orgUser;
                 this._saveSession();
@@ -309,13 +305,6 @@ class APIClient {
         }
     }
 
-
-
-
-
-
-
-
     /**
      * useAccount
      * @param {*} accName 
@@ -350,14 +339,6 @@ class APIClient {
         }
     }
 
-
-
-
-
-
-
-
-
     /**
      * getOrganizations
      * @param {*} query 
@@ -383,16 +364,6 @@ class APIClient {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
     /**
      * getAccounts
      * @param {*} query 
@@ -417,16 +388,6 @@ class APIClient {
             };
         }
     }
-
-
-
-
-
-
-
-
-
-
 
     /**
      * getAvailableServices
@@ -620,6 +581,41 @@ class APIClient {
             };
         }
     }
+
+
+
+
+    /**
+     * addOrgUsers
+     * @param {*} query 
+     */
+    async addOrgUsers(query) {
+        let error = this._precheckFlight({auth: true, org: true});
+        if(error) {
+            return error;
+        }
+        try{
+            let _q = query ? query : {};
+            _q.organizationId = this.sessionJson.organization.id;
+           
+            let result = await this.app.service("cli").update(0, {
+                "action": "add_org_users",
+                "params": _q
+            }, {
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+           
+            return {
+                "code": 200,
+                "data": result.data
+            };
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+    
 
     /**
      * getKubectlConfigFile

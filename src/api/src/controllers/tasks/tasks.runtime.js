@@ -44,6 +44,19 @@ class TaskRuntimeController {
     }
 
     /**
+     * addOrgUsers
+     * @param {*} data 
+     * @param {*} params 
+     */
+    static async addOrgUsers(data, params) {
+        console.log("data => ", data);
+        console.log("params => ", params);
+        return {
+            "code": 200
+        };
+    }
+    
+    /**
      * getK8SConfigFile
      * @param {*} data 
      * @param {*} params 
