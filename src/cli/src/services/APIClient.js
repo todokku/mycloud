@@ -666,7 +666,9 @@ class APIClient {
                             "--oidc-client-id=kubernetes-cluster",
                             "--insecure-skip-tls-verify=true",
                             "--oidc-redirect-url-hostname=127.0.0.1",
-                            "--listen-address=127.0.0.1:12345"
+                            "--listen-address=127.0.0.1:12345",
+                            "- --oidc-extra-scope=email",
+                            "- --oidc-extra-scope=profile"
                         ]
                     }
                 };

@@ -161,6 +161,7 @@ class PermissionHelper {
             "username": email, 
             "email": email, 
             "enabled": true, 
+            "emailVerified": true,
             "credentials":[{ "type": "password", "value": password, "temporary": false }]
         };
         await this.asyncRequest(_o);
