@@ -94,6 +94,14 @@ module.exports = {
 					}
 				});
 				
+
+
+
+console.log(context);
+
+
+
+
 				// Itterate over all returned organizations
 				context.result.data = context.result.data.filter((org) => {
 					return orgUsers.find(o => o.organizationId == org.id) ? true : false;

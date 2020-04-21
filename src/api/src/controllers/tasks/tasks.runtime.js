@@ -57,6 +57,7 @@ class TaskRuntimeController {
         //     permissions: [ 'ORG_ADMIN' ],
         //     organizationId: 2
         // }
+        let transaction = null;
         try {
             let targetOrgs = await this.app.service('organizations').find({
                 "query": {
@@ -144,7 +145,7 @@ class TaskRuntimeController {
             });
 
             const sequelize = this.app.get('sequelizeClient');
-            let transaction = await sequelize.transaction();
+            transaction = await sequelize.transaction();
 
             // Create new user acc bindings
             for(let i=0; i<newAccTargetUsers.length; i++) {
