@@ -31,13 +31,7 @@ exports.Cli = class Cli {
 	async create (data, params) {
 		switch(data.action) {
 			case "account":
-				try {					
-					// let adminSession = await this.app.service('authentication').create({
-					// 	strategy: 'local',
-					// 	email: process.env.API_SYSADMIN_USER,
-					// 	password: process.env.API_SYSADMIN_PASSWORD
-					// });
-
+				try {
 					let existingAccount = await this.app.service('accounts').find({
 						query: {
 							"name": data.params.accountName

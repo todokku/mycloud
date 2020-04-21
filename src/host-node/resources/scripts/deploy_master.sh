@@ -8,6 +8,7 @@ cd $_DIR && cd ../../workplaces/$1/$2
 _onError () {
     vagrant halt
     vagrant destroy --force
+    exit 1
 }
 
 echo "[TASK 0] Start VM"
@@ -15,7 +16,7 @@ vagrant up
 if [ $? -eq 0 ]; then
     echo "[TASK FINAL] Make master node also a worker node"
     sleep 5
-    vagrant ssh -c "kubectl taint nodes --all node-role.kubernetes.io/master-" 2>/dev/null
+    vagrant ssh -c "kubectl taint nodes --all node-role.kubernetes.io/master-"
     if [ $? -eq 1 ]; then
         echo "[ERROR] Could not untaint master node workplaces/$1/$2"
         _onError

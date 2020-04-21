@@ -30,7 +30,7 @@ class TaskRuntimeController {
             let allDbHosts = await DBController.getAllK8sHosts();
             await this.registerMissingK8SHosts(allDbHosts, memArray);
         } else {
-            this.mqttController.logEvent(task.payload[0].socketId, "error", "MyCloud is out of memory to allocate a new cluster");
+            this.mqttController.logEvent(task.payload[0].socketId, "error", "MyCloud is out of memory, can not create a new cluster");
             this.mqttController.closeEventStream(task.payload[0].socketId);
             return this.mqttController.client.publish('/mycloud/alert/out_of_resources/no_k8s_host');
         }
