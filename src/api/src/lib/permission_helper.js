@@ -60,6 +60,7 @@ class PermissionHelper {
      * @param {*} wsId 
      */
     static async isResourceAccountOwner(context, orgId, wsId) {
+        console.log(orgId, wsId);
         let acc = null;
         if(orgId != null && orgId != undefined) {
             acc = await DBController.getAccountForOrg(orgId);
@@ -75,6 +76,7 @@ class PermissionHelper {
             paginate: false,
             _internalRequest: true
         });
+        console.log(accUsers);
         return accUsers.find(o => o.accountId == acc.id);
     }
 

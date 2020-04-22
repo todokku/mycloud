@@ -238,7 +238,7 @@ class TaskController {
                 "type": "ERROR",
                 "step": "DEPROVISION-ORGANIZATION",
                 "component": "task-controller",
-                "message": error.message ? error.message : "Could not create k8s cluster",
+                "message": error.message ? error.message : "Could not deprovision k8s cluster",
                 "ts": new Date().toISOString()
             });
         }
@@ -321,7 +321,7 @@ class TaskController {
                 "type": "ERROR",
                 "step": "DEPROVISION-WORKSPACE",
                 "component": "task-controller",
-                "message": error.message ? error.message : "Could not create k8s cluster",
+                "message": error.message ? error.message : "Could not deprovision k8s cluster",
                 "ts": new Date().toISOString()
             });
         }
