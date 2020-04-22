@@ -229,7 +229,7 @@ install_core_components() {
             -H "Accept: application/json" \
             -H "Content-Type:application/json" \
             -H "Authorization: Bearer $KC_TOKEN" \
-            -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"]}' \
+            -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"], "protocolMappers": [{"name": "groups", "protocol": "openid-connect", "protocolMapper": "oidc-group-membership-mapper", "config": {"claim.name" : "groups", "full.path" : "false","id.token.claim" : "true", "access.token.claim" : "true", "userinfo.token.claim" : "true"}}]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
 
         # Retrieve client UUID

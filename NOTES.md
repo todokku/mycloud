@@ -116,6 +116,90 @@ users:
 
 
 
+## Configure RBAC for roles and groups
+
+
+--anonymous-auth=false
+
+### Roles OOTB
+
+#### Cluster-admin
+   
+``` bash
+cat > crb.yaml <<EOF
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mc-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: mc-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF
+kubectl apply -f ./crb.yaml
+rm -rf ./crb.yaml
+```
+
+#### Namespace-admin
+
+``` bash
+cat > crb.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mc-ns-admin-binding
+  namespace: <target namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: mc-ns-admin
+EOF
+kubectl apply -f ./crb.yaml
+rm -rf ./crb.yaml
+```
+
+#### Namespace-developer
+
+``` bash
+cat > crb.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mc-ns-developer-binding
+  namespace: <target namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: mc-ns-developer
+EOF
+kubectl apply -f ./crb.yaml
+rm -rf ./crb.yaml
+```
+
+
+
+
+
+
+
+
+
+
+curl -k -X POST https://mycloud.keycloak.com/auth/realms/master/protocol/openid-connect/token -d grant_type=password -d client_id=kubernetes-cluster -d username=oo@gg.com -d password=li14ebe14 -d scope=openid -d response_type=id_token | jq -r ‘.access_token
+
+
 # Keycloac API calls
 
 ## Create role
@@ -204,4 +288,92 @@ curl -k --request POST \
     -H "Authorization: Bearer $KK_TOKEN" \
     --data '[{"name": "foobar", "id": "'"$ROLE_UUID"'"}]' \
     https://mycloud.keycloak.com/auth/admin/realms/master/users/$U_ID/role-mappings/clients/$CLIENT_UUID
+```
+
+
+
+
+
+# OIDC Mapperes in Keycloak examples:
+
+```sh
+kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "username",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-usermodel-property-mapper",
+    "config" : {
+      "user.attribute" : "username",
+      "claim.name" : "preferred_username",
+      "jsonType.label" : "String",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true",
+      "userinfo.token.claim" : "true"
+    }
+  }'
+
+  kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "email",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-usermodel-property-mapper",
+    "config" : {
+      "user.attribute" : "email",
+      "claim.name" : "email",
+      "jsonType.label" : "String",
+      "userinfo.token.claim" : "true",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true"
+    }
+  }'
+
+  kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "given name",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-usermodel-property-mapper",
+    "config" : {
+      "user.attribute" : "firstName",
+      "claim.name" : "given_name",
+      "jsonType.label" : "String",
+      "userinfo.token.claim" : "true",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true"
+    }
+  }'
+
+  kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "family name",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-usermodel-property-mapper",
+    "config" : {
+      "user.attribute" : "lastName",
+      "claim.name" : "family_name",
+      "jsonType.label" : "String",
+      "userinfo.token.claim" : "true",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true"
+    }
+  }'
+
+  kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "full name",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-full-name-mapper",
+    "config" : {
+      "userinfo.token.claim" : "true",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true"
+    }
+  }'
+
+  kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
+    "name" : "groups",
+    "protocol" : "openid-connect",
+    "protocolMapper" : "oidc-group-membership-mapper",
+    "config" : {
+      "claim.name" : "groups",
+      "full.path" : "true",
+      "id.token.claim" : "true",
+      "access.token.claim" : "true",
+      "userinfo.token.claim" : "true"
+    }
+  }'
 ```

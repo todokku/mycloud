@@ -184,6 +184,13 @@ class TaskController {
                 this.mqttController.logEvent(socketId, "info", eventMessage);
             });
 
+            // Deploy admin RoleBinding
+            await TaskRuntimeController.applyK8SYaml(
+                path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml"),
+                null, 
+                { ip: result.nodeIp }
+            );
+
             await DBController.createK8SMasterNode(result.nodeIp, result.nodeHostname, result.workspaceId, result.hostId, result.hash);
         } catch (err) {
             this.mqttController.logEvent(socketId, "error", "An error occured while deploying Cluster, rollback");
