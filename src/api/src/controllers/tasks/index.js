@@ -545,6 +545,13 @@ class TaskController {
      * @param {*} params 
      */
     static async scheduleWorkspaceDelete(workspaceName, orgId, params) {
+
+
+
+        console.log(workspaceName, orgId);
+
+
+
         let targetWs = await this.app.service('workspaces').find({
             "query": {
                 "name": workspaceName,

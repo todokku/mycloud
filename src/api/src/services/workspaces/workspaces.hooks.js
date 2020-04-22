@@ -8,7 +8,6 @@ module.exports = {
     find: [],
     get: [
 		async context => {
-			console.log(context);
 			// Is user is sysadmin, return it all
 			if((await Permissions.isSysAdmin(context)) || context.params._internalRequest){
 				delete context.params._internalRequest;
