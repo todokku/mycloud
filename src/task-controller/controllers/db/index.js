@@ -281,6 +281,8 @@ class DBController {
                                                 organizations."accountId" = accounts."id" AND 
                                                 organizations."id" = $1`, [orgId]);
             return res.rows.length == 1 ? res.rows[0] : null;
+        } catch(error) {
+            console.log("ERROR ===>", error);
         } finally {
             client.release();
         }
