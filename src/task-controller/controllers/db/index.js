@@ -253,9 +253,9 @@ class DBController {
      * @param {*} workspaceId 
      */
     static async getOrgForWorkspace(workspaceId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT organizations.* FROM 
+            const res = await _client.query(`SELECT organizations.* FROM 
                                                 organizations, 
                                                 workspaces 
                                             WHERE 
@@ -263,7 +263,7 @@ class DBController {
                                                 workspaces."id" = $1`, [workspaceId]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -272,20 +272,17 @@ class DBController {
      * @param {*} orgId 
      */
     static async getAccountForOrg(orgId) {
-        console.log(orgId);
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT accounts.* FROM 
+            const res = await _client.query(`SELECT accounts.* FROM 
                                                 organizations, 
                                                 accounts 
                                             WHERE 
                                                 organizations."accountId" = accounts."id" AND 
                                                 organizations."id" = $1`, [orgId]);
             return res.rows.length == 1 ? res.rows[0] : null;
-        } catch(error) {
-            console.log("ERROR ===>", error);
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -294,12 +291,12 @@ class DBController {
      * @param {*} domainIds 
      */
     static async getCertificates(domainIds) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM certificates WHERE certificates."domainId" IN (${domainIds.join(',')})`);
+            const res = await _client.query(`SELECT * FROM certificates WHERE certificates."domainId" IN (${domainIds.join(',')})`);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -309,7 +306,7 @@ class DBController {
      * @param {*} ns 
      */
     static async getServicesForWsRoutes(wsId, ns) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
             let query = `SELECT 
                 services."instanceName" as "name",
@@ -335,10 +332,10 @@ class DBController {
                 query += ' AND services."namespace" = $2';
             }
 
-            const res = await client.query(query, ns ? [wsId, ns] : [wsId]);
+            const res = await _client.query(query, ns ? [wsId, ns] : [wsId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -348,7 +345,7 @@ class DBController {
      * @param {*} ns 
      */
     static async getApplicationsForWsRoutes(wsId, ns) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
             let query = `SELECT 
                 applications."name",
@@ -371,10 +368,10 @@ class DBController {
             if(ns) {
                 query += ' AND applications."namespace" = $2';
             }
-            const res = await client.query(query, ns ? [wsId, ns] : [wsId]);
+            const res = await _client.query(query, ns ? [wsId, ns] : [wsId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
