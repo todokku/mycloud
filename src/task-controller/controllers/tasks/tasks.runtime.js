@@ -15,6 +15,23 @@ class TaskRuntimeController {
     static init(parent, mqttController) {
         this.parent = parent;
         this.mqttController = mqttController;
+
+        setTimeout(() => {
+            (async() => {
+                console.log("A");
+                let org = DBController.getOrgForWorkspace(6);
+                let ws = DBController.getWorkspace(6);
+                let acc = DBController.getAccountForOrg(org.id);
+                console.log("A");
+                let adminToken = await Keycloak.adminAuthenticate();
+                console.log("A", adminToken);
+                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
+                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
+                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
+                console.log("A");
+            })();
+        }, 5000);
+        
     }
 
     /**
@@ -32,7 +49,7 @@ class TaskRuntimeController {
             await this.registerMissingK8SHosts(allDbHosts, memArray);
         } else {
             this.mqttController.logEvent(task.payload[0].socketId, "error", "MyCloud is out of memory, can not create a new cluster");
-            this.mqttController.closeEventStream(task.payload[0].socketId);
+            // this.mqttController.closeEventStream(task.payload[0].socketId);
             return this.mqttController.client.publish('/mycloud/alert/out_of_resources/no_k8s_host');
         }
        
@@ -40,7 +57,7 @@ class TaskRuntimeController {
 
         if(usableMemTargets.length == 0){
             this.mqttController.logEvent(task.payload[0].socketId, "error", "MyCloud is out of resources");
-            this.mqttController.closeEventStream(task.payload[0].socketId);
+            // this.mqttController.closeEventStream(task.payload[0].socketId);
             return this.mqttController.client.publish('/mycloud/alert/out_of_resources/k8s_host_memory');
         }
 
@@ -65,15 +82,16 @@ class TaskRuntimeController {
                 throw error;
             }
 
+            this.mqttController.logEvent(task.payload[0].socketId, "info", "Creating Keycloak RBAC groups");
+
             let org = DBController.getOrgForWorkspace(task.targetId);
             let ws = DBController.getWorkspace(task.targetId);
             let acc = DBController.getAccountForOrg(org.id);
+
             let adminToken = await Keycloak.adminAuthenticate();
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
-
-            
 
             await DBController.updateTaskStatus(task, "DONE", {
                 "type": "INFO",
