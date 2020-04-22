@@ -272,6 +272,7 @@ class DBController {
      * @param {*} orgId 
      */
     static async getAccountForOrg(orgId) {
+        console.log(orgId);
         let client = await this.pool.connect();
         try {
             const res = await client.query(`SELECT accounts.* FROM 
