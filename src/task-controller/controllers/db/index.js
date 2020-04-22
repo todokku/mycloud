@@ -74,6 +74,19 @@ class DBController {
     }
 
     /**
+     * getKeycloakAdminClientSecret
+     */
+    static async getKeycloakAdminClientSecret() {
+        this.client = await this.pool.connect();
+        try {
+            const res = await this.client.query('SELECT * FROM settings WHERE "key" = $1', ["KEYCLOAK_SECRET"]);
+            return res.rows.length == 1 ? res.rows[0] : null;
+        } finally {
+            this.client.release();
+        }
+    }
+
+    /**
      * getWorkspace
      * @param {*} id 
      */

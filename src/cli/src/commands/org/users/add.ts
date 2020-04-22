@@ -79,7 +79,7 @@ export default class OrganizationUsersAdd extends Command {
 		} else if(result.code == 405){
 			this.logError(`Some emails you provided do not have an account`);
 		} else if(result.code == 413){
-			this.logError(`You need to set an account first, using the commabd 'mc accounts:use <account name>'`);
+			this.logError(`You need to select an account first using 'mc account:use <account name>'`);
 		} else if(result.code == 417){
 			this.logError(`The cli API host has not been defined. Please run the command "mycloud join" to specity a target host for MyCloud.`);
 		} else if(result.code == 503){

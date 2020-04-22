@@ -37,6 +37,8 @@ export default class Organization extends Command {
 			this.logError(`You are not entitled to delete this organization`);
 		} else if(result.code == 404){
 			this.logError(`The organization '${args.orgName}' does not exist`);
+		} else if(result.code == 413){
+			this.logError(`You need to select an account first using 'mc account:use <account name>'`);
 		} else if(result.code == 417){
 			this.logError(`The cli API host has not been defined. Please run the command "mycloud join" to specity a target host for MyCloud.`);
 		} else if(result.code == 503){

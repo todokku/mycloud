@@ -5,6 +5,7 @@ const TaskVolumeController = require('./tasks.volume');
 const TaskServicesController = require('./tasks.services');
 const TaskAppsController = require('./tasks.apps');
 const TaskNginxController = require('./tasks.nginx');
+const Keycloak = require('../keycloak/index');
 
 const YAML = require('yaml');
 const shortid = require('shortid');
@@ -290,6 +291,22 @@ class TaskController {
                 );
             }
 
+            // Remove cluster roles from keycloak for this workspace
+            try {
+                let org = DBController.getOrgForWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
+                let ws = DBController.getWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
+                let acc = DBController.getAccountForOrg(org.id);
+                let adminToken = await Keycloak.adminAuthenticate();
+                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
+                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
+                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
+                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
+                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
+                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
+            } catch (error) {
+                console.log(error);
+            }
+            
             // Delete Workspace DB entry
             await DBController.deleteWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
             

@@ -1,6 +1,7 @@
 const { Service } = require('feathers-sequelize');
 const { Conflict } = require('@feathersjs/errors');
 const PermissionHelper = require("../../lib/permission_helper");
+const Keycloak = require("../../lib/keycloak");
 
 exports.Accounts = class Accounts extends Service {
     constructor (options, app) {
@@ -31,10 +32,10 @@ exports.Accounts = class Accounts extends Service {
             return error;
         }
 
-        let adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app);
-        let kcUser = await PermissionHelper.getKeycloakUserByEmail(adminToken, email);
+        let adminToken = await Keycloak.adminAuthenticate(this.app);
+        let kcUser = await Keycloak.getUserByEmail(adminToken, email);
         if(kcUser && password) {
-            await PermissionHelper.keycloakAuthenticate(email, password, true);
+            await Keycloak.authenticate(email, password, true);
         }
 
         if(potentialUsers.length == 1) {
@@ -95,7 +96,7 @@ exports.Accounts = class Accounts extends Service {
                 });
 
                 if(!kcUser) {
-                    await PermissionHelper.createKeycloakUser(adminToken, email, password);
+                    await Keycloak.createUser(adminToken, email, password);
                 }
             
                 await transaction.commit();

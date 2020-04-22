@@ -137,7 +137,7 @@ roleRef:
   name: cluster-admin
 subjects:
 - kind: Group
-  name: mc-admin
+  name: /k8s/mc-admin
   apiGroup: rbac.authorization.k8s.io
 EOF
 kubectl apply -f ./crb.yaml

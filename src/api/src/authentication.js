@@ -3,6 +3,7 @@ const { LocalStrategy } = require('@feathersjs/authentication-local');
 const { expressOauth } = require('@feathersjs/authentication-oauth');
 const { NotAuthenticated, GeneralError, NotFound } = require('@feathersjs/errors');
 const PermissionHelper = require("./lib/permission_helper");
+const Keycloak = require("./lib/keycloak");
 
 class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 	/**
@@ -17,10 +18,10 @@ class KEYCLOAKStrategy extends AuthenticationBaseStrategy {
 			
 			// Authenticate with Keycloak
 			var jwtDecoded = null;
-			let adminToken = null;
+			// let adminToken = null;
 			try {
-				jwtDecoded = await PermissionHelper.keycloakAuthenticate(email, password, true);
-				adminToken = await PermissionHelper.adminKeycloakAuthenticate(this.app); 
+				jwtDecoded = await Keycloak.authenticate(email, password, true);
+				// adminToken = await Keycloak.adminAuthenticate(this.app); 
 			
 				// Look for user locally
 				let existingUser = await usersService.find({

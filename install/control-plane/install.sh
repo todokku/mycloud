@@ -229,7 +229,7 @@ install_core_components() {
             -H "Accept: application/json" \
             -H "Content-Type:application/json" \
             -H "Authorization: Bearer $KC_TOKEN" \
-            -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"], "protocolMappers": [{"name": "groups", "protocol": "openid-connect", "protocolMapper": "oidc-group-membership-mapper", "config": {"claim.name" : "groups", "full.path" : "false","id.token.claim" : "true", "access.token.claim" : "true", "userinfo.token.claim" : "true"}}]}' \
+            -d '{"clientId": "kubernetes-cluster", "publicClient": true, "standardFlowEnabled": true, "directGrantsOnly": true, "redirectUris": ["*"], "protocolMappers": [{"name": "groups", "protocol": "openid-connect", "protocolMapper": "oidc-group-membership-mapper", "config": {"claim.name" : "groups", "full.path" : "true","id.token.claim" : "true", "access.token.claim" : "true", "userinfo.token.claim" : "true"}}]}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients
 
         # Retrieve client UUID
@@ -239,7 +239,31 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients?clientId=kubernetes-cluster | jq '.[0].id' | sed 's/[\"]//g')
 
-        # Create roles in Keycloak
+
+
+
+
+
+
+        # Create mc base group for mycloud k8s clusters in Keycloak
+        curl -k --request POST \
+            -H "Accept: application/json" \
+            -H "Content-Type:application/json" \
+            -H "Authorization: Bearer $KC_TOKEN" \
+            -d '{"name": "mc"}' \
+            https://mycloud.keycloak.com/auth/admin/realms/master/groups
+
+
+
+
+
+
+
+
+
+
+
+        # Create client roles in Keycloak
         curl -k --request POST \
             -H "Accept: application/json" \
             -H "Content-Type:application/json" \
