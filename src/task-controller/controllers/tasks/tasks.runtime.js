@@ -18,17 +18,15 @@ class TaskRuntimeController {
 
         setTimeout(() => {
             (async() => {
-                console.log("A");
-                let org = DBController.getOrgForWorkspace(6);
-                let ws = DBController.getWorkspace(6);
-                let acc = DBController.getAccountForOrg(org.id);
-                console.log("A");
+                let org = await DBController.getOrgForWorkspace(6);
+                let ws = await DBController.getWorkspace(6);
+                let acc = await DBController.getAccountForOrg(org.id);
+                
                 let adminToken = await Keycloak.adminAuthenticate();
-                console.log("A", adminToken);
+
                 await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
                 await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
                 await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
-                console.log("A");
             })();
         }, 5000);
         
