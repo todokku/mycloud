@@ -209,7 +209,14 @@ class Keycloak {
         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
         _o.url += `/groups`;
         let groups = await this.asyncRequest(_o);
+
+
+        console.log(JSON.stringify(groups, null, 4));
+
+
+
         let rootGroup = groups.find(o => o.name == "mc");
+
         if(rootGroup.subGroups) {
             throw new Error("No groups found");
         }       
