@@ -435,15 +435,17 @@ class TaskController {
      */
     static async requestDeprovisionMaster(topicSplit, payload) {
         try {
+            console.log(1);
             let exists = await EngineController.vmExists(payload.node.hostname);
             if(exists){
                 await EngineController.stopDeleteVm(payload.node.hostname, payload.node.workspaceId);
-
+                console.log(1);
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
                     leasedIp: payload.node.ip
                 }));
-                
+                console.log(1);
                 await DBController.deleteK8SNode(payload.node.id);
+                console.log(1);
                 this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 200,
                     task: "deprovision",
@@ -451,6 +453,7 @@ class TaskController {
                     node: payload.node
                 }));
             } else {
+                console.log(2);
                 this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                     status: 404,
                     task: "deprovision",
@@ -459,6 +462,7 @@ class TaskController {
                 }));
             }
         } catch (err) {
+            console.log(3);
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${payload.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: Array.isArray(err) ? 500 : (err.code ? err.code : 500),
                 message: Array.isArray(err) ? err.map(e => e.message).join(" ; ") : err.message,
