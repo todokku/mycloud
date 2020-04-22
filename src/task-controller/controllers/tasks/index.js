@@ -251,7 +251,7 @@ class TaskController {
     static async processScheduledDeprovisionWorkspaceResources(task) {
         task.payload = JSON.parse(task.payload);
         // console.log(JSON.stringify(task.payload, null, 4));
-
+console.log(1);
         try {
             await DBController.updateTaskStatus(task, "IN_PROGRESS", {
                 "type": "INFO",
@@ -259,7 +259,7 @@ class TaskController {
                 "component": "task-controller",
                 "ts": new Date().toISOString()
             });
-
+            console.log(2);
             // Look up all gluster volumes provisioned & deprovision them from the Gluster network
             let allGlusterVolumeIds = task.payload[0].params.glusterVolumeIds;
             for(let i=0; i<allGlusterVolumeIds.length; i++) {
@@ -268,7 +268,7 @@ class TaskController {
                     "volumeId": allGlusterVolumeIds[i]
                 }, 60 * 1000 * 15);
             }
-
+            console.log(3);
             // Halt and destroy all VMs
             // Delete workspace base folder
             // Return leased IPs
@@ -283,14 +283,14 @@ class TaskController {
                     workerNodes[i].k8s_host
                 );
             }
-
+            console.log(4);
             for(let i=0; i<masterNodes.length; i++) {
                 await TaskRuntimeController.deprovisionK8SMaster(
                     masterNodes[i],
                     masterNodes[i].k8s_host
                 );
             }
-
+            console.log(5);
             // Remove cluster roles from keycloak for this workspace
             try {
                 let org = await DBController.getOrgForWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
@@ -306,7 +306,7 @@ class TaskController {
             } catch (error) {
                 console.log(error);
             }
-            
+            console.log(6);
             // Delete Workspace DB entry
             await DBController.deleteWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
             
