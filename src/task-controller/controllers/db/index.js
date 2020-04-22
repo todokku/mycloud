@@ -23,12 +23,12 @@ class DBController {
      * getIpsInUse
      */
     static async getIpsInUse() {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT "ip" FROM k8s_nodes');
+            const res = await _client.query('SELECT "ip" FROM k8s_nodes');
             return res.rows.map(o => o.ip)
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -37,12 +37,12 @@ class DBController {
      * @param {*} taskId 
      */
     static async getTask(taskId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM tasks WHERE "id" = $1', [taskId]);
+            const res = await _client.query('SELECT * FROM tasks WHERE "id" = $1', [taskId]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -50,12 +50,12 @@ class DBController {
      * getPendingTasks
      */
     static async getPendingTasks() {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM tasks WHERE "status" = $1 ORDER BY "createdAt"', ["PENDING"]);
+            const res = await _client.query('SELECT * FROM tasks WHERE "status" = $1 ORDER BY "createdAt"', ["PENDING"]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -64,12 +64,12 @@ class DBController {
      * @param {*} id 
      */
     static async getK8sNode(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM k8s_nodes WHERE "id" = $1', [id]);
+            const res = await _client.query('SELECT * FROM k8s_nodes WHERE "id" = $1', [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -77,12 +77,12 @@ class DBController {
      * getKeycloakAdminClientSecret
      */
     static async getKeycloakAdminClientSecret() {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM settings WHERE "key" = $1', ["KEYCLOAK_SECRET"]);
+            const res = await _client.query('SELECT * FROM settings WHERE "key" = $1', ["KEYCLOAK_SECRET"]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -90,13 +90,13 @@ class DBController {
      * getWorkspace
      * @param {*} id 
      */
-    static async getWorkspace(id, client) {
-        let client = await this.pool.connect();
+    static async getWorkspace(id) {
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM workspaces WHERE "id" = $1', [id]);
+            const res = await _client.query('SELECT * FROM workspaces WHERE "id" = $1', [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -105,12 +105,12 @@ class DBController {
      * @param {*} id 
      */
     static async getWorkspacesForOrg(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM workspaces WHERE "organizationId" = $1', [id]);
+            const res = await _client.query('SELECT * FROM workspaces WHERE "organizationId" = $1', [id]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -119,11 +119,11 @@ class DBController {
      * @param {*} id 
      */
     static async deleteWorkspace(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            await client.query('DELETE FROM workspaces WHERE "id" = $1', [id]);
+            await _client.query('DELETE FROM workspaces WHERE "id" = $1', [id]);
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -132,11 +132,11 @@ class DBController {
      * @param {*} id 
      */
     static async deleteOrganization(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            await client.query('DELETE FROM organizations WHERE "id" = $1', [id]);
+            await _client.query('DELETE FROM organizations WHERE "id" = $1', [id]);
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -145,12 +145,12 @@ class DBController {
      * @param {*} wsId 
      */
     static async getK8sWorkspaceNodes(wsId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT * FROM k8s_nodes WHERE "workspaceId" = $1', [wsId]);
+            const res = await _client.query('SELECT * FROM k8s_nodes WHERE "workspaceId" = $1', [wsId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -421,7 +421,7 @@ class DBController {
         let values = Object.keys(data).map(o => data[o]);
         values.push(taskId);
         if(client){
-            await client.query(query, values);
+            await _client.query(query, values);
         } else {
             let _client = await this.pool.connect();
             try {
@@ -444,7 +444,7 @@ class DBController {
         let query = `INSERT INTO volumes ("size", "name", "secret", "workspaceId", "type", "portIndex", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`;
         let values = [size, name, secret, workspaceId, type, portIndex != undefined ? portIndex : null, new Date().toISOString(), new Date().toISOString()];
         if(client){
-            let res = await client.query(query, values);
+            let res = await _client.query(query, values);
             return res.rows[0];
         } else {
             let _client = await this.pool.connect();
@@ -475,7 +475,7 @@ class DBController {
         let query = `INSERT INTO services ("workspaceId", "serviceName", "serviceVersion", "instanceName", "namespace", "externalServiceName", "hasDedicatedVolume", "volumeId", "dedicatedPv", "dedicatedPvc", "pvcSize", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`;
         let values = [workspaceId, serviceName, serviceVersion, instanceName, namespace, externalServiceName, hasDedicatedVolume, volumeId, dedicatedPv, dedicatedPvc, size, new Date().toISOString(), new Date().toISOString()];
         if(client){
-            let res = await client.query(query, values);
+            let res = await _client.query(query, values);
             return res.rows[0];
         } else {
             let _client = await this.pool.connect();
@@ -503,7 +503,7 @@ class DBController {
         let query = `INSERT INTO routes ("domainId", "applicationId", "serviceId", "virtualPort", "port", "tcpStream", "serviceType", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`;
         let values = [domainId, applicationId, serviceId, virtualPort, port, tcpStream, serviceType, new Date().toISOString(), new Date().toISOString()];
         if(client){
-            let res = await client.query(query, values);
+            let res = await _client.query(query, values);
             return res.rows[0];
         } else {
             let _client = await this.pool.connect();
@@ -520,12 +520,12 @@ class DBController {
      * getAllVirtualPorts
      */
     static async getAllVirtualPorts() {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT routes."virtualPort" FROM routes');
+            const res = await _client.query('SELECT routes."virtualPort" FROM routes');
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -534,12 +534,12 @@ class DBController {
      * @param {*} wsId 
      */
     static async getVirtualPortsForWorkspace(wsId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query('SELECT routes."virtualPort" as "virtualPort" FROM routes LEFT JOIN services ON routes."serviceId"=services."id" LEFT JOIN applications ON routes."applicationId"=applications."id" WHERE services."workspaceId" = $1', [wsId]);
+            const res = await _client.query('SELECT routes."virtualPort" as "virtualPort" FROM routes LEFT JOIN services ON routes."serviceId"=services."id" LEFT JOIN applications ON routes."applicationId"=applications."id" WHERE services."workspaceId" = $1', [wsId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
     
@@ -626,12 +626,12 @@ class DBController {
      * @param {*} vId 
      */
     static async getVolumesForK8SCluster(wId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1 ORDER BY "portIndex" ASC`, [wId]);
+            const res = await _client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1 ORDER BY "portIndex" ASC`, [wId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -640,12 +640,12 @@ class DBController {
      * @param {*} id 
      */
     static async getVolume(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM volumes WHERE "id" = $1`, [id]);
+            const res = await _client.query(`SELECT * FROM volumes WHERE "id" = $1`, [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -654,12 +654,12 @@ class DBController {
      * @param {*} wsId 
      */
     static async getVolumeBindingsForWorkspace(wsId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM volume_bindings WHERE "target" = $1 AND "targetId" = $2`, ["workspace", wsId]);
+            const res = await _client.query(`SELECT * FROM volume_bindings WHERE "target" = $1 AND "targetId" = $2`, ["workspace", wsId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -668,12 +668,12 @@ class DBController {
      * @param {*} id 
      */
     static async getService(id) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM services WHERE "id" = $1`, [id]);
+            const res = await _client.query(`SELECT * FROM services WHERE "id" = $1`, [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -683,12 +683,12 @@ class DBController {
      * @param {*} name 
      */
     static async getVolumeByName(wsId, name) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1 AND "name" = $2`, [wsId, name]);
+            const res = await _client.query(`SELECT * FROM volumes WHERE "workspaceId" = $1 AND "name" = $2`, [wsId, name]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -697,9 +697,9 @@ class DBController {
      * @param {*} vId 
      */
     static async getGlusterHostsByVolumeId(vId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT gluster_hosts.* FROM 
+            const res = await _client.query(`SELECT gluster_hosts.* FROM 
                     volumes, 
                     gluster_hosts, 
                     gluster_vol_replicas 
@@ -709,7 +709,7 @@ class DBController {
                     volumes."id" = $1`, [vId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -718,9 +718,9 @@ class DBController {
      * @param {*} vId 
      */
     static async getK8SNodesByVolumeId(vId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT k8s_nodes.* FROM 
+            const res = await _client.query(`SELECT k8s_nodes.* FROM 
                     volumes,
                     k8s_nodes
                 WHERE 
@@ -728,7 +728,7 @@ class DBController {
                     volumes."id" = $1`, [vId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
@@ -737,9 +737,9 @@ class DBController {
      * @param {*} vId 
      */
     static async getGlusteVolumeBindingsByVolumeId(vId) {
-        let client = await this.pool.connect();
+        let _client = await this.pool.connect();
         try {
-            const res = await client.query(`SELECT volume_bindings.* FROM 
+            const res = await _client.query(`SELECT volume_bindings.* FROM 
                     volumes, 
                     volume_bindings
                 WHERE 
@@ -747,7 +747,7 @@ class DBController {
                     volumes."id" = $1`, [vId]);
             return res.rows;
         } finally {
-            client.release();
+            _client.release();
         }
     }
 
