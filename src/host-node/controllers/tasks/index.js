@@ -435,7 +435,7 @@ class TaskController {
      */
     static async requestDeprovisionMaster(topicSplit, payload) {
         try {
-            console.log(1);
+            console.log(1, payload.node.hostname);
             let exists = await EngineController.vmExists(payload.node.hostname);
             if(exists){
                 await EngineController.stopDeleteVm(payload.node.hostname, payload.node.workspaceId);
