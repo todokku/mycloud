@@ -545,13 +545,6 @@ class TaskController {
      * @param {*} params 
      */
     static async scheduleWorkspaceDelete(workspaceName, orgId, params) {
-
-
-
-        console.log(workspaceName, orgId);
-
-
-
         let targetWs = await this.app.service('workspaces').find({
             "query": {
                 "name": workspaceName,
@@ -560,8 +553,6 @@ class TaskController {
             "user": params.user,
             "authentication": params.authentication
         });
-
-        console.log(targetWs);
 
         if(targetWs.total == 1){
             let error = await this._precheckPermissionsOrgAdmin_ws(targetWs.data[0].id, params);
