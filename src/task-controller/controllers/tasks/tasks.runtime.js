@@ -14,22 +14,7 @@ class TaskRuntimeController {
      */
     static init(parent, mqttController) {
         this.parent = parent;
-        this.mqttController = mqttController;
-
-        setTimeout(() => {
-            (async() => {
-                let org = await DBController.getOrgForWorkspace(6);
-                let ws = await DBController.getWorkspace(6);
-                let acc = await DBController.getAccountForOrg(org.id);
-                
-                let adminToken = await Keycloak.adminAuthenticate();
-
-                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
-                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
-                await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
-            })();
-        }, 5000);
-        
+        this.mqttController = mqttController;        
     }
 
     /**

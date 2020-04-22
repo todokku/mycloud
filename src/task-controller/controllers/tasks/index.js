@@ -293,9 +293,9 @@ class TaskController {
 
             // Remove cluster roles from keycloak for this workspace
             try {
-                let org = DBController.getOrgForWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
-                let ws = DBController.getWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
-                let acc = DBController.getAccountForOrg(org.id);
+                let org = await DBController.getOrgForWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
+                let ws = await DBController.getWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
+                let acc = await DBController.getAccountForOrg(org.id);
                 let adminToken = await Keycloak.adminAuthenticate();
                 await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
                 await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
