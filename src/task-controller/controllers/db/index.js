@@ -23,12 +23,12 @@ class DBController {
      * getIpsInUse
      */
     static async getIpsInUse() {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT "ip" FROM k8s_nodes');
+            const res = await client.query('SELECT "ip" FROM k8s_nodes');
             return res.rows.map(o => o.ip)
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -37,12 +37,12 @@ class DBController {
      * @param {*} taskId 
      */
     static async getTask(taskId) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM tasks WHERE "id" = $1', [taskId]);
+            const res = await client.query('SELECT * FROM tasks WHERE "id" = $1', [taskId]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -50,12 +50,12 @@ class DBController {
      * getPendingTasks
      */
     static async getPendingTasks() {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM tasks WHERE "status" = $1 ORDER BY "createdAt"', ["PENDING"]);
+            const res = await client.query('SELECT * FROM tasks WHERE "status" = $1 ORDER BY "createdAt"', ["PENDING"]);
             return res.rows;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -64,12 +64,12 @@ class DBController {
      * @param {*} id 
      */
     static async getK8sNode(id) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM k8s_nodes WHERE "id" = $1', [id]);
+            const res = await client.query('SELECT * FROM k8s_nodes WHERE "id" = $1', [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -77,12 +77,12 @@ class DBController {
      * getKeycloakAdminClientSecret
      */
     static async getKeycloakAdminClientSecret() {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM settings WHERE "key" = $1', ["KEYCLOAK_SECRET"]);
+            const res = await client.query('SELECT * FROM settings WHERE "key" = $1', ["KEYCLOAK_SECRET"]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -90,13 +90,13 @@ class DBController {
      * getWorkspace
      * @param {*} id 
      */
-    static async getWorkspace(id) {
-        this.client = await this.pool.connect();
+    static async getWorkspace(id, client) {
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM workspaces WHERE "id" = $1', [id]);
+            const res = await client.query('SELECT * FROM workspaces WHERE "id" = $1', [id]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -105,12 +105,12 @@ class DBController {
      * @param {*} id 
      */
     static async getWorkspacesForOrg(id) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM workspaces WHERE "organizationId" = $1', [id]);
+            const res = await client.query('SELECT * FROM workspaces WHERE "organizationId" = $1', [id]);
             return res.rows;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -119,11 +119,11 @@ class DBController {
      * @param {*} id 
      */
     static async deleteWorkspace(id) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            await this.client.query('DELETE FROM workspaces WHERE "id" = $1', [id]);
+            await client.query('DELETE FROM workspaces WHERE "id" = $1', [id]);
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -132,11 +132,11 @@ class DBController {
      * @param {*} id 
      */
     static async deleteOrganization(id) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            await this.client.query('DELETE FROM organizations WHERE "id" = $1', [id]);
+            await client.query('DELETE FROM organizations WHERE "id" = $1', [id]);
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -145,12 +145,12 @@ class DBController {
      * @param {*} wsId 
      */
     static async getK8sWorkspaceNodes(wsId) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT * FROM k8s_nodes WHERE "workspaceId" = $1', [wsId]);
+            const res = await client.query('SELECT * FROM k8s_nodes WHERE "workspaceId" = $1', [wsId]);
             return res.rows;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -252,8 +252,8 @@ class DBController {
      * getOrgForWorkspace
      * @param {*} workspaceId 
      */
-    static async getOrgForWorkspace(workspaceId) {
-        let _client = await this.pool.connect();
+    static async getOrgForWorkspace(workspaceId, client) {
+        let _client = cient ? client : await this.pool.connect();
         try {
             const res = await _client.query(`SELECT organizations.* FROM 
                                                 organizations, 
@@ -263,7 +263,8 @@ class DBController {
                                                 workspaces."id" = $1`, [workspaceId]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            _client.release();
+            if(!client)
+                _client.release();
         }
     }
 
@@ -271,8 +272,8 @@ class DBController {
      * getAccountForOrg
      * @param {*} orgId 
      */
-    static async getAccountForOrg(orgId) {
-        let _client = await this.pool.connect();
+    static async getAccountForOrg(orgId, client) {
+        let _client = client ? client : await this.pool.connect();
         try {
             const res = await _client.query(`SELECT accounts.* FROM 
                                                 organizations, 
@@ -282,7 +283,8 @@ class DBController {
                                                 organizations."id" = $1`, [orgId]);
             return res.rows.length == 1 ? res.rows[0] : null;
         } finally {
-            _client.release();
+            if(!client)
+                _client.release();
         }
     }
 
@@ -518,12 +520,12 @@ class DBController {
      * getAllVirtualPorts
      */
     static async getAllVirtualPorts() {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT routes."virtualPort" FROM routes');
+            const res = await client.query('SELECT routes."virtualPort" FROM routes');
             return res.rows;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
 
@@ -532,12 +534,12 @@ class DBController {
      * @param {*} wsId 
      */
     static async getVirtualPortsForWorkspace(wsId) {
-        this.client = await this.pool.connect();
+        let client = await this.pool.connect();
         try {
-            const res = await this.client.query('SELECT routes."virtualPort" as "virtualPort" FROM routes LEFT JOIN services ON routes."serviceId"=services."id" LEFT JOIN applications ON routes."applicationId"=applications."id" WHERE services."workspaceId" = $1', [wsId]);
+            const res = await client.query('SELECT routes."virtualPort" as "virtualPort" FROM routes LEFT JOIN services ON routes."serviceId"=services."id" LEFT JOIN applications ON routes."applicationId"=applications."id" WHERE services."workspaceId" = $1', [wsId]);
             return res.rows;
         } finally {
-            this.client.release();
+            client.release();
         }
     }
     
