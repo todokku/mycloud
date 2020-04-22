@@ -253,7 +253,7 @@ class DBController {
      * @param {*} workspaceId 
      */
     static async getOrgForWorkspace(workspaceId, client) {
-        let _client = cient ? client : await this.pool.connect();
+        let _client = client ? client : await this.pool.connect();
         try {
             const res = await _client.query(`SELECT organizations.* FROM 
                                                 organizations, 
