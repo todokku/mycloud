@@ -67,13 +67,9 @@ class TaskRuntimeController {
 
             this.mqttController.logEvent(task.payload[0].socketId, "info", "Creating Keycloak RBAC groups");
 
-            let org = DBController.getOrgForWorkspace(task.targetId);
-            let ws = DBController.getWorkspace(task.targetId);
-            let acc = DBController.getAccountForOrg(org.id);
-
-            console.log(org);
-            console.log(ws);
-            console.log(acc);
+            let org = await DBController.getOrgForWorkspace(task.targetId);
+            let ws = await DBController.getWorkspace(task.targetId);
+            let acc = await DBController.getAccountForOrg(org.id);
 
             let adminToken = await Keycloak.adminAuthenticate();
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
