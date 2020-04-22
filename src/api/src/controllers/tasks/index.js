@@ -561,6 +561,8 @@ class TaskController {
             "authentication": params.authentication
         });
 
+        console.log(targetWs);
+
         if(targetWs.total == 1){
             let error = await this._precheckPermissionsOrgAdmin_ws(targetWs.data[0].id, params);
             if(error) {
