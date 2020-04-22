@@ -71,6 +71,10 @@ class TaskRuntimeController {
             let ws = DBController.getWorkspace(task.targetId);
             let acc = DBController.getAccountForOrg(org.id);
 
+            console.log(org);
+            console.log(ws);
+            console.log(acc);
+
             let adminToken = await Keycloak.adminAuthenticate();
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
             await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
