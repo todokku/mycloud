@@ -66,7 +66,7 @@ class TaskNamespaceController {
                     "node": r.data[0],
                     "clusterBaseGroup": `${acc.name}-${org.name}-${ws.name}`,
                     "groups": allGroups.data
-                }, 15000);
+                }, 25000);
                 if(response.data.status == 200){
                     return { "code": 200 }
                 } else {

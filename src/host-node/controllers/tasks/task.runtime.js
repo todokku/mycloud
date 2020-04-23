@@ -61,7 +61,7 @@ console.log(data);
                     adminRoleBindingYaml.roleRef.name = data.groups[i];
 
                     fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
-                    await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
+                    await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, data.node);
                     // Deploy admin RoleBinding
                     await TaskRuntimeController.applyK8SYaml(
                         path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml"),
