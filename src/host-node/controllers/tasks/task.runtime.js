@@ -55,10 +55,10 @@ console.log(data);
                 adminRoleBindingYaml.metadata.namespace = data.name;
 
                 for(let i=0; i<data.groups.length; i++) {
-                    console.log("Applying role binding ", data.groups[i]);
-                    adminRoleBindingYaml.metadata.name = `mc-${data.name}-${data.groups[i]}-binding`;
-                    adminRoleBindingYaml.subjects[0].name = `/mc/${data.clusterBaseGroup}/${data.groups[i]}`;
-                    adminRoleBindingYaml.roleRef.name = data.groups[i];
+                    console.log("Applying role binding ", data.groups[i].name);
+                    adminRoleBindingYaml.metadata.name = `mc-${data.name}-${data.groups[i].name}-binding`;
+                    adminRoleBindingYaml.subjects[0].name = `/mc/${data.clusterBaseGroup}/${data.groups[i].name}`;
+                    adminRoleBindingYaml.roleRef.name = data.groups[i].name;
 
                     fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
                     await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, data.node);
