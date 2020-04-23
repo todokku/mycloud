@@ -433,6 +433,33 @@ class DBController {
     }
 
     /**
+     * createTask
+     * @param {*} taskId 
+     * @param {*} taskType 
+     * @param {*} target 
+     * @param {*} targetId 
+     * @param {*} status 
+     * @param {*} payload 
+     * @param {*} client 
+     */
+    static async createTask(taskId, taskType, target, targetId, status, payload, client) {
+        let query = `INSERT INTO tasks ("taskId", "taskType", "target", "targetId", "status", "payload", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`;
+        let values = [taskId, taskType, target, targetId, status, payload, new Date().toISOString(), new Date().toISOString()];
+        if(client){
+            let res = await _client.query(query, values);
+            return res.rows[0];
+        } else {
+            let _client = await this.pool.connect();
+            try {
+                let res = await _client.query(query, values);
+                return res.rows[0];
+            } finally {
+                _client.release()
+            }
+        }
+    }
+
+    /**
      * createVolume
      * @param {*} size 
      * @param {*} name 

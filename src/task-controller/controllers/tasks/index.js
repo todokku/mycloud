@@ -5,6 +5,7 @@ const TaskVolumeController = require('./tasks.volume');
 const TaskServicesController = require('./tasks.services');
 const TaskAppsController = require('./tasks.apps');
 const TaskNginxController = require('./tasks.nginx');
+const TaskKeycloakController = require('./tasks.keycloak');
 const Keycloak = require('../keycloak/index');
 
 const YAML = require('yaml');
@@ -26,6 +27,7 @@ class TaskController {
             TaskVolumeController.init(this, mqttController);
             TaskAppsController.init(this, mqttController);
             TaskNginxController.init(this, mqttController);
+            TaskKeycloakController.init(this, mqttController);
 
             setInterval(() => {
                 this.maintenance();
@@ -87,6 +89,10 @@ class TaskController {
                             await this.processScheduledDeprovisionWorkspaceResources(taskList[i]);
                         } else if(taskList[i].taskType == "CREATE-K8S-CLUSTER") {
                             await TaskRuntimeController.processScheduledInitiateK8sCluster(taskList[i]);
+                        } else if(taskList[i].taskType == "CREATE-KEYCLOAK-WS-GROUPS") {
+                            await TaskKeycloakController.processScheduledCreateGroups(taskList[i]);
+                        } else if(taskList[i].taskType == "CLEANUP-KEYCLOAK-WS-GROUPS") {
+                            await TaskKeycloakController.processScheduledCleanupGroups(taskList[i]);
                         } else if(taskList[i].taskType == "UPDATE-K8S-CLUSTER") {
                             await TaskRuntimeController.processScheduledUpdateK8sCluster(taskList[i]);
                         } else if(taskList[i].taskType == "PROVISION-VOLUME") {
@@ -291,18 +297,26 @@ class TaskController {
                 );
             }
 
+            
             // Remove cluster roles from keycloak for this workspace
             try {
                 let org = await DBController.getOrgForWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
                 let ws = await DBController.getWorkspace(task.payload[0].params.k8sNodes[0].workspaceId);
                 let acc = await DBController.getAccountForOrg(org.id);
-                let adminToken = await Keycloak.adminAuthenticate();
-                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
-                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
-                await Keycloak.removeClusterGroupFromAllUsers(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
-                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
-                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
-                await Keycloak.deleteClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
+
+                await this.schedule(
+                    "CLEANUP-KEYCLOAK-WS-GROUPS",
+                    "workspace",
+                    task.targetId,
+                    [{
+                        "type": "INFO",
+                        "step": "CREATE-KEYCLOAK-WS-GROUPS",
+                        "params": {
+                            groupBase: `${acc.name}-${org.name}-${ws.name}`
+                        },
+                        "ts": new Date().toISOString()
+                    }]
+                );
             } catch (error) {
                 console.log(error);
             }
@@ -325,6 +339,19 @@ class TaskController {
                 "ts": new Date().toISOString()
             });
         }
+    }
+
+    /**
+     * schedule
+     * @param {*} taskType 
+     * @param {*} target 
+     * @param {*} targetId 
+     * @param {*} payload 
+     */
+    static async schedule(taskType, target, targetId, payload) {
+        let taskId = shortid.generate();
+        let dbEntry = await DBController.createTask(taskId, taskType, target, targetId, "PENDING", JSON.stringify(payload ? payload : []));
+        this.mqttController.client.publish(`/mycloud/task/new/${dbEntry.id}`);
     }
 }
 

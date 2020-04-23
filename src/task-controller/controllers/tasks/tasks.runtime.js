@@ -67,14 +67,32 @@ class TaskRuntimeController {
 
             this.mqttController.logEvent(task.payload[0].socketId, "info", "Creating Keycloak RBAC groups");
 
-            let org = await DBController.getOrgForWorkspace(task.targetId);
-            let ws = await DBController.getWorkspace(task.targetId);
-            let acc = await DBController.getAccountForOrg(org.id);
+            try{
+                let org = await DBController.getOrgForWorkspace(task.targetId);
+                let ws = await DBController.getWorkspace(task.targetId);
+                let acc = await DBController.getAccountForOrg(org.id);
 
-            let adminToken = await Keycloak.adminAuthenticate();
-            await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-cl-admin`);
-            await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-admin`);
-            await Keycloak.createClusterGroup(adminToken, `${acc.name}-${org.name}-${ws.name}-developer`);
+                await this.parent.schedule(
+                    "CREATE-KEYCLOAK-WS-GROUPS",
+                    "workspace",
+                    task.targetId,
+                    [{
+                        "type": "INFO",
+                        "step": "CREATE-KEYCLOAK-WS-GROUPS",
+                        "params": {
+                            groupBase: `${acc.name}-${org.name}-${ws.name}`,
+                            groups: [
+                                'cl-admin',
+                                'admin',
+                                'developer'
+                            ]
+                        },
+                        "ts": new Date().toISOString()
+                    }]
+                );
+            } catch (error) {
+                console.log(error);
+            }
 
             await DBController.updateTaskStatus(task, "DONE", {
                 "type": "INFO",
