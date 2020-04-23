@@ -40,7 +40,7 @@ class TaskKeycloakController {
                 adminToken,
                 task.payload[0].params.clusterAdminUserEmail,
                 task.payload[0].params.groupBase,
-                "cl-admin"
+                "cluster-admin"
             )
 
             await DBController.updateTaskStatus(task, "DONE", {

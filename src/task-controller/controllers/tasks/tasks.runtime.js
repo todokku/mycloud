@@ -80,7 +80,7 @@ class TaskRuntimeController {
                         "params": {
                             groupBase: `${acc.name}-${org.name}-${ws.name}`,
                             groups: [
-                                'cl-admin',
+                                'cluster-admin',
                                 'admin',
                                 'developer'
                             ],

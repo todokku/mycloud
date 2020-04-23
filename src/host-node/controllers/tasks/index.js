@@ -197,7 +197,7 @@ class TaskController {
 
             let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
 
-            adminRoleBindingYaml.subjects[0].name = `/mc/${account.name}-${org.name}-${ws.name}/cl-admin`;
+            adminRoleBindingYaml.subjects[0].name = `/mc/${account.name}-${org.name}-${ws.name}/cluster-admin`;
 
             fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
             await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
