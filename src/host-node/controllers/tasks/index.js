@@ -178,27 +178,19 @@ class TaskController {
             let org = await DBController.getOrgForWorkspace(workspaceId);
             let account = await DBController.getAccountForOrg(org.id);
             let ws = await DBController.getWorkspace(workspaceId);
-
             let rPass = this.decrypt(org.registryPass, org.bcryptSalt);
-
             if(!dbHostNode){
                 throw new Error("Could not find K8SHost in database");
             }
-
             result = await EngineController.deployNewCluster(dbHostNode, workspaceId, org.registryUser, rPass, (eventMessage) => {
                 this.mqttController.logEvent(socketId, "info", eventMessage);
             });
 
             let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml");
-
             let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", ws.id.toString(), result.nodeHostname, "rbac_role_bindings.yaml");
             await OSController.copyFile(adminRoleBindingYamlPath, path.dirname(wsTmpYamlPath));
-
-
             let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
-
             adminRoleBindingYaml.subjects[0].name = `/mc/${account.name}-${org.name}-${ws.name}/cluster-admin`;
-
             fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
             await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
 

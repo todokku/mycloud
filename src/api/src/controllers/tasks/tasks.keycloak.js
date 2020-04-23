@@ -25,8 +25,33 @@ class TaskKeycloakController {
             console.log(error);
             return { "code": 500 };
         }
+    }
+
+    /**
+     * applyRbacBindings
+     * @param {$} data 
+     * @param {*} params 
+     */
+    static async applyRbacBindings(data, params) {
+        let r = await this.parent._precheckWorkspaceReadyNotBussy(data.workspaceId, params);
+        if(r.code){
+            return r;
+        }
+
+        console.log(data);
+        console.log(params);
+
+        // // Assign roles to target users in Keycloak (make sure they don't have them already)
+        // // Assign cluster admin role to the user who created this ws
+        // await Keycloak.addClusterGroupToUser(
+        //     adminToken,
+        //     task.payload[0].params.clusterAdminUserEmail,
+        //     task.payload[0].params.groupBase,
+        //     "cluster-admin"
+        // )
 
 
+        return { "code": 200 }
     }
 }
 module.exports = TaskKeycloakController;

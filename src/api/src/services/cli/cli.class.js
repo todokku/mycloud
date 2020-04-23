@@ -106,7 +106,7 @@ exports.Cli = class Cli {
 				}
 			case "apply_rbac_bindings":
 				try{
-					return await TaskRuntimeController.applyRbacBindings(data.params, params);
+					return await TaskKeycloakController.applyRbacBindings(data.params, params);
 				} catch(error){
 					console.log(error);
 					return {"code": error.code};

@@ -2,7 +2,6 @@ const MQTTController = require("../mqtt/index");
 const YAML = require('yaml');
 const { NotFound, Unprocessable } = require('@feathersjs/errors');
 const Permissions = require('../../lib/permission_helper');
-const TaskKeycloakController = require("./tasks.keycloak");
 
 class TaskRuntimeController {
 
@@ -190,27 +189,6 @@ class TaskRuntimeController {
         }
     }
 
-    /**
-     * applyRbacBindings
-     * @param {$} data 
-     * @param {*} params 
-     */
-    static async applyRbacBindings(data, params) {
-        let r = await this.parent._precheckWorkspaceReadyNotBussy(data.workspaceId, params);
-        if(r.code){
-            return r;
-        }
-
-        console.log(data);
-        console.log(params);
-
-        // Assign roles to target users in Keycloak (make sure they don't have them already)
-
-
-
-        return { "code": 200 }
-    }
-    
     /**
      * getK8SConfigFile
      * @param {*} data 
