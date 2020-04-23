@@ -61,7 +61,6 @@ class Keycloak {
                 } else if (response.statusCode == 401) {
                     reject(new Error('Unauthorized'));
                 } else if (response.statusCode < 200 || response.statusCode > 299) {
-                    console.log(response);
                     reject(new Error("Unexpected error"));
                 } else {
                     try {
@@ -352,6 +351,11 @@ class Keycloak {
                 if(targetGroup) {
                     let targetUser = this.getUserByEmail(adminAccessToken, userEmail);
                     if(targetUser) {
+
+                        console.log("targetUser =>", targetUser);
+
+
+
                         _o = JSON.parse(JSON.stringify(putOptions));
                         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
                         _o.url += `/users/${targetUser.id}/groups/${targetGroup.id}`;
