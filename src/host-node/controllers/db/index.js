@@ -72,6 +72,20 @@ class DBController {
     }
 
     /**
+     * getWorkspace
+     * @param {*} id 
+     */
+    static async getWorkspace(id) {
+        let _client = await this.pool.connect();
+        try {
+            const res = await _client.query('SELECT * FROM workspaces WHERE "id" = $1', [id]);
+            return res.rows.length == 1 ? res.rows[0] : null;
+        } finally {
+            _client.release();
+        }
+    }
+
+    /**
      * getServicesForWsRoutes
      * @param {*} wsId 
      */

@@ -40,6 +40,7 @@ exports.Workspaces = class Workspaces extends Service {
                         "type":"INFO",
                         "step":"PROVISION",
                         "socketId": socketId,
+                        "clusterAdminUserEmail": params.user.email, 
                         "ts":new Date().toISOString()
                     }],
                     params

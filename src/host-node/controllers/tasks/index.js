@@ -12,6 +12,7 @@ shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const YAML = require('yaml');
 
 // const ssh = new node_ssh();
 let EngineController;
@@ -173,7 +174,11 @@ class TaskController {
         let result = null;
         try {
             let dbHostNode = await DBController.getK8SHostByIp(ip);
+
             let org = await DBController.getOrgForWorkspace(workspaceId);
+            let account = await DBController.getAccountForOrg(org.id);
+            let ws = await DBController.getWorkspace(workspaceId);
+
             let rPass = this.decrypt(org.registryPass, org.bcryptSalt);
 
             if(!dbHostNode){
@@ -183,6 +188,14 @@ class TaskController {
             result = await EngineController.deployNewCluster(dbHostNode, workspaceId, org.registryUser, rPass, (eventMessage) => {
                 this.mqttController.logEvent(socketId, "info", eventMessage);
             });
+
+            let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml")
+            let adminRoleBindingYaml = YAML.parse(fs.readFileSync(adminRoleBindingYamlPath, 'utf8'));
+
+            adminRoleBindingYaml.subjects[0].name = `/mc/${account.name}-${org.name}-${ws.name}/cl-admin`;
+
+            fs.writeFileSync(adminRoleBindingYamlPath, YAML.stringify(adminRoleBindingYaml));
+            await this.applyK8SYaml(adminRoleBindingYamlPath, null, { ip: result.nodeIp });
 
             // Deploy admin RoleBinding
             await TaskRuntimeController.applyK8SYaml(

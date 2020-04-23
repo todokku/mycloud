@@ -35,6 +35,14 @@ class TaskKeycloakController {
                 await Keycloak.createClusterGroup(adminToken, parentId, null, task.payload[0].params.groups[i]);
             }
 
+            // Assign cluster admin role to the user who created this ws
+            await Keycloak.addClusterGroupToUser(
+                adminToken,
+                task.payload[0].params.clusterAdminUserEmail,
+                task.payload[0].params.groupBase,
+                "cl-admin"
+            )
+
             await DBController.updateTaskStatus(task, "DONE", {
                 "type":"INFO",
                 "step":"CREATE_GROUPS",
@@ -69,11 +77,8 @@ class TaskKeycloakController {
             });
 
             let adminToken = await Keycloak.adminAuthenticate();
-            console.log(1);
             await Keycloak.removeClusterBaseGroupsFromAllUsers(adminToken, task.payload[0].params.groupBase);
-            console.log(1);
             await Keycloak.deleteClusterBaseGroup(adminToken, task.payload[0].params.groupBase);
-            console.log(1);
           
             await DBController.updateTaskStatus(task, "DONE", {
                 "type":"INFO",
