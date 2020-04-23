@@ -189,13 +189,18 @@ class TaskController {
                 this.mqttController.logEvent(socketId, "info", eventMessage);
             });
 
-            let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml")
-            let adminRoleBindingYaml = YAML.parse(fs.readFileSync(adminRoleBindingYamlPath, 'utf8'));
+            let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml");
+
+            let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", ws.id.toString(), result.nodeHostname, "rbac_role_bindings.yaml");
+            await OSController.copyFile(adminRoleBindingYamlPath, path.dirname(wsTmpYamlPath));
+
+
+            let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
 
             adminRoleBindingYaml.subjects[0].name = `/mc/${account.name}-${org.name}-${ws.name}/cl-admin`;
 
-            fs.writeFileSync(adminRoleBindingYamlPath, YAML.stringify(adminRoleBindingYaml));
-            await this.applyK8SYaml(adminRoleBindingYamlPath, null, { ip: result.nodeIp });
+            fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
+            await this.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
 
             // Deploy admin RoleBinding
             await TaskRuntimeController.applyK8SYaml(
