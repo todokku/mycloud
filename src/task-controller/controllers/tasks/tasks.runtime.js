@@ -84,7 +84,7 @@ class TaskRuntimeController {
                                 'admin',
                                 'developer'
                             ],
-                            clusterAdminUserEmail: task.payload[0].params.clusterAdminUserEmail
+                            clusterAdminUserEmail: task.payload[0].clusterAdminUserEmail
                         },
                         "ts": new Date().toISOString()
                     }]
