@@ -202,8 +202,8 @@ class Keycloak {
 
         let targetUser = await this.getUserByEmail(adminAccessToken, email);
         if(targetUser) {
-            let targetUserDetails = await this.getUserDetails(adminAccessToken, targetUser.id);
-            console.log(JSON.stringify(targetUserDetails, null, 4));
+            let targetUserGroups = await this.getUserGroups(adminAccessToken, targetUser.id);
+            console.log(JSON.stringify(targetUserGroups, null, 4));
         }
         
         return [];
@@ -235,18 +235,17 @@ class Keycloak {
     }
 
     /**
-     * getUserDetails
+     * getUserGroups
      * @param {*} adminAccessToken 
      * @param {*} userId 
      */
-    static async getUserDetails(adminAccessToken, userId) {
+    static async getUserGroups(adminAccessToken, userId) {
         // Get user attributes
         let _o = JSON.parse(JSON.stringify(queryOptions));
-        _o.url += `/users/${userId}`;
+        _o.url += `/users/${userId}/groups`;
         _o.method = "GET";
         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
-        let users = await this.asyncRequest(_o);
-        return users;
+        return await this.asyncRequest(_o);
     }
 
     /**
