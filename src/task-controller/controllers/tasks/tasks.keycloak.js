@@ -69,8 +69,11 @@ class TaskKeycloakController {
             });
 
             let adminToken = await Keycloak.adminAuthenticate();
+            console.log(1);
             await Keycloak.removeClusterBaseGroupsFromAllUsers(adminToken, task.payload[0].params.groupBase);
+            console.log(1);
             await Keycloak.deleteClusterBaseGroup(adminToken, task.payload[0].params.groupBase);
+            console.log(1);
           
             await DBController.updateTaskStatus(task, "DONE", {
                 "type":"INFO",
