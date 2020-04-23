@@ -188,6 +188,23 @@ class TaskRuntimeController {
             return { "code": 500 };
         }
     }
+
+    /**
+     * applyRbacBindings
+     * @param {$} data 
+     * @param {*} params 
+     */
+    static async applyRbacBindings(data, params) {
+        let r = await this.parent._precheckWorkspaceReadyNotBussy(data.workspaceId, params);
+        if(r.code){
+            return r;
+        }
+
+        console.log(data);
+        console.log(params);
+
+        return { "code": 200 }
+    }
     
     /**
      * getK8SConfigFile

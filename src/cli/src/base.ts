@@ -117,6 +117,8 @@ export default abstract class extends Command {
 					return await this.fapi.getTaskList(params.data);
 				} else if(params.method == "get-cluster-rbac-groups"){
 					return await this.fapi.getClusterRbacGroups();
+				} else if(params.method == "apply-rbac-bindings"){
+					return await this.fapi.applyRbacBindings(params.data);
 				}
 				break
 			case "config":

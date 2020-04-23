@@ -104,6 +104,13 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
+			case "apply_rbac_bindings":
+				try{
+					return await TaskRuntimeController.applyRbacBindings(data.params, params);
+				} catch(error){
+					console.log(error);
+					return {"code": error.code};
+				}
 			case "config_k8s":
 				try {
 					return await TaskRuntimeController.scheduleK8SConfig(data.params, params);

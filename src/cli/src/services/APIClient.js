@@ -892,6 +892,32 @@ class APIClient {
     }
 
     /**
+     * applyRbacBindings
+     * @param {*} params 
+     */
+    async applyRbacBindings(params) {
+        let error = this._precheckFlight({auth: true, ws: true});
+        if(error) {
+            return error;
+        }
+        try{
+            params.workspaceId = this.sessionJson.workspace.id;
+            let result = await this.app.service("cli").update(0, {
+                "action": "apply_rbac_bindings",
+                "params": params
+            }, {
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+            return result;
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+    
+
+    /**
      * listServices
      */
     async listServices(params) {

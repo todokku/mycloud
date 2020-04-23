@@ -31,15 +31,15 @@ export default class NsRbacBindings extends Command {
 			roles: new Array<any>() 
 		};
 
-
 		let groups = await this.api("workspace", {
 			method: "get-cluster-rbac-groups"
 		});
-		console.log(groups);
-		
-
-
-
+		if(!this.handleError(groups)){
+			return;
+		}
+		if(groups.data.length == 0) {
+			return this.logError("There are no groups available for this cluster.");
+		}
 
 		let resultNs = await this.api("namespaces", {
 			method: "get-namespaces",
@@ -94,20 +94,23 @@ export default class NsRbacBindings extends Command {
 				name: 'name',
 				message: 'What RBAC groups should this user belong to (no groups removes all permissions)?',
 				type: 'checkbox',
-				choices: [
-					{
-						name: "Administrator",
-						value: "admin"
-					},
-					{
-						name: "Developer",
-						value: "developer"
-					}
-				]
+				choices: groups.data.map((o: { name: any; id: any }) => {
+					return {
+						name: o.name,
+						value: o.id
+					};
+				})
 			}]);
 			apiData.roles = roleChoices.name;
 			
-				
+			let response = await this.api("workspace", {
+				method: "apply-rbac-bindings",
+				data: apiData
+			});
+
+			if(this.handleError(response)){
+				this.log("Bindings applyed successfully");
+			}
 		}
 	}
 
