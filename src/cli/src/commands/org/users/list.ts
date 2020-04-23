@@ -1,5 +1,7 @@
 import {flags} from '@oclif/command'
 import Command from '../../../base'
+import {cli} from 'cli-ux'
+const chalk = require('chalk')
 
 export default class OrganizationUserList extends Command {
 	static description = 'get organizations for your account'
@@ -29,30 +31,46 @@ export default class OrganizationUserList extends Command {
 			return;
 		}
 
-		console.log(JSON.stringify(users, null, 4));
-		console.log(JSON.stringify(usersGroups, null, 4));
+		let tree = cli.tree();
 
-		// if(result.code == 200){
-		// 	if(result.data.length == 0) {
-		// 		this.log("There are currently no organizations");
-		// 	} else {
-		// 		this.log("Org name", "blue");
-		// 		result.data.forEach((o:any) => {
-		// 			this.log(o.name);
-		// 		});
-		// 	}
-		// } else if(result.code == 401){
-		// 	this.logError(`You are not logged in`);
-		// } else if(result.code == 413){
-		// 	this.logError(`You need to select an account first using 'mc account:use <account name>'`);
-		// } else if(result.code == 417){
-		// 	this.logError(`The cli API host has not been defined. Please run the command "mycloud join" to specity a target host for MyCloud.`);
-		// } else if(result.code == 503){
-		// 	this.logError(`MyCloud is not accessible. Please make sure that you are connected to the right network and try again.`);
-		// } else {
-		// 	console.log(JSON.stringify(result, null, 4));
-		// 	this.logError("Something went wrong... Please inform the system administrator.");
-		// }
+		if(users.data.length > 0) {
+			users.data.forEach((o: { user: { email: string | number }, permissions: string }) => {
+				let userName = `${chalk.bold.redBright('User:')} ${o.user.email}, ${chalk.bold.redBright('Permissions:')} ${o.permissions}`;
+				tree.insert(userName);
+				if(usersGroups.data[o.user.email] && usersGroups.data[o.user.email].length > 0) {
+
+					let wsList: any | any[] = [];
+					usersGroups.data[o.user.email].forEach((g: { name: any; path: any }) => {
+						let scopeDecomposition = g.path.substring(1).split('/')[1].split("-");
+						if(wsList.indexOf(scopeDecomposition[2]) == -1){
+							wsList.push(scopeDecomposition[2]);
+						}
+					});
+
+					wsList.forEach((ws: any) => {
+						let wsNode = `${chalk.green('Workspace:')} ${ws}`;
+						tree.nodes[userName].insert(wsNode);
+
+						let wsGroups = usersGroups.data[o.user.email].filter((g: { path: string | string[] }) => {
+							return g.path.indexOf(`-${ws}/`) != -1;
+						});
+						wsGroups.forEach((g: { name: any; path: any }) => {
+							let groupAssoc = `${chalk.blue('Group:')} ${g.name}, ${chalk.blue('Group path:')} ${g.path}`;
+							tree.nodes[userName].nodes[wsNode].insert(groupAssoc);
+						});
+
+					});
+
+
+				} else {
+					tree.nodes[userName].insert(`- No roles -`);
+				}
+			});
+		} else {
+			tree.insert(`- No Users -`);
+		}
+
+		tree.display();
 	}
 
 	/**

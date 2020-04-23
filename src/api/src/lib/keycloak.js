@@ -197,11 +197,9 @@ class Keycloak {
      * @param {*} email 
      */
     static async getUserGroupsForOrg(adminAccessToken, parentOrgGroupName, email) {
-        console.log(parentOrgGroupName);
         let targetUser = await this.getUserByEmail(adminAccessToken, email);
         if(targetUser) {
             let targetUserGroups = await this.getUserGroups(adminAccessToken, targetUser.id);
-            console.log(targetUserGroups);
             return targetUserGroups.filter(g => g.path.indexOf(`/mc/${parentOrgGroupName}`) == 0);
         } else {
             return [];
