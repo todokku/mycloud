@@ -28,7 +28,7 @@ export default class NsRbacBindings extends Command {
 		let apiData = {
 			ns: null,
 			emails: new Array<any>(),
-			roles: new Array<any>() 
+			groups: new Array<any>() 
 		};
 
 		let groups = await this.api("workspace", {
@@ -97,11 +97,11 @@ export default class NsRbacBindings extends Command {
 				choices: groups.data.map((o: { name: any; id: any }) => {
 					return {
 						name: o.name,
-						value: o.id
+						value: o.name
 					};
 				})
 			}]);
-			apiData.roles = roleChoices.name;
+			apiData.groups = roleChoices.name;
 			
 			let response = await this.api("workspace", {
 				method: "apply-rbac-bindings",

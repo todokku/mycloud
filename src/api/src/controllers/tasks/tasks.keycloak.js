@@ -38,8 +38,37 @@ class TaskKeycloakController {
             return r;
         }
 
-        console.log(data);
-        console.log(params);
+        // We start by deleting all cluster groups for those users before we reassign the selecteg groups
+        params._internalRequest = true;
+        let ws = await this.app.service("workspaces").get(data.workspaceId, params);
+        params._internalRequest = true;
+        let org = await this.app.service("organizations").get(ws.organizationId, params);
+        params._internalRequest = true;
+        let acc = await this.app.service("accounts").get(org.accountId, params);
+
+        let adminToken = await Keycloak.adminAuthenticate(this.app);
+        for(let i=0; i<data.emails.length; i++) {
+            await Keycloak.removeClusterBaseGroupsForUser(
+                adminToken,
+                `${acc.name}-${org.name}-${ws.name}`,
+                data.emails[i]
+            );
+        }
+
+        // Now we assign the proper groups
+        for(let i=0; i<data.emails.length; i++) {
+            for(let y=0; y<data.groups.length; y++) {
+                await Keycloak.addClusterGroupToUser(
+                    adminToken,
+                    data.emails[i],
+                    `${acc.name}-${org.name}-${ws.name}`,
+                    data.groups[y]
+                );
+            }
+        }
+
+        // console.log(data);
+        // console.log(params);
 
         // // Assign roles to target users in Keycloak (make sure they don't have them already)
         // // Assign cluster admin role to the user who created this ws

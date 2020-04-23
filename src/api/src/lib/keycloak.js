@@ -149,25 +149,6 @@ class Keycloak {
     }
 
     /**
-     * keycloakUserExists
-     * @param {*} adminAccessToken 
-     * @param {*} email 
-     */
-    static async getUserByEmail(adminAccessToken, email) {
-        // Get user attributes
-        let _o = JSON.parse(JSON.stringify(queryOptions));
-        _o.url += `/users?email=${email}`;
-        _o.method = "GET";
-        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
-        let users = await this.asyncRequest(_o);
-        if(users.length == 1) {
-            return users[0];
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * createUser
      * @param {*} adminAccessToken 
      * @param {*} email 
@@ -205,6 +186,93 @@ class Keycloak {
                 return rootGroup.subGroups;
             } else {
                 return [];
+            }
+        }
+    }
+
+    /**
+     * getUserByEmail
+     * @param {*} adminAccessToken 
+     * @param {*} email 
+     */
+    static async getUserByEmail(adminAccessToken, email) {
+        // Get user attributes
+        let _o = JSON.parse(JSON.stringify(queryOptions));
+        _o.url += `/users?email=${email}`;
+        _o.method = "GET";
+        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+        let users = await this.asyncRequest(_o);
+        if(users.length == 1) {
+            return users[0];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * removeClusterBaseGroupsForUser
+     * @param {*} adminAccessToken 
+     * @param {*} parentGroupName 
+     * @param {*} email 
+     */
+    static async removeClusterBaseGroupsForUser(adminAccessToken, parentGroupName, email) {
+        let kcUser = await this.getUserByEmail(adminAccessToken, email);
+        if(!kcUser) {
+            throw new Exception("User not found");
+        }
+
+        // Get groupId
+        let _o = JSON.parse(JSON.stringify(queryOptions));
+        _o.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+        _o.url += `/groups`;
+        let groups = await this.asyncRequest(_o);
+
+        let mcGroup = groups.find(o => o.name == "mc");
+        if(mcGroup && mcGroup.subGroups) {
+            let rootGroup = mcGroup.subGroups.find(o => o.name == parentGroupName);
+            if(rootGroup && rootGroup.subGroups) {
+                for(let i=0; i<rootGroup.subGroups.length; i++) {
+                    let targetGroup = rootGroup.subGroups[i];
+                    
+                    _o = JSON.parse(JSON.stringify(deleteOptions));
+                    _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+                    _o.url += `/users/${kcUser.id}/groups/${targetGroup.id}`;
+            
+                    await this.asyncRequest(_o);
+                }
+            }
+        }
+    }
+
+    /**
+     * addClusterGroupToUser
+     * @param {*} adminAccessToken 
+     * @param {*} email 
+     * @param {*} password 
+     */
+    static async addClusterGroupToUser(adminAccessToken, userEmail, parentGroupName, groupName) {
+        let _o = JSON.parse(JSON.stringify(queryOptions));
+        _o.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+        _o.url += `/groups`;
+        let groups = await this.asyncRequest(_o);
+
+        let mcGroup = groups.find(o => o.name == "mc");
+        if(mcGroup && mcGroup.subGroups) {
+            let rootGroup = mcGroup.subGroups.find(o => o.name == parentGroupName);
+            if(rootGroup && rootGroup.subGroups) {
+                let targetGroup = rootGroup.subGroups.find(o => o.name == groupName);
+                if(targetGroup) {
+                    let targetUser = await this.getUserByEmail(adminAccessToken, userEmail);
+                    if(targetUser) {
+                        _o = JSON.parse(JSON.stringify(putOptions));
+                        _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
+                        _o.url += `/users/${targetUser.id}/groups/${targetGroup.id}`;
+
+                        await this.asyncRequest(_o);
+                    }
+                }
             }
         }
     }
