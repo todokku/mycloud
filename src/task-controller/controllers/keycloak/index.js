@@ -257,7 +257,6 @@ class Keycloak {
             if(rootGroup && rootGroup.subGroups) {
                 for(let i=0; i<rootGroup.subGroups.length; i++) {
                     let targetGroup = rootGroup.subGroups[i];
-
                     // Get users of that group
                     _o = JSON.parse(JSON.stringify(queryOptions));
                     _o.url += `/groups/${targetGroup.id}/members?max=9999`;
