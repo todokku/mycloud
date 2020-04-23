@@ -39,17 +39,17 @@ class TaskKeycloakController {
         let acc = await this.app.service("accounts").get(org.accountId, params);
 
         let adminToken = await Keycloak.adminAuthenticate(this.app);
-        let data = {};
+        let groupData = {};
         for(let i=0; i<data.emails.length; i++) {
             let _data = await Keycloak.getUserGroupsForOrg(
                 adminToken,
                 `${acc.name}-${org.name}-`,
                 data.emails[i]
             );
-            data[data.emails[i]] = _data;
+            groupData[data.emails[i]] = _data;
         }
        
-        return { "code": 200, "data": data }
+        return { "code": 200, "data": groupData }
     }
     
 
