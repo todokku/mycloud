@@ -47,7 +47,7 @@ console.log(data);
 
             if(data.type == "namespace") {
                 let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml");
-                let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", ws.id.toString(), data.node.hostname, `rbac_rb.yaml`);
+                let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `rbac_rb.yaml`);
                 await OSController.copyFile(adminRoleBindingYamlPath, path.dirname(wsTmpYamlPath));
                 let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
 
@@ -71,15 +71,13 @@ console.log(data);
                 }
             }
 
-
-
-
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "create k8s resource"
             }));
         } catch (_error) {
             console.log(_error);
+            try { await this.kubectl(`kubectl delete ${data.type} ${data.name}${data.ns ? " --namespace=" + data.ns : ""}`, data.node); } catch (error) {}
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: _error.code ? _error.code : 500,
                 message: _error.message,
