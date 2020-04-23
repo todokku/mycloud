@@ -56,12 +56,16 @@ class TaskNamespaceController {
                     wsName: ws.name
                 });
 
+                if(allGroups.code != 200) {
+                    return { "code": 500 }
+                }
+
                 response = await MQTTController.queryRequestResponse(r.data[0].k8s_host.ip, "create_k8s_resource", {
                     "type": "namespace",
                     "name": data.name,
                     "node": r.data[0],
                     "clusterBaseGroup": `${acc.name}-${org.name}-${ws.name}`,
-                    "groups": allGroups
+                    "groups": allGroups.data
                 }, 15000);
                 if(response.data.status == 200){
                     return { "code": 200 }
