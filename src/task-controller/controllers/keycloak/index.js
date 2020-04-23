@@ -61,6 +61,7 @@ class Keycloak {
                 } else if (response.statusCode == 401) {
                     reject(new Error('Unauthorized'));
                 } else if (response.statusCode < 200 || response.statusCode > 299) {
+                    console.log(response);
                     reject(new Error("Unexpected error"));
                 } else {
                     try {
