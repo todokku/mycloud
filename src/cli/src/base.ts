@@ -91,6 +91,8 @@ export default abstract class extends Command {
 					return await this.fapi.addOrgUsers(params.data);
 				} else if(params.method == "get_users"){
 					return await this.fapi.getOrgUsers(params.data);
+				} else if(params.method == "get_groups_for_users"){
+					return await this.fapi.getGroupsOfUsers(params.data);
 				}
 				break
 			case "account":

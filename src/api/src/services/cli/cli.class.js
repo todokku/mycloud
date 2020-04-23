@@ -111,6 +111,13 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
+			case "get_groups_for_users":
+				try{
+					return await TaskKeycloakController.getGroupsForUsers(data.params, params);
+				} catch(error){
+					console.log(error);
+					return {"code": error.code};
+				}
 			case "config_k8s":
 				try {
 					return await TaskRuntimeController.scheduleK8SConfig(data.params, params);

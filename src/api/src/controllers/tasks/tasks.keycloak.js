@@ -28,6 +28,23 @@ class TaskKeycloakController {
     }
 
     /**
+     * getGroupsForUsers
+     * @param {*} data 
+     * @param {*} params 
+     */
+    static async getGroupsForUsers(data, params) {
+        params._internalRequest = true;
+        let org = await this.app.service("organizations").get(data.organizationId, params);
+        params._internalRequest = true;
+        let acc = await this.app.service("accounts").get(org.accountId, params);
+
+console.log(data);
+       
+        return { "code": 200 }
+    }
+    
+
+    /**
      * applyRbacBindings
      * @param {$} data 
      * @param {*} params 
@@ -66,20 +83,6 @@ class TaskKeycloakController {
                 );
             }
         }
-
-        // console.log(data);
-        // console.log(params);
-
-        // // Assign roles to target users in Keycloak (make sure they don't have them already)
-        // // Assign cluster admin role to the user who created this ws
-        // await Keycloak.addClusterGroupToUser(
-        //     adminToken,
-        //     task.payload[0].params.clusterAdminUserEmail,
-        //     task.payload[0].params.groupBase,
-        //     "cluster-admin"
-        // )
-
-
         return { "code": 200 }
     }
 }

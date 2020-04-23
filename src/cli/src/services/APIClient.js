@@ -601,8 +601,6 @@ class APIClient {
         try{
             let _q = query ? query : {};
             _q.organizationId = this.sessionJson.organization.id;
-           
-            console.log(_q);
             let result = await this.app.service("org-users").find({
                 query: _q,
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
@@ -612,6 +610,32 @@ class APIClient {
                 "code": 200,
                 "data": result.data
             };
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+
+    /**
+     * getGroupsOfUsers
+     * @param {*} query 
+     */
+    async getGroupsOfUsers(query) {
+        let error = this._precheckFlight({auth: true, org: true});
+        if(error) {
+            return error;
+        }
+        try{
+            query.organizationId = this.sessionJson.organization.id;
+            let result = await this.app.service("cli").update(0, {
+                "action": "get_groups_for_users",
+                "params": query
+            }, {
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+           
+            return result;
         } catch(err) {
             return {
                 "code": err.code
