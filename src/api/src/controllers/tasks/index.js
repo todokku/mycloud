@@ -18,6 +18,7 @@ const TaskCertificatesController = require("./tasks.certificates");
 const TaskNamespaceController = require("./tasks.ns");
 const TaskPvcController = require("./tasks.pvc");
 const TaskRoutesController = require("./tasks.routes");
+const TaskKeycloakController = require("./tasks.keycloak");
 
 class TaskController {
 
@@ -37,6 +38,8 @@ class TaskController {
         TaskRoutesController.init(this, app, mqttController);
         TaskNamespaceController.init(this, app, mqttController);
         TaskPvcController.init(this, app, mqttController);
+        TaskKeycloakController.init(this, app, mqttController);
+        
         this.services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
     }
 

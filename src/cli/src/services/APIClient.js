@@ -648,6 +648,36 @@ class APIClient {
     }
 
     /**
+     * getClusterRbacGroups
+     * @param {*} query 
+     */
+    async getClusterRbacGroups(query) {
+        let error = this._precheckFlight({auth: true, ws: true});
+        if(error) {
+            return error;
+        }
+        try{
+            let _q = query ? query : {};
+            _q.accName = this.sessionJson.account.name;
+            _q.orgName = this.sessionJson.organization.name;
+            _q.wsName = this.sessionJson.workspace.name;
+           
+            let result = await this.app.service("cli").update(0, {
+                "action": "get_available_cluster_groups",
+                "params": _q
+            }, {
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+           
+            return result;
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
+
+    /**
      * getKubectlConfigFile
      */
     async getKubectlConfigFile() {

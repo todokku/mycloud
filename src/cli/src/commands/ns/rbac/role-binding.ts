@@ -27,16 +27,20 @@ export default class NsRbacBindings extends Command {
 	async run() {
 		let apiData = {
 			ns: null,
-			user: null,
-			roles: null
+			emails: new Array<any>(),
+			roles: new Array<any>() 
 		};
 
-		let orgUsers = await this.api("organization", {
-			method: "get_users"
-		});
 
-		console.log(orgUsers);
+		let groups = await this.api("workspace", {
+			method: "get-cluster-rbac-groups"
+		});
+		console.log(groups);
 		
+
+
+
+
 		let resultNs = await this.api("namespaces", {
 			method: "get-namespaces",
 			data: {}
@@ -46,10 +50,16 @@ export default class NsRbacBindings extends Command {
 			if(resultNs.data.length == 0) {
 				return this.logError("There are no namespaces configured on your cluster. Namespaces are like separate isolated environements on your cluster that you can deploy resources on. Start by creating a namespace using the command 'mc create:ns', then try again.");
 			}
-			
-			// if(!this.handleError(resultVol)){
-			// 	return;
-			// }
+			let orgUsers = await this.api("organization", {
+				method: "get_users"
+			});
+			if(!this.handleError(orgUsers)){
+				return;
+			}
+			if(orgUsers.data.length == 0) {
+				return this.logError("There are no users available in this organization.");
+			}
+
 			// Select namespace
 			let nsChoice: any = await inquirer.prompt([{
 				name: 'name',
@@ -63,11 +73,26 @@ export default class NsRbacBindings extends Command {
 			}]);
 			apiData.ns = nsChoice.name;
 
-			
+			// Select users
+			let usersChoice: any = await inquirer.prompt([{
+				name: 'name',
+				message: 'Select which users to apply the role binding to',
+				type: 'checkbox',
+				choices: orgUsers.data.map((o: { user: any }) => {
+					return {
+						name: o.user.email
+					}
+				})
+			}]);
+			apiData.emails = usersChoice.name;
+			if(apiData.emails.length == 0) {
+				return this.logError("You need to select at least one user.");
+			}
+
 			// Select target service version
 			let roleChoices: any = await inquirer.prompt([{
 				name: 'name',
-				message: 'Which volume do you wish to use?',
+				message: 'What RBAC groups should this user belong to (no groups removes all permissions)?',
 				type: 'checkbox',
 				choices: [
 					{
@@ -81,6 +106,7 @@ export default class NsRbacBindings extends Command {
 				]
 			}]);
 			apiData.roles = roleChoices.name;
+			
 				
 		}
 	}

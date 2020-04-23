@@ -98,7 +98,6 @@ module.exports = {
 				if(context.result.data){
 					context.result.data = context.result.data.filter((org) => {
 						return orgUsers.find(o => o.organizationId == org.id) ? true : false;
-						
 					});
 					context.result.total = context.result.data.length;
 				} else {

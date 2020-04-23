@@ -115,6 +115,8 @@ export default abstract class extends Command {
 					return await this.fapi.getPersistedVolumes(params.data);
 				} else if(params.method == "get-tasks"){
 					return await this.fapi.getTaskList(params.data);
+				} else if(params.method == "get-cluster-rbac-groups"){
+					return await this.fapi.getClusterRbacGroups();
 				}
 				break
 			case "config":

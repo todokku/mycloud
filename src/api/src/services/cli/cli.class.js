@@ -8,6 +8,7 @@ const TaskDomainsController = require("../../controllers/tasks/tasks.domains");
 const TaskCertificatesController = require("../../controllers/tasks/tasks.certificates");
 const TaskNamespaceController = require("../../controllers/tasks/tasks.ns");
 const TaskPvcController = require("../../controllers/tasks/tasks.pvc");
+const TaskKeycloakController = require("../../controllers/tasks/tasks.keycloak");
 
 /* eslint-disable no-unused-vars */
 exports.Cli = class Cli {
@@ -96,13 +97,13 @@ exports.Cli = class Cli {
 					console.log(error);
 					return {"code": error.code};
 				}
-			// case "get_org_users":
-			// 	try{
-			// 		return await TaskRuntimeController.getOrgUsers(data, params);
-			// 	} catch(error){
-			// 		console.log(error);
-			// 		return {"code": error.code};
-			// 	}
+			case "get_available_cluster_groups":
+				try{
+					return await TaskKeycloakController.getAvailableClusterGroups(data.params, params);
+				} catch(error){
+					console.log(error);
+					return {"code": error.code};
+				}
 			case "config_k8s":
 				try {
 					return await TaskRuntimeController.scheduleK8SConfig(data.params, params);
