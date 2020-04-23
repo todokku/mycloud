@@ -349,7 +349,7 @@ class Keycloak {
             if(rootGroup && rootGroup.subGroups) {
                 let targetGroup = rootGroup.subGroups.find(o => o.name == groupName);
                 if(targetGroup) {
-                    let targetUser = this.getUserByEmail(adminAccessToken, userEmail);
+                    let targetUser = await this.getUserByEmail(adminAccessToken, userEmail);
                     if(targetUser) {
 
                         console.log("targetUser =>", targetUser);
