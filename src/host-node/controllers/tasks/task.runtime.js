@@ -47,7 +47,7 @@ console.log(data);
 
             if(data.type == "namespace") {
                 let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml");
-                let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `rbac_rb.yaml`);
+                let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", data.node.workspaceId.toString(), data.node.hostname, `rbac_role_bindings.yaml`);
                 await OSController.copyFile(adminRoleBindingYamlPath, path.dirname(wsTmpYamlPath));
                 let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
 
@@ -64,7 +64,7 @@ console.log(data);
                     await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
                     // Deploy admin RoleBinding
                     await TaskRuntimeController.applyK8SYaml(
-                        path.join(process.cwd(), "resources", "k8s_templates", "rbac_rb.yaml"),
+                        path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml"),
                         null, 
                         { ip: result.nodeIp }
                     );
