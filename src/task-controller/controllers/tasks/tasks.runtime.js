@@ -65,8 +65,6 @@ class TaskRuntimeController {
                 throw error;
             }
 
-            this.mqttController.logEvent(task.payload[0].socketId, "info", "Creating Keycloak RBAC groups");
-
             try{
                 let org = await DBController.getOrgForWorkspace(task.targetId);
                 let ws = await DBController.getWorkspace(task.targetId);

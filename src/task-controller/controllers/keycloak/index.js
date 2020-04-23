@@ -254,7 +254,7 @@ class Keycloak {
         let mcGroup = groups.find(o => o.name == "mc");
         if(mcGroup && mcGroup.subGroups) {
             let rootGroup = mcGroup.subGroups.find(o => o.name == parentGroupName);
-            if(rootGroup && ootGroup.subGroups) {
+            if(rootGroup && rootGroup.subGroups) {
                 for(let i=0; i<rootGroup.subGroups.length; i++) {
                     let targetGroup = rootGroup.subGroups[i];
 
