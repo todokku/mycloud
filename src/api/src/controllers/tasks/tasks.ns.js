@@ -43,8 +43,11 @@ class TaskNamespaceController {
             if(response.data.output.namespaces.find(o => o.NAME == data.name)) {
                 return { "code": 409 }
             } else {
+                params._internalRequest = true;
                 let ws = await this.app.service("workspaces").get(data.workspaceId, params);
+                params._internalRequest = true;
                 let org = await this.app.service("organizations").get(ws.organizationId, params);
+                params._internalRequest = true;
                 let acc = await this.app.service("accounts").get(org.accountId, params);
 
                 let allGroups = await TaskKeycloakController.getAvailableClusterGroups({
