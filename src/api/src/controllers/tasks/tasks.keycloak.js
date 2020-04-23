@@ -5,8 +5,9 @@ class TaskKeycloakController {
     /**
      * init
      */
-    static init(parent, mqttController) {
+    static init(parent, app, mqttController) {
         this.parent = parent;
+        this.app = app;
         this.mqttController = mqttController;
     }
 
