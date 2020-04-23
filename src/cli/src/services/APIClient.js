@@ -380,6 +380,7 @@ class APIClient {
                 query: query ? query : {},
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
+            console.log(result);
             return {
                 "code": 200,
                 "data": result.data

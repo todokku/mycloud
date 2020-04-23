@@ -351,11 +351,6 @@ class Keycloak {
                 if(targetGroup) {
                     let targetUser = await this.getUserByEmail(adminAccessToken, userEmail);
                     if(targetUser) {
-
-                        console.log("targetUser =>", targetUser);
-
-
-
                         _o = JSON.parse(JSON.stringify(putOptions));
                         _o.headers['Authorization'] = `Bearer ${adminAccessToken}`;
                         _o.url += `/users/${targetUser.id}/groups/${targetGroup.id}`;

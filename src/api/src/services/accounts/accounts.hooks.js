@@ -5,7 +5,17 @@ const { Forbidden } = require('@feathersjs/errors');
 module.exports = {
 	before: {
 		all: [],
-		find: [],
+		find: [
+			async context => {
+				const sequelize = context.app.get('sequelizeClient');
+						if(!context.params.sequelize) {
+							context.params.sequelize = {};
+				}				
+				context.params.sequelize.raw = false;
+				context.params.sequelize.include = { model: sequelize.models.acc_users};
+				return context;
+			},
+		],
 		get: [
 			async context => {
 				if(await Permissions.isSysAdmin(context) || context.params._internalRequest){
