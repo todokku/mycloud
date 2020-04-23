@@ -33,12 +33,16 @@ class TaskKeycloakController {
      * @param {*} params 
      */
     static async getGroupsForUsers(data, params) {
+
+        console.log(data);
+
+        
         params._internalRequest = true;
         let org = await this.app.service("organizations").get(data.organizationId, params);
         params._internalRequest = true;
         let acc = await this.app.service("accounts").get(org.accountId, params);
 
-console.log(data);
+
        
         return { "code": 200 }
     }
