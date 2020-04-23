@@ -89,8 +89,9 @@ export default abstract class extends Command {
 					return await this.fapi.deleteOrganization(params.data);
 				} else if(params.method == "add_users"){
 					return await this.fapi.addOrgUsers(params.data);
+				} else if(params.method == "get_users"){
+					return await this.fapi.getOrgUsers(params.data);
 				}
-				
 				break
 			case "account":
 				if(params.method == "set"){

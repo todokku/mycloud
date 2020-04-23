@@ -19,9 +19,11 @@ export default class AccountList extends Command {
 			if(result.data.length == 0) {
 				this.log("There are currently no accounts");
 			} else {
+				let session = await this.api("status");
+
 				this.log("Account name", "blue");
 				result.data.forEach((o:any) => {
-					this.log(o.name);
+					this.log(o.name + (o.acc_users.find((o: { userId: any; }) => o.userId == session.user.id).isAccountOwner ? " (account owner)":""));
 				});
 			}
 		} else if(result.code == 401){

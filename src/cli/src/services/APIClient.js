@@ -351,6 +351,10 @@ class APIClient {
             return error;
         }
         try{
+            query = query ? query : {};
+
+            query.accountId = this.sessionJson.account.id;
+
             let result = await this.app.service("organizations").find({
                 query: query ? query : {},
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
@@ -380,7 +384,7 @@ class APIClient {
                 query: query ? query : {},
                 headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
             });
-            console.log(result);
+            
             return {
                 "code": 200,
                 "data": result.data
@@ -585,8 +589,35 @@ class APIClient {
         }
     }
 
-
-
+    /**
+     * getOrgUsers
+     * @param {*} query 
+     */
+    async getOrgUsers(query) {
+        let error = this._precheckFlight({auth: true, org: true});
+        if(error) {
+            return error;
+        }
+        try{
+            let _q = query ? query : {};
+            _q.organizationId = this.sessionJson.organization.id;
+           
+            console.log(_q);
+            let result = await this.app.service("org-users").find({
+                query: _q,
+                headers: { 'Authorization': `Bearer ${this.sessionJson.accessToken}` }
+            });
+           
+            return {
+                "code": 200,
+                "data": result.data
+            };
+        } catch(err) {
+            return {
+                "code": err.code
+            };
+        }
+    }
 
     /**
      * addOrgUsers
@@ -615,7 +646,6 @@ class APIClient {
             };
         }
     }
-    
 
     /**
      * getKubectlConfigFile

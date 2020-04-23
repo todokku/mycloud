@@ -3,7 +3,17 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 module.exports = {
   before: {
     all: [ authenticate('jwt') ],
-    find: [],
+    find: [
+      async context => {
+        const sequelize = context.app.get('sequelizeClient');
+				if(!context.params.sequelize) {
+					context.params.sequelize = {};
+        }				
+        context.params.sequelize.raw = false;
+        context.params.sequelize.include = [{ model: sequelize.models.users}, { model: sequelize.models.organizations}];
+				return context;
+			},
+    ],
     get: [],
     create: [],
     update: [],

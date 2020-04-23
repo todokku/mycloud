@@ -42,20 +42,170 @@ class TaskRuntimeController {
         return { "code": 200 }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // /**
+    //  * getOrgUsers
+    //  * @param {*} data 
+    //  * @param {*} params 
+    //  */
+    // static async getOrgUsers(data, params) {
+    //     try {
+    //         let org = targetOrgs[0];
+    //         // Make sure current user has permissions to do this
+    //         let isAccOwner = await Permissions.isAccountOwner({
+    //             app: this.app,
+    //             params
+    //         }, data.organizationId);
+    //         if(!isAccOwner) {
+    //             let isOrgAdmin = await Permissions.isOrgUserAdmin_ws({
+    //                 app: this.app,
+    //                 params
+    //             }, data.organizationId);
+
+    //             if(!isOrgAdmin) {
+    //                 return {
+    //                     "code": 403
+    //                 };
+    //             }
+    //         }
+
+    //         // Make sure all users exist
+    //         data.params.emails = [...new Set(data.params.emails)]; // Filter out duplicates
+    //         let targetUsers = await this.app.service('users').find({
+    //             "query": {
+    //                 "email": {
+    //                     $in: data.params.emails
+    //                 }
+    //             },
+    //             "user": params.user,
+    //             "authentication": params.authentication,
+    //             "paginate": false
+    //         });
+
+    //         if(targetUsers.length != data.params.emails.length) {
+    //             return {
+    //                 "code": 405
+    //             };
+    //         }
+
+    //         let orgUsers = await this.app.service('org-users').find({
+    //             "user": params.user,
+    //             "authentication": params.authentication,
+    //             "paginate": false,
+    //             "query": {
+    //                 organizationId: org.id
+    //             }
+    //         });
+
+
+
+
+
+
+
+    //         let newOrgTargetUsers = targetUsers.filter(u => {
+    //             let existingU = orgUsers.find(ou => ou.userId == u.id);
+    //             return !existingU;
+    //         });
+    //         let existingOrgTargetUsers = targetUsers.filter(u => {
+    //             let existingU = orgUsers.find(ou => ou.userId == u.id);
+    //             return existingU;
+    //         });
+
+    //         const sequelize = this.app.get('sequelizeClient');
+    //         transaction = await sequelize.transaction();
+
+    //         // Create new user acc bindings
+    //         for(let i=0; i<newAccTargetUsers.length; i++) {
+    //             await this.app.service('acc-users').create({
+    //                 accountId: org.accountId, 
+    //                 userId: newAccTargetUsers[i].id,
+    //                 isAccountOwner: false
+    //             }, {
+    //                 _internalRequest: true,
+    //                 sequelize: { transaction }
+    //             });
+    //         }
+
+    //         // Create new user org bindings
+    //         for(let i=0; i<newOrgTargetUsers.length; i++) {
+    //             await this.app.service('org-users').create({
+    //                 organizationId: org.id, 
+    //                 userId: newOrgTargetUsers[i].id,
+    //                 permissions: data.params.permissions.join(',')
+    //             }, {
+    //                 _internalRequest: true,
+    //                 sequelize: { transaction }
+    //             });
+    //         }
+
+    //         // Update new user org bindings
+    //         for(let i=0; i<existingOrgTargetUsers.length; i++) {
+    //             let existingOrgAcc = orgUsers.find(o => o.userId == existingOrgTargetUsers[i].id);
+    //             await this.app.service('org-users').update(existingOrgAcc.id, {
+    //                 organizationId: org.id, 
+    //                 userId: existingOrgTargetUsers[i].id,
+    //                 permissions: data.params.permissions.join(',')
+    //             }, {
+    //                 _internalRequest: true,
+    //                 sequelize: { transaction }
+    //             });
+    //         }
+
+    //         await transaction.commit();
+    //         return {
+    //             code: 200
+    //         };
+    //     } catch (error) {
+    //         console.log(error);
+    //         if (transaction) {
+    //             // console.log(transaction);
+    //             await transaction.rollback();
+    //         }
+    //         return { "code": 500 };
+    //     }
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * addOrgUsers
      * @param {*} data 
      * @param {*} params 
      */
     static async addOrgUsers(data, params) {
-        // console.log("params => ", params.authentication.accessToken);
-        // console.log("data => ", data.params);
-        // {
-        //     emails: [ 'foo@bar.com' ],
-        //     orgName: 'dto',
-        //     permissions: [ 'ORG_ADMIN' ],
-        //     organizationId: 2
-        // }
         let transaction = null;
         try {
             let targetOrgs = await this.app.service('organizations').find({
