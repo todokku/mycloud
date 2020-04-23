@@ -2,6 +2,7 @@ const MQTTController = require("../mqtt/index");
 const YAML = require('yaml');
 const { NotFound, Unprocessable } = require('@feathersjs/errors');
 const Permissions = require('../../lib/permission_helper');
+const TaskKeycloakController = require("./tasks.keycloak");
 
 class TaskRuntimeController {
 
@@ -202,6 +203,10 @@ class TaskRuntimeController {
 
         console.log(data);
         console.log(params);
+
+        // Assign roles to target users in Keycloak (make sure they don't have them already)
+
+
 
         return { "code": 200 }
     }

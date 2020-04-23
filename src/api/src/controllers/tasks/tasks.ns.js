@@ -2,6 +2,7 @@
 const MQTTController = require("../mqtt/index");
 const DBController = require("../db/index");
 const { Forbidden } = require('@feathersjs/errors');
+const TaskKeycloakController = require("./tasks.keycloak");
 
 class TaskNamespaceController {
 
@@ -42,10 +43,22 @@ class TaskNamespaceController {
             if(response.data.output.namespaces.find(o => o.NAME == data.name)) {
                 return { "code": 409 }
             } else {
+                let ws = await this.app.service("workspaces").get(data.workspaceId, params);
+                let org = await this.app.service("organizations").get(ws.organizationId, params);
+                let acc = await this.app.service("accounts").get(org.accountId, params);
+
+                let allGroups = await TaskKeycloakController.getAvailableClusterGroups({
+                    accName: acc.name,
+                    orgName: org.name,
+                    wsName: ws.name
+                });
+
                 response = await MQTTController.queryRequestResponse(r.data[0].k8s_host.ip, "create_k8s_resource", {
                     "type": "namespace",
                     "name": data.name,
-                    "node": r.data[0]
+                    "node": r.data[0],
+                    "clusterBaseGroup": `${acc.name}-${org.name}-${ws.name}`,
+                    "groups": allGroups
                 }, 15000);
                 if(response.data.status == 200){
                     return { "code": 200 }

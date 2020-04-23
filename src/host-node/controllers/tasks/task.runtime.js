@@ -43,6 +43,37 @@ class TaskRuntimeController {
         try{
             await this.kubectl(`kubectl create ${data.type} ${data.name}${data.ns ? " --namespace=" + data.ns : ""}`, data.node);
 
+console.log(data);
+
+            if(data.type == "namespace") {
+                let adminRoleBindingYamlPath = path.join(process.cwd(), "resources", "k8s_templates", "rbac_role_bindings.yaml");
+                let wsTmpYamlPath = path.join(process.env.VM_BASE_DIR, "workplaces", ws.id.toString(), data.node.hostname, `rbac_rb.yaml`);
+                await OSController.copyFile(adminRoleBindingYamlPath, path.dirname(wsTmpYamlPath));
+                let adminRoleBindingYaml = YAML.parse(fs.readFileSync(wsTmpYamlPath, 'utf8'));
+
+                adminRoleBindingYaml.kind = "RoleBinding";
+                adminRoleBindingYaml.metadata.namespace = data.name;
+
+                for(let i=0; i<data.groups.length; i++) {
+                    console.log("Applying role binding ", data.groups[i]);
+                    adminRoleBindingYaml.metadata.name = `mc-${data.name}-${data.groups[i]}-binding`;
+                    adminRoleBindingYaml.subjects[0].name = `/mc/${data.clusterBaseGroup}/${data.groups[i]}`;
+                    adminRoleBindingYaml.roleRef.name = data.groups[i];
+
+                    fs.writeFileSync(wsTmpYamlPath, YAML.stringify(adminRoleBindingYaml));
+                    await TaskRuntimeController.applyK8SYaml(wsTmpYamlPath, null, { ip: result.nodeIp });
+                    // Deploy admin RoleBinding
+                    await TaskRuntimeController.applyK8SYaml(
+                        path.join(process.cwd(), "resources", "k8s_templates", "rbac_rb.yaml"),
+                        null, 
+                        { ip: result.nodeIp }
+                    );
+                }
+            }
+
+
+
+
             this.mqttController.client.publish(`/mycloud/k8s/host/respond/${data.queryTarget}/${topicSplit[5]}/${topicSplit[6]}`, JSON.stringify({
                 status: 200,
                 task: "create k8s resource"
