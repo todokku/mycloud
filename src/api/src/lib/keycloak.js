@@ -200,7 +200,7 @@ class Keycloak {
         let targetUser = await this.getUserByEmail(adminAccessToken, email);
         if(targetUser) {
             let targetUserGroups = await this.getUserGroups(adminAccessToken, targetUser.id);
-            return targetUserGroups.filter(g => g.path.indexOf(parentOrgGroupName) == 0);
+            return targetUserGroups.filter(g => g.path.indexOf(`/mc/${parentOrgGroupName}`) == 0);
         } else {
             return [];
         }
