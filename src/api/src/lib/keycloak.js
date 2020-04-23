@@ -190,6 +190,27 @@ class Keycloak {
         }
     }
 
+
+    /**
+     * getUserGroupsForOrg
+     * @param {*} adminAccessToken 
+     * @param {*} parentOrgGroupName 
+     * @param {*} email 
+     */
+    static async getUserGroupsForOrg(adminAccessToken, parentOrgGroupName, email) {
+
+
+        let targetUser = await this.getUserByEmail(adminAccessToken, email);
+        console.log(JSON.stringify(targetUser, null, 4));
+        return [];
+
+       
+    }
+
+
+
+    
+
     /**
      * getUserByEmail
      * @param {*} adminAccessToken 

@@ -33,18 +33,23 @@ class TaskKeycloakController {
      * @param {*} params 
      */
     static async getGroupsForUsers(data, params) {
-
-        console.log(data);
-
-        
         params._internalRequest = true;
         let org = await this.app.service("organizations").get(data.organizationId, params);
         params._internalRequest = true;
         let acc = await this.app.service("accounts").get(org.accountId, params);
 
-
+        let adminToken = await Keycloak.adminAuthenticate(this.app);
+        let data = {};
+        for(let i=0; i<data.emails.length; i++) {
+            let _data = await Keycloak.getUserGroupsForOrg(
+                adminToken,
+                `${acc.name}-${org.name}-`,
+                data.emails[i]
+            );
+            data[data.emails[i]] = _data;
+        }
        
-        return { "code": 200 }
+        return { "code": 200, "data": data }
     }
     
 

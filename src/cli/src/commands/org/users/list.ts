@@ -21,7 +21,9 @@ export default class OrganizationUserList extends Command {
 
 		let usersGroups = await this.api("organization", {
 			method: "get_groups_for_users",
-			data: users.data.map((o: { user: { email: any; }; }) => o.user.email)
+			data: {
+				emails: users.data.map((o: { user: { email: any; }; }) => o.user.email)
+			}
 		});
 		if(!this.handleError(usersGroups)){
 			return;
