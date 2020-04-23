@@ -195,7 +195,7 @@ class Keycloak {
 
         await this.asyncRequest(_o2);
 
-        let groups = await this.asyncRequest(_o);
+        groups = await this.asyncRequest(_o);
         return groups.find(o => o.name == "mc").subGroups.find(o => o.name == groupName).id;
     }
 
