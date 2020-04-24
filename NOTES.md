@@ -377,3 +377,115 @@ kcadm.sh create "clients/$client_uuid/protocol-mappers/models" -r "$realm" -b '{
     }
   }'
 ```
+
+
+
+
+
+## OpenFaaS Install
+```
+kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
+helm upgrade openfaas --install openfaas/openfaas \
+    --namespace openfaas \
+    --set functionNamespace=openfaas-fn \
+    --set generateBasicAuth=true \
+    --set ingress.enabled=true \
+```
+
+
+## Istio Install
+
+```
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-*
+export PATH="$PATH:$(pwd)/bin"
+istioctl manifest apply \
+    --set values.global.k8sIngress.enabled=true \
+    --set values.global.k8sIngress.enableHttps=true \
+    --set values.global.k8sIngress.gatewayName=ingressgateway
+```
+
+
+
+```
+mkdir /home/vagrant/gitlab_home
+
+docker run --detach --name gitlab \
+    --name mycloud-gitlab \
+    --hostname gitlab.local \
+    --publish 30080:30080 \
+    --publish 30022:22 \
+    --volume /home/vagrant/gitlab_home/gitlab/config:/etc/gitlab \
+    --volume /home/vagrant/gitlab_home/gitlab/logs:/var/log/gitlab \
+    --volume /home/vagrant/gitlab_home/gitlab/data:/var/opt/gitlab \
+    --env GITLAB_OMNIBUS_CONFIG="external_url 'http://gitlab.local:30080'; gitlab_rails['gitlab_shell_ssh_port']=30022;" \
+    gitlab/gitlab-ce:latest
+
+docker run -d --name gitlab-runner \
+    --name mycloud-gitlab-runner \
+    -v /home/vagrant/gitlab_home/gitlab-runner/config:/etc/gitlab-runner \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    gitlab/gitlab-runner:latest
+
+docker run --rm -t -i -v /home/vagrant/gitlab_home/gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register
+```
+
+http://gitlab.local:30080/
+
+
+
+
+
+
+
+
+### Expose service on NGinx load balancer
+
+```
+mc routes:create
+```
+
+1. Select namespace
+2. Get namespace services that are not yet exposed
+3. Select service to expose
+4. Get ports and ask if HTTP or TCP for each port
+5. Ask if exposing with domain name or IP only
+6. Create app (one based on service name), and one route for each port
+7. Regenerate ingress & nginx proxy
+
+
+### List NGinx ingress routes
+
+```
+mc routes:list
+```
+
+
+### Configure private registry on local machine
+
+```
+mc registry:config
+```
+
+We need:
+- Registry IP
+- Registry Certificate
+- Account registry username
+- Account name
+- Org name
+
+1. Look up OS.
+2. If OS = Mac, we simply need to tell user to add `registry.mycloud.org` to the `insecure-registries` in the docker runtime settings
+3. If OS = Linux, we download the certificate from the API, add the cert to the docker certificates and restart docker
+4. Add entry in `etc/hosts`: `<REGISTRY IP> registry.mycloud.org`
+5. Tell user to login before using the registry with command: `docker login registry.mycloud.org --username <registry user>`
+6. Tell user that they need to tag images with `registry.mycloud.org/<ACCOUNT NAME>/<ORG NAME>/<IMAGE NAME>:<IMAGE TAG>`
+
+
+### OpenFaaS
+
+```
+mc cluster:extend openfaas
+```
+
+1. If ISTIO is installed, integrate OpenFaaS to Istio Mesh, otherwise add ClusterIP service of OpenFaaS to NGinx ingress on a new virtualPort
