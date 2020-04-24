@@ -115,8 +115,8 @@ echo "[TASK 11] Install Docker registry"
 
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
-docker run --entrypoint htpasswd registry -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd > /dev/null 2>&1 
-docker run --entrypoint htpasswd registry -bn mycloud_master_user mycloud_master_pass > /opt/docker/containers/nginx-registry/auth/htpasswd > /dev/null 2>&1 
+docker run --entrypoint htpasswd registry:2.7.1 -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd > /dev/null 2>&1 
+docker run --entrypoint htpasswd registry:2.7.1 -bn mycloud_master_user mycloud_master_pass > /opt/docker/containers/nginx-registry/auth/htpasswd > /dev/null 2>&1 
 printf "FR\nGaronne\nToulouse\nmycloud\nITLAB\nmycloud.registry.com\nmycloud@mycloud.com\n" | openssl req -newkey rsa:2048 -nodes -sha256 -x509 -days 365 \
     -keyout /opt/docker/containers/nginx/certs/docker-registry.key \
     -out /opt/docker/containers/nginx/certs/docker-registry.crt > /dev/null 2>&1 
@@ -236,7 +236,7 @@ docker run -d \
     -e DB_PASSWORD='"$KEYCLOAK_PASSWORD"' \
     -e DB_ADDR='"$DB_HOST"' \
     -e PROXY_ADDRESS_FORWARDING=true \
-    jboss/keycloak:latest
+    jboss/keycloak:9.0.3
 ' > /dev/null 2>&1
 
 # Install Nginx
@@ -251,7 +251,7 @@ docker run -d \
     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
-    nginx:alpine
+    nginx:1.17.10-alpine
 ' > /dev/null 2>&1
 
 # Install Mosquitto
