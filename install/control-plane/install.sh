@@ -239,12 +239,6 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             https://mycloud.keycloak.com/auth/admin/realms/master/clients?clientId=kubernetes-cluster | jq '.[0].id' | sed 's/[\"]//g')
 
-
-
-
-
-
-
         # Create mc base group for mycloud k8s clusters in Keycloak
         curl -k --request POST \
             -H "Accept: application/json" \
@@ -252,16 +246,6 @@ install_core_components() {
             -H "Authorization: Bearer $KC_TOKEN" \
             -d '{"name": "mc"}' \
             https://mycloud.keycloak.com/auth/admin/realms/master/groups
-
-
-
-
-
-
-
-
-
-
 
         # Create client roles in Keycloak
         curl -k --request POST \
@@ -300,9 +284,6 @@ install_core_components() {
         #     -H "Authorization: Bearer $KC_TOKEN" \
         #     https://mycloud.keycloak.com/auth/admin/realms/master/clients/$CLIENT_UUID/roles/mc-account-user | jq '.id' | sed 's/[\"]//g')
         
-
-
-
         # Update admin email and role
         ADMIN_U_ID=$(curl -k --request GET \
             -H "Accept: application/json" \
@@ -323,9 +304,6 @@ install_core_components() {
             --data '[{"name": "mc-sysadmin", "id": "'"$SYSADMIN_ROLE_UUID"'"}]' \
             https://mycloud.keycloak.com/auth/admin/realms/master/users/$ADMIN_U_ID/role-mappings/clients/$CLIENT_UUID
 
-
-
-
         # Login to MyCloud with sysadmin credentials
         MC_TOKEN=$(curl http://$VM_IP:3030/authentication/ \
             -H 'Content-Type: application/json' \
@@ -339,18 +317,18 @@ install_core_components() {
             http://$VM_IP:3030/settings
            
         # Get MyCloud sysadmin role ID
-        SYSADMIN_ID=$(curl -k --request GET \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $MC_TOKEN" \
-            http://$VM_IP:3030/roles?name=mc-sysadmin | jq '.data | .[0].id' | sed 's/[\"]//g')
+        # SYSADMIN_ID=$(curl -k --request GET \
+        #     -H "Content-Type: application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     http://$VM_IP:3030/roles?name=mc-sysadmin | jq '.data | .[0].id' | sed 's/[\"]//g')
 
         # Create / update roles in MyCloud
-        curl -k \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $MC_TOKEN" \
-            -X PATCH \
-            -d '{"kcUUID":"'$SYSADMIN_ROLE_UUID'"}' \
-            http://$VM_IP:3030/roles/$SYSADMIN_ID
+        # curl -k \
+        #     -H "Content-Type: application/json" \
+        #     -H "Authorization: Bearer $MC_TOKEN" \
+        #     -X PATCH \
+        #     -d '{"kcUUID":"'$SYSADMIN_ROLE_UUID'"}' \
+        #     http://$VM_IP:3030/roles/$SYSADMIN_ID
 
         # curl -k \
         #     -H "Content-Type: application/json" \
@@ -365,14 +343,6 @@ install_core_components() {
         #     -X POST \
         #     -d '{"name": "mc-account-user", "kcUUID":"'$ACCUSER_ROLE_UUID'"}' \
         #     http://$VM_IP:3030/roles
-
-
-
-
-
-
-
-
 
         # curl -k --request POST \
         #     -H "Accept: application/json" \
