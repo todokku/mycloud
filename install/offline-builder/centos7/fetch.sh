@@ -49,9 +49,9 @@ yum install -y docker-ce
 systemctl enable docker
 systemctl start docker
 
-fetch_docker_images registry 2.7.1
-fetch_docker_images postgres 12.2-alpine
+#fetch_docker_images registry 2.7.1
+#fetch_docker_images postgres 12.2-alpine
 fetch_docker_images jboss/keycloak 9.0.3
-fetch_docker_images nginx 1.17.10-alpine
-fetch_docker_images eclipse-mosquitto 1.6
+#fetch_docker_images nginx 1.17.10-alpine
+#fetch_docker_images eclipse-mosquitto 1.6
 fetch_docker_images node 12.16.2
