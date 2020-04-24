@@ -29,14 +29,44 @@ REGISTRY_IP="$API_IP"
 DB_PASS=$POSTGRES_PASSWORD
 
 echo "[TASK 1] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 git wget > /dev/null 2>&1 
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1 
-yum install -y -q docker-ce > /dev/null 2>&1 
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
+
+
+
+
+
+
+yum install -y -q git > /dev/null 2>&1 
+#yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1 
+#yum install -y -q docker-ce > /dev/null 2>&1 
 usermod -aG docker vagrant > /dev/null 2>&1 
 
 echo "[TASK 2] Enable and start docker service"
 systemctl enable docker > /dev/null 2>&1 
 systemctl start docker > /dev/null 2>&1 
+
+
+
+docker load < /home/vagrant/docker-images/registry-2.7.1.tar
+docker load < /home/vagrant/docker-images/postgres-12.2-alpine.tar
+docker load < /home/vagrant/docker-images/keycloak-9.0.3.tar
+docker load < /home/vagrant/docker-images/nginx-1.17.10-alpine.tar
+docker load < /home/vagrant/docker-images/eclipse-mosquitto-1.6.tar
+docker load < /home/vagrant/docker-images/node-12.16.2.tar
+
+
+
+
+
+
+
+
+
 
 echo "[TASK 3] Stop and Disable firewalld"
 systemctl disable firewalld > /dev/null 2>&1 
@@ -46,8 +76,8 @@ echo "[TASK 4] Disable SELinux"
 setenforce 0 > /dev/null 2>&1
 sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 
-echo "[TASK 5] Install sshpass"
-yum install -q -y sshpass > /dev/null 2>&1 
+#echo "[TASK 5] Install sshpass"
+#yum install -q -y sshpass > /dev/null 2>&1 
 
 echo "[TASK 6] Prepare environement & clone mycloud"
 
@@ -93,23 +123,23 @@ systemctl reload sshd > /dev/null 2>&1
 
 mkdir -p /opt/docker/containers/nginx/certs
 
-echo "[TASK X] Download all registry images"
-dlAndInstallDockerImg () {
-    fileId=$1
-    fileName=$2
-    curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${fileId}" > /dev/null
-    code="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
-    curl -Lb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${code}&id=${fileId}" -o ${fileName}
-    chown vagrant $fileName
-    su - vagrant -c "docker load < $fileName"
-    rm -rf $fileName
-}
-dlAndInstallDockerImg "1c4mm3NW7toz3h1521vs1Zi8E4o5cOC46" "eclipse-mosquitto-1.6.tar"
-dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
-dlAndInstallDockerImg "1Y3iDlkmyHHqwhB2LtYat5vC3dRwg5A8q" "nginx-latest.tar"
-dlAndInstallDockerImg "1Zy13ElhkR5srcIu_tFudUvvb1Wh0aq2K" "postgres-latest.tar"
-dlAndInstallDockerImg "1NBD0eQLeEO-xsXiQTBDpZGmqXCEaylCC" "registry-2.7.1.tar"
-dlAndInstallDockerImg "1rJiDz_p_-tqlvoO5pLiin_iJ3gzAH8RM" "node-12.tar"
+# echo "[TASK X] Download all registry images"
+# dlAndInstallDockerImg () {
+#     fileId=$1
+#     fileName=$2
+#     curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${fileId}" > /dev/null
+#     code="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+#     curl -Lb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${code}&id=${fileId}" -o ${fileName}
+#     chown vagrant $fileName
+#     su - vagrant -c "docker load < $fileName"
+#     rm -rf $fileName
+# }
+# dlAndInstallDockerImg "1c4mm3NW7toz3h1521vs1Zi8E4o5cOC46" "eclipse-mosquitto-1.6.tar"
+# dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
+# dlAndInstallDockerImg "1Y3iDlkmyHHqwhB2LtYat5vC3dRwg5A8q" "nginx-latest.tar"
+# dlAndInstallDockerImg "1Zy13ElhkR5srcIu_tFudUvvb1Wh0aq2K" "postgres-latest.tar"
+# dlAndInstallDockerImg "1NBD0eQLeEO-xsXiQTBDpZGmqXCEaylCC" "registry-2.7.1.tar"
+# dlAndInstallDockerImg "1rJiDz_p_-tqlvoO5pLiin_iJ3gzAH8RM" "node-12.tar"
 
 echo "[TASK 11] Install Docker registry"
 
@@ -370,14 +400,3 @@ chmod +x /home/vagrant/configPrivateRegistry.sh
 # echo "https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#before-you-begin"
 
 echo "[DONE]"
-
-
-
-yum install yum-plugin-downloadonly yum-utils createrepo
-
-
-
-PACKAGE=createrepo
-
-
-
