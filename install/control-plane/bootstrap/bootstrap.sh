@@ -28,7 +28,7 @@ MOSQUITTO_IP="$API_IP"
 REGISTRY_IP="$API_IP"
 DB_PASS=$POSTGRES_PASSWORD
 
-echo "[TASK 1] Install docker container engine"
+echo "[TASK 1] Install RPM packages"
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
@@ -36,22 +36,15 @@ yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
 
-
-
-
-
-
-yum install -y -q git > /dev/null 2>&1 
-#yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1 
-#yum install -y -q docker-ce > /dev/null 2>&1 
-usermod -aG docker vagrant > /dev/null 2>&1 
+#yum install -y -q git > /dev/null 2>&1 
 
 echo "[TASK 2] Enable and start docker service"
+usermod -aG docker vagrant > /dev/null 2>&1 
 systemctl enable docker > /dev/null 2>&1 
 systemctl start docker > /dev/null 2>&1 
 
 
-
+echo "[TASK 3] Install docker base images"
 docker load < /home/vagrant/docker-images/registry-2.7.1.tar
 docker load < /home/vagrant/docker-images/postgres-12.2-alpine.tar
 docker load < /home/vagrant/docker-images/keycloak-9.0.3.tar
@@ -60,29 +53,18 @@ docker load < /home/vagrant/docker-images/eclipse-mosquitto-1.6.tar
 docker load < /home/vagrant/docker-images/node-12.16.2.tar
 
 
-
-
-
-
-
-
-
-
-echo "[TASK 3] Stop and Disable firewalld"
+echo "[TASK 4] Stop and Disable firewalld"
 systemctl disable firewalld > /dev/null 2>&1 
 systemctl stop firewalld > /dev/null 2>&1 
 
-echo "[TASK 4] Disable SELinux"
+echo "[TASK 5] Disable SELinux"
 setenforce 0 > /dev/null 2>&1
 sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 
-#echo "[TASK 5] Install sshpass"
-#yum install -q -y sshpass > /dev/null 2>&1 
-
 echo "[TASK 6] Prepare environement & clone mycloud"
 
-su - vagrant -c "mkdir /home/vagrant/mycloud"
-su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud" > /dev/null 2>&1
+#su - vagrant -c "mkdir /home/vagrant/mycloud"
+#su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud" > /dev/null 2>&1
 
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
@@ -123,26 +105,7 @@ systemctl reload sshd > /dev/null 2>&1
 
 mkdir -p /opt/docker/containers/nginx/certs
 
-# echo "[TASK X] Download all registry images"
-# dlAndInstallDockerImg () {
-#     fileId=$1
-#     fileName=$2
-#     curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${fileId}" > /dev/null
-#     code="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
-#     curl -Lb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${code}&id=${fileId}" -o ${fileName}
-#     chown vagrant $fileName
-#     su - vagrant -c "docker load < $fileName"
-#     rm -rf $fileName
-# }
-# dlAndInstallDockerImg "1c4mm3NW7toz3h1521vs1Zi8E4o5cOC46" "eclipse-mosquitto-1.6.tar"
-# dlAndInstallDockerImg "1g8n3ykMPoc3lyLnUWwzDSvPlahASyY9J" "keycloak-latest.tar"
-# dlAndInstallDockerImg "1Y3iDlkmyHHqwhB2LtYat5vC3dRwg5A8q" "nginx-latest.tar"
-# dlAndInstallDockerImg "1Zy13ElhkR5srcIu_tFudUvvb1Wh0aq2K" "postgres-latest.tar"
-# dlAndInstallDockerImg "1NBD0eQLeEO-xsXiQTBDpZGmqXCEaylCC" "registry-2.7.1.tar"
-# dlAndInstallDockerImg "1rJiDz_p_-tqlvoO5pLiin_iJ3gzAH8RM" "node-12.tar"
-
-echo "[TASK 11] Install Docker registry"
-
+echo "[TASK 11] Start Docker registry"
 mkdir -p /opt/docker/containers/docker-registry/auth
 mkdir -p /opt/docker/containers/nginx-registry/auth
 docker run --entrypoint htpasswd registry:2.7.1 -Bbn mycloud_master_user mycloud_master_pass > /opt/docker/containers/docker-registry/auth/htpasswd > /dev/null 2>&1 
@@ -171,7 +134,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Postgres
-echo "[TASK 12] Install PostgreSQL"
+echo "[TASK 12] Start PostgreSQL"
 su - vagrant -c '
 docker run -d \
     --name mycloud-postgresql \
@@ -190,7 +153,7 @@ docker run -d \
 sleep 15 # Give time to Postgres to start and init DB
 
 # Install Keycloak
-echo "[TASK 13] Install Keycloak"
+echo "[TASK 13] Start Keycloak"
 echo "$API_IP mycloud.keycloak.com" >> /etc/hosts
 
 NGINX_CRT_FOLDER=/opt/docker/containers/nginx/certs
@@ -270,7 +233,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Nginx
-echo "[TASK 14] Install NGinx"
+echo "[TASK 14] Start NGinx"
 su - vagrant -c '
 docker run -d \
     --name mycloud-nginx \
@@ -285,7 +248,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 # Install Mosquitto
-echo "[TASK 15] Install Mosquitto"
+echo "[TASK 15] Start Mosquitto"
 su - vagrant -c 'touch /home/vagrant/.mycloud/mosquitto/log/mosquitto.log'
 chmod o+w /home/vagrant/.mycloud/mosquitto/log/mosquitto.log
 chown 1883:1883 /home/vagrant/.mycloud/mosquitto/log -R

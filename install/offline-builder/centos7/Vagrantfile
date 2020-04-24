@@ -8,6 +8,7 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder "./rpms", "/var/tmp/rpms"
   config.vm.synced_folder "./docker-images", "/var/tmp/docker-images"
+  # config.vm.synced_folder "../../src", "/var/tmp/mycloud-src"
   config.vm.define "mycloud-offline.builder" do |mycloud|
     mycloud.vm.box = "centos/7"
     mycloud.vm.hostname = "mycloud-offline.builder"

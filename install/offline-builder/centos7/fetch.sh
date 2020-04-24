@@ -36,3 +36,4 @@ for PACKAGE in "${RPM_LIST[@]}"; do :
    F_NAME=$(echo $PACKAGE | cut -d' ' -f3)
    fetch_docker_images $D_IMG $D_VER $F_NAME
 done
+

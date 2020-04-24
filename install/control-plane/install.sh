@@ -351,6 +351,7 @@ install_core_components() {
         #     --data '{ "username": "test-user-2", "lastName": "test", "firstName": "joe", "email": "test2@mail.de", "enabled": true, "credentials":[{ "type": "password", "value": "test", "temporary": false }] }' \
         #     https://mycloud.keycloak.com/auth/admin/realms/master/users
 
+        echo ""
         echo "[DONE] MyCloud control-plane deployed successfully!"
     else
         echo "[ERROR] The control plane VM couls not be started!"

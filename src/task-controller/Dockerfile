@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:12.16.2
 
 RUN apt-get update
 RUN apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
