@@ -251,7 +251,7 @@ docker run -d \
     -v /home/vagrant/.mycloud/nginx/letsencrypt:/etc/letsencrypt \
     -v /opt/docker/containers/nginx-registry/auth:/auth \
     -v /opt/docker/containers/nginx/certs:/certs \
-    nginx:1.17.9-alpine
+    nginx:alpine
 ' > /dev/null 2>&1
 
 # Install Mosquitto
@@ -370,3 +370,14 @@ chmod +x /home/vagrant/configPrivateRegistry.sh
 # echo "https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#before-you-begin"
 
 echo "[DONE]"
+
+
+
+yum install yum-plugin-downloadonly yum-utils createrepo
+
+
+
+PACKAGE=createrepo
+
+
+
