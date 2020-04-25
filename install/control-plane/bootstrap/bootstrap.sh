@@ -12,8 +12,7 @@ POSTGRES_PASSWORD="$1"
 KEYCLOAK_PASSWORD="$2"
 API_SYSADMIN_USER="$3"
 API_SYSADMIN_PASSWORD="$4"
-
-API_IP=$(hostname -I | cut -d' ' -f2)
+API_IP="$5"
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 arrIN=(${API_IP//./ })
