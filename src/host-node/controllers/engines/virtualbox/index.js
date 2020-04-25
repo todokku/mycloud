@@ -33,7 +33,7 @@ class EngineController {
             await rmfr(targetBootstrapK8SIngress);
         }
         mkdirp.sync(targetBootstrapK8SIngress);
-        await OSController.copyDir(path.join("resources", "k8s_templates", "ingress-controller"), targetBootstrapK8SIngress);
+        await OSController.copyDir(path.join(process.cwd(), "resources", "k8s_templates", "ingress-controller"), targetBootstrapK8SIngress);
 
         let targetBootstrapScriptBaseDir = path.join(process.env.VM_BASE_DIR, "bootstrap_scripts");
         let targetBootstrapK8SFolder = path.join(targetBootstrapScriptBaseDir, "k8s");
@@ -54,9 +54,9 @@ class EngineController {
         }
         mkdirp.sync(targetProvisioningK8SScriptFolder);
 
-        OSController.copyFile(path.join("resources", "scripts", "deploy_master.sh"), targetProvisioningK8SScriptFolder);
-        OSController.copyFile(path.join("resources", "scripts", "deploy_worker.sh"), targetProvisioningK8SScriptFolder);
-        OSController.copyFile(path.join("resources", "scripts", "get_ip_hostname.sh"), targetProvisioningK8SScriptFolder);
+        OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "deploy_master.sh"), targetProvisioningK8SScriptFolder);
+        OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "deploy_worker.sh"), targetProvisioningK8SScriptFolder);
+        OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "get_ip_hostname.sh"), targetProvisioningK8SScriptFolder);
         await OSController.chmodr(targetProvisioningScriptBaseDir, 0o755); 
     }
 
@@ -295,15 +295,15 @@ class EngineController {
             mkdirp.sync(targetFolder);
 
             // Create ingress rules file
-            let ingressRulesPath = path.join("resources", "k8s_templates", "ingress-rules.yaml");
+            let ingressRulesPath = path.join(process.cwd(), "resources", "k8s_templates", "ingress-rules.yaml");
             OSController.copyFile(ingressRulesPath, targetFolder);
 
             // Create pod presets file
-            let podPresetsPath = path.join("resources", "k8s_templates", "pod-preset.yaml");
+            let podPresetsPath = path.join(process.cwd(), "resources", "k8s_templates", "pod-preset.yaml");
             OSController.copyFile(podPresetsPath, targetFolder);
 
             // Prepare Vagrantfile
-            vagrantTemplateArray = OSController.readFileToArray(path.join("resources", "templates", "master", "Vagrantfile"));
+            vagrantTemplateArray = OSController.readFileToArray(path.join(process.cwd(), "resources", "templates", "master", "Vagrantfile"));
             let WS_ID = "<WS_ID>";
             let IF_NAME = "<IF_NAME>";
             let STATIC_IP = "<STATIC_IP>";
@@ -344,17 +344,17 @@ class EngineController {
 
         // Start deploy script
         try{
-            console.log(1);
+            
             eventCb("Initializing cluster VM");
             // Create VM and bootstrap it
             let provisioningScript = path.join(process.env.VM_BASE_DIR, "provisioning_scripts", "k8s", "deploy_master.sh");
             await OSController.execMyCloudScript(`${provisioningScript} ${workspaceId} master.${hash} ${rUser} ${rPass}`);
-            console.log(1);
+            
             eventCb("Installing & bootstraping cluster components");
             // Get IP for this new node and update vagrant file accordingly
             let ipHostnameScript = path.join(process.env.VM_BASE_DIR, "provisioning_scripts", "k8s", "get_ip_hostname.sh");
             let masterIpHost = await OSController.execSilentCommand(`${ipHostnameScript} ${workspaceId} master.${hash}`);
-            console.log(1);
+            
             if(!leasedIp){
                 vagrantTemplateArray = vagrantTemplateArray.map(l => {
                     if(l.indexOf(`master.vm.network "public_network", bridge:`) != -1){
@@ -363,22 +363,22 @@ class EngineController {
                     return l;
                 });
             }
-            console.log(1);
+            
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
-            console.log(1);
+            
             // Copy over some base scripts to controll the vagrant vm
-            OSController.copyFile(path.join("resources", "scripts", "start_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("resources", "scripts", "stop_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("resources", "scripts", "destroy_vm.sh"), targetFolder);
-            console.log(1);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "start_vm.sh"), targetFolder);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "stop_vm.sh"), targetFolder);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "destroy_vm.sh"), targetFolder);
+            
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
             await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
             await OSController.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
-            console.log(1);
+            
             // Update hostnames with keycloak domain
             await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.keycloak.com" >> /etc/hosts`, true);
-            console.log(1);
+            
             // Install nginx ingress controller on cluster
             await OSController.sshExec(masterIpHost[0], [
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,
@@ -389,7 +389,7 @@ class EngineController {
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/deployment/nginx-ingress.yaml`,
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml`
             ], true);
-            console.log(1);
+            
             // await OSController.sshExec(masterIpHost[0], [
             //     `curl -L https://istio.io/downloadIstio | sh -`,
             //     `/root/istio-*/bin/istioctl manifest apply --set values.global.k8sIngress.enabled=true --set values.global.k8sIngress.gatewayName=ingressgateway`
@@ -401,7 +401,7 @@ class EngineController {
             await OSController.execSilentCommand(path.join(targetFolder, "stop_vm.sh"));
             await OSController.execSilentCommand(`VBoxManage storagectl master.${hash} --name "SATA Controller" --add sata --bootable on`);
             await OSController.execSilentCommand(path.join(targetFolder, "start_vm.sh"));
-            console.log(1);
+            
             return {
                 "nodeIp": masterIpHost[0],
                 "nodeHostname": masterIpHost[1],
@@ -445,7 +445,7 @@ class EngineController {
         try {
             // Prepare Vagrantfile
             mkdirp.sync(targetFolder);
-            vagrantTemplateArray = OSController.readFileToArray(path.join("resources", "templates", "worker", "Vagrantfile"));
+            vagrantTemplateArray = OSController.readFileToArray(path.join(process.cwd(), "resources", "templates", "worker", "Vagrantfile"));
 
             if(process.env.DHCP_OVERWRITE){
                 let assignedIpResponse = await this.mqttController.queryRequestResponse("taskmanager", "leaseIp");
@@ -510,9 +510,9 @@ class EngineController {
 
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
 
-            OSController.copyFile(path.join("resources", "scripts", "start_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("resources", "scripts", "stop_vm.sh"), targetFolder);
-            OSController.copyFile(path.join("resources", "scripts", "destroy_vm.sh"), targetFolder);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "start_vm.sh"), targetFolder);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "stop_vm.sh"), targetFolder);
+            OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "destroy_vm.sh"), targetFolder);
 
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
@@ -533,13 +533,14 @@ class EngineController {
                 "targetFolder": targetFolder
             };
         } catch(errArray) {
+            console.log(errArray);
             let created = await this.vmExists(`worker.${hash}`);
             if(created){
-                // await this.stopDeleteVm(`worker.${hash}`, wsId);
+                await this.stopDeleteVm(`worker.${hash}`, wsId);
             }
 
             if (fs.existsSync(targetFolder)) {
-                // await rmfr(targetFolder);
+                await rmfr(targetFolder);
             }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
