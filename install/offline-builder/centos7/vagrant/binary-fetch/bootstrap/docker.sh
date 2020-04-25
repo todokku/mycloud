@@ -17,7 +17,7 @@ fi
 
 
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'DIMG_LIST=($(cat /var/tmp/docker-images/image-list.cfg))'
-for PACKAGE in "${RPM_LIST[@]}"; do :
+for PACKAGE in "${DIMG_LIST[@]}"; do :
     if [[ "$PACKAGE" =~ ^#.*  ]]; then
         echo "Skipping dependency $PACKAGE"
     else
