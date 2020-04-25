@@ -7,7 +7,7 @@ fetch_docker_images() {
     docker images purge
 }
 
-DOCKER_EXISTS=$(command -v wget)
+DOCKER_EXISTS=$(command -v docker)
 if [ "$DOCKER_EXISTS" == "" ]; then
     # ********** FETCH REQUIRED DOCKER CONTAINERS ************
     yum install -y docker-ce
