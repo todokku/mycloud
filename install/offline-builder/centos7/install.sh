@@ -128,12 +128,12 @@ cd vagrant/binary-fetch
 rm -rf .vagrant
 
 cd ../k8s-master
-vagrant halt && vagrant destroy -f
-vagrant up
-rm -rf ../../virtual/mycloud-master.box
-vagrant package --output ../../virtual/mycloud-master.box
-vagrant destroy -f
-rm -rf .vagrant
+# vagrant halt && vagrant destroy -f
+# vagrant up
+# rm -rf ../../virtual/mycloud-master.box
+# vagrant package --output ../../virtual/mycloud-master.box
+# vagrant destroy -f
+# rm -rf .vagrant
 
 cd ../k8s-worker
 vagrant halt && vagrant destroy -f
