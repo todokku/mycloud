@@ -8,6 +8,7 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder "./rpms", "/var/tmp/rpms"
   config.vm.synced_folder "./docker-images", "/var/tmp/docker-images"
+  
   config.vm.define "mycloud-basebox" do |mycloud|
     mycloud.vm.box = "mycloud-basebox-centos/7"
     mycloud.vm.hostname = "mycloud-basebox"
