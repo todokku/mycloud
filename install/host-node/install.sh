@@ -144,6 +144,11 @@ dependencies () {
         fi
     fi
 
+    VAGRANT_VGA_PLUGIN_EXISTS=$(vagrant plugin list | grep "vagrant-vbguest")
+    if [ "$VAGRANT_VGA_PLUGIN_EXISTS" == "" ]; then
+        vagrant plugin install vagrant-vbguest
+    fi
+
     NODE_EXISTS=$(command -v node)
     if [ "$NODE_EXISTS" == "" ]; then
         if [ "$DISTRO" == "ubuntu" ]; then

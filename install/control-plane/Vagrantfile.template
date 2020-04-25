@@ -15,7 +15,7 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder "../..", "/home/vagrant/mycloud"
 
   config.vm.define "mycloud.base" do |mycloud|
-    mycloud.vm.box = "centos/7"
+    mycloud.vm.box = "mycloud-basebox-centos/7"
     mycloud.vm.hostname = "mycloud.base"
     mycloud.vm.network "public_network", ip: "<VM_IP>", bridge: "#$default_network_interface"
     mycloud.vm.provider "virtualbox" do |v|

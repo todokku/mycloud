@@ -6,7 +6,6 @@ vagrant box remove mycloud-worker
 vagrant plugin install vagrant-vbguest
 
 vagrant up
-vagrant halt
 
 vagrant package --output mycloud-worker.box
 vagrant box add mycloud-worker mycloud-worker.box
