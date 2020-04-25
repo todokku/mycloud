@@ -115,25 +115,25 @@ distro
 dependencies
 
 cd vagrant/binary-fetch
-# VAGRANT_BOX_EXISTS=$(vagrant box list | grep "mycloud-basebox-centos/7")
-# if [ "$VAGRANT_BOX_EXISTS" != "" ]; then
-#     vagrant box remove mycloud-basebox-centos/7
-# fi
-# vagrant halt && vagrant destroy -f
-# vagrant up
-# rm -rf ../../virtual/mycloud-basebox-centos7.box
-# vagrant package --output ../../virtual/mycloud-basebox-centos7.box
-# vagrant box add mycloud-basebox-centos/7 ../../virtual/mycloud-basebox-centos7.box
-# vagrant destroy -f
+VAGRANT_BOX_EXISTS=$(vagrant box list | grep "mycloud-basebox-centos/7")
+if [ "$VAGRANT_BOX_EXISTS" != "" ]; then
+    vagrant box remove mycloud-basebox-centos/7
+fi
+vagrant halt && vagrant destroy -f
+vagrant up
+rm -rf ../../virtual/mycloud-basebox-centos7.box
+vagrant package --output ../../virtual/mycloud-basebox-centos7.box
+vagrant box add mycloud-basebox-centos/7 ../../virtual/mycloud-basebox-centos7.box
+vagrant destroy -f
 rm -rf .vagrant
 
 cd ../k8s-master
-# vagrant halt && vagrant destroy -f
-# vagrant up
-# rm -rf ../../virtual/mycloud-master.box
-# vagrant package --output ../../virtual/mycloud-master.box
-# vagrant destroy -f
-# rm -rf .vagrant
+vagrant halt && vagrant destroy -f
+vagrant up
+rm -rf ../../virtual/mycloud-master.box
+vagrant package --output ../../virtual/mycloud-master.box
+vagrant destroy -f
+rm -rf .vagrant
 
 cd ../k8s-worker
 vagrant halt && vagrant destroy -f

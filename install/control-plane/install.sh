@@ -61,7 +61,7 @@ dependencies () {
            sudo apt-get install -y wget &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y wget &> /dev/null
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/wget/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install wget &> /dev/null
             fi
@@ -74,8 +74,8 @@ dependencies () {
            sudo apt-get install -y jq &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm &> /dev/null
-                sudo yum install jq -y &> /dev/null
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/epel-release-latest-7/*.rpm
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/jq/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install jq &> /dev/null
             fi
@@ -91,8 +91,7 @@ dependencies () {
             sudo apt install -y virtualbox-6.1 &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm &> /dev/null
-                rm -rf ./VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/virtualbox/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm &> /dev/null
                 rm -rf ./VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
@@ -110,25 +109,25 @@ dependencies () {
             sudo apt -y install vagrant &> /dev/null
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm &> /dev/null
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/vagrant/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm &> /dev/null
             fi
         fi
     fi
 
-    GIT_EXISTS=$(command -v git)
-    if [ "$GIT_EXISTS" == "" ]; then
-        if [ "$DISTRO" == "ubuntu" ]; then
-            sudo apt-get install git -y &> /dev/null
-        elif [ "$DISTRO" == "redhat" ]; then
-            if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y git &> /dev/null
-            elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install git &> /dev/null
-            fi
-        fi
-    fi
+    # GIT_EXISTS=$(command -v git)
+    # if [ "$GIT_EXISTS" == "" ]; then
+    #     if [ "$DISTRO" == "ubuntu" ]; then
+    #         sudo apt-get install git -y &> /dev/null
+    #     elif [ "$DISTRO" == "redhat" ]; then
+    #         if [ "$MAJ_V" == "7" ]; then
+    #             sudo yum install -y git &> /dev/null
+    #         elif [ "$MAJ_V" == "8" ]; then
+    #             sudo dnf -y install git &> /dev/null
+    #         fi
+    #     fi
+    # fi
 }
 
 pull_git() {

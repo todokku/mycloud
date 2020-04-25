@@ -35,14 +35,12 @@ yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
-
-#yum install -y -q git > /dev/null 2>&1 
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/git/*.rpm
 
 echo "[TASK 2] Enable and start docker service"
 usermod -aG docker vagrant > /dev/null 2>&1 
 systemctl enable docker > /dev/null 2>&1 
 systemctl start docker > /dev/null 2>&1 
-
 
 echo "[TASK 3] Install docker base images"
 docker load < /home/vagrant/docker-images/registry-2.7.1.tar
@@ -51,7 +49,8 @@ docker load < /home/vagrant/docker-images/keycloak-9.0.3.tar
 docker load < /home/vagrant/docker-images/nginx-1.17.10-alpine.tar
 docker load < /home/vagrant/docker-images/eclipse-mosquitto-1.6.tar
 docker load < /home/vagrant/docker-images/node-12.16.2.tar
-
+docker load < /home/vagrant/docker-images/mycloud-api-0.9.tar
+docker load < /home/vagrant/docker-images/mycloud-ctrl-0.9.tar
 
 echo "[TASK 4] Stop and Disable firewalld"
 systemctl disable firewalld > /dev/null 2>&1 
@@ -62,10 +61,6 @@ setenforce 0 > /dev/null 2>&1
 sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 
 echo "[TASK 6] Prepare environement & clone mycloud"
-
-#su - vagrant -c "mkdir /home/vagrant/mycloud"
-#su - vagrant -c "git clone https://github.com/mdundek/mycloud.git /home/vagrant/mycloud" > /dev/null 2>&1
-
 mkdir -p /home/vagrant/.mycloud/nginx/conf.d
 mkdir -p /home/vagrant/.mycloud/nginx/letsencrypt
 mkdir -p /home/vagrant/.mycloud/postgres/pg-init-scripts
@@ -267,12 +262,6 @@ docker run -d \
 # Run API server
 echo "[TASK 16] Install MyCloud API Server"
 su - vagrant -c '
-cd /home/vagrant/mycloud/src/api
-docker build -t mycloud-api:0.9 . > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error building MyCloud API docker image"
-    exit 1
-fi
 docker run -d \
     --name mycloud-api \
     --restart unless-stopped \
@@ -295,12 +284,6 @@ docker run -d \
 # Run controller component
 echo "[TASK 17] Install MyCloud task controller"
 su - vagrant -c '
-cd /home/vagrant/mycloud/src/task-controller
-docker build -t mycloud-ctrl:0.9 . > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error building MyCloud Ctrl docker image"
-    exit 1
-fi
 docker run -d \
     --name mycloud-ctrl \
     --restart unless-stopped \

@@ -8,6 +8,7 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder "../../rpms", "/var/tmp/rpms"
   config.vm.synced_folder "../../docker-images", "/var/tmp/docker-images"
+  config.vm.synced_folder "../../../../../", "/home/vagrant/mycloud"
   
   config.vm.define "mycloud-basebox" do |mycloud|
     mycloud.vm.box = "centos/7"
@@ -17,6 +18,10 @@ Vagrant.configure(2) do |config|
       v.linked_clone = true if Gem::Version.new(Vagrant::VERSION) >= Gem::Version.new('1.8.0')
       v.name = "mycloud-basebox"
     end
-    mycloud.vm.provision "shell", path: "./fetch.sh"
+    mycloud.vm.provision "shell", path: "./bootstrap/init.sh"
+    #mycloud.vm.provision "shell", path: "./bootstrap/rpms.sh"
+    #mycloud.vm.provision "shell", path: "./bootstrap/docker.sh"
+    mycloud.vm.provision "shell", path: "./bootstrap/mc.sh"
+    mycloud.vm.provision "shell", path: "./bootstrap/cleanup.sh"
   end
 end
