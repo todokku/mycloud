@@ -32,8 +32,8 @@ echo "[TASK 1] Install RPM packages"
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
-yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
-yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
+# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
+# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/git/*.rpm
 
@@ -77,7 +77,7 @@ mkdir -p /home/vagrant/.mycloud/mosquitto/data
 mkdir -p /home/vagrant/.mycloud/mosquitto/log
 chown -R vagrant: /home/vagrant/.mycloud
 
-su - vagrant -c 'mkdir /home/vagrant/mycloud/tmp'
+su - vagrant -c 'mkdir -p /home/vagrant/mycloud/tmp'
 
 sed -i "s/<MYCLOUD_API_HOST_PORT>/$API_IP:3030/g" /home/vagrant/.mycloud/nginx/conf.d/registry.conf
 
