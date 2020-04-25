@@ -6,14 +6,15 @@ LANG=en_US.utf-8
 LC_ALL=en_US.utf-8
 EOF
 
-yum -y update
-yum -y update kernel
-
 # Install docker from Docker-ce repository
 echo "[TASK 1] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 sshpass
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 
-yum install -y -q docker-ce >/dev/null 
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/unzip/*.rpm
 
 usermod -aG docker vagrant
 
@@ -45,22 +46,11 @@ echo "[TASK 5] Disable and turn off SWAP"
 sed -i '/swap/d' /etc/fstab
 swapoff -a
 
-# Add yum repo file for Kubernetes
-echo "[TASK 6] Add yum repo file for kubernetes"
-cat >>/etc/yum.repos.d/kubernetes.repo<<EOF
-[kubernetes]
-name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
-
 # Install Kubernetes
 echo "[TASK 7] Install Kubernetes (kubeadm, kubelet and kubectl)"
-yum install -y -q kubeadm kubelet kubectl
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/kubeadm/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/kubelet/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/kubectl/*.rpm
 
 # Enable ssh password authentication
 echo "[TASK 8] Enable ssh password authentication"
@@ -79,7 +69,6 @@ echo "kubeadmin" | passwd --stdin vagrant
 
 # Cleanup
 echo "[TASK 11] Cleanup"
-yum -y install yum-utils
 package-cleanup -y --oldkernels --count=1
 yum -y autoremove
 yum -y remove yum-utils
