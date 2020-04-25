@@ -6,7 +6,7 @@ ENV["LC_ALL"] = "en_US.UTF-8"
 
 Vagrant.configure(2) do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
-  # Kubernetes Worker Node
+  config.vbguest.auto_update = false
   config.vm.define "worker.<WS_ID>" do |worker|
     worker.vm.box = "mycloud-worker"
     worker.vm.hostname = "worker.<WS_ID>"

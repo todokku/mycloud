@@ -344,15 +344,17 @@ class EngineController {
 
         // Start deploy script
         try{
+            console.log(1);
             eventCb("Initializing cluster VM");
             // Create VM and bootstrap it
             let provisioningScript = path.join(process.env.VM_BASE_DIR, "provisioning_scripts", "k8s", "deploy_master.sh");
             await OSController.execMyCloudScript(`${provisioningScript} ${workspaceId} master.${hash} ${rUser} ${rPass}`);
-
+            console.log(1);
             eventCb("Installing & bootstraping cluster components");
             // Get IP for this new node and update vagrant file accordingly
             let ipHostnameScript = path.join(process.env.VM_BASE_DIR, "provisioning_scripts", "k8s", "get_ip_hostname.sh");
             let masterIpHost = await OSController.execSilentCommand(`${ipHostnameScript} ${workspaceId} master.${hash}`);
+            console.log(1);
             if(!leasedIp){
                 vagrantTemplateArray = vagrantTemplateArray.map(l => {
                     if(l.indexOf(`master.vm.network "public_network", bridge:`) != -1){
@@ -361,21 +363,22 @@ class EngineController {
                     return l;
                 });
             }
+            console.log(1);
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
-
+            console.log(1);
             // Copy over some base scripts to controll the vagrant vm
             OSController.copyFile(path.join("resources", "scripts", "start_vm.sh"), targetFolder);
             OSController.copyFile(path.join("resources", "scripts", "stop_vm.sh"), targetFolder);
             OSController.copyFile(path.join("resources", "scripts", "destroy_vm.sh"), targetFolder);
-
+            console.log(1);
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
             await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
             await OSController.sshExec(masterIpHost[0], `printf "${rPass}" | docker login registry.mycloud.org --username ${rUser} --password-stdin`, true);
-
+            console.log(1);
             // Update hostnames with keycloak domain
             await OSController.sshExec(masterIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.keycloak.com" >> /etc/hosts`, true);
-
+            console.log(1);
             // Install nginx ingress controller on cluster
             await OSController.sshExec(masterIpHost[0], [
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/common/ns-and-sa.yaml`,
@@ -386,7 +389,7 @@ class EngineController {
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/deployment/nginx-ingress.yaml`,
                 `kubectl apply -f /home/vagrant/deployment_templates/ingress-controller/daemon-set/nginx-ingress.yaml`
             ], true);
-
+            console.log(1);
             // await OSController.sshExec(masterIpHost[0], [
             //     `curl -L https://istio.io/downloadIstio | sh -`,
             //     `/root/istio-*/bin/istioctl manifest apply --set values.global.k8sIngress.enabled=true --set values.global.k8sIngress.gatewayName=ingressgateway`
@@ -398,7 +401,7 @@ class EngineController {
             await OSController.execSilentCommand(path.join(targetFolder, "stop_vm.sh"));
             await OSController.execSilentCommand(`VBoxManage storagectl master.${hash} --name "SATA Controller" --add sata --bootable on`);
             await OSController.execSilentCommand(path.join(targetFolder, "start_vm.sh"));
-            
+            console.log(1);
             return {
                 "nodeIp": masterIpHost[0],
                 "nodeHostname": masterIpHost[1],
