@@ -9,6 +9,7 @@ $default_network_interface = `ip route | grep -E "^default" | awk '{printf "%s",
 disk = "./docker-registry.vdi"
 
 Vagrant.configure(2) do |config|
+  config.vbguest.auto_update = false
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder "../offline-builder/centos7/rpms", "/home/vagrant/rpms"
   config.vm.synced_folder "../offline-builder/centos7/docker-images", "/home/vagrant/docker-images"

@@ -507,13 +507,15 @@ class EngineController {
                     return l;
                 });
             }
-
+            console.log(1);
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
-
+            console.log(1);
             OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "start_vm.sh"), targetFolder);
+            console.log(1);
             OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "stop_vm.sh"), targetFolder);
+            console.log(1);
             OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "destroy_vm.sh"), targetFolder);
-
+            console.log(1);
             // Update hostnames with registry domain and login to registry
             // This is done here rather than from the bootstrap script because we need to fetch the workspace org credentials for the registry
             await OSController.sshExec(workerIpHost[0], `echo "${process.env.REGISTRY_IP} mycloud.registry.com docker-registry registry.mycloud.org" >> /etc/hosts`, true);
