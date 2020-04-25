@@ -29,10 +29,10 @@ wget https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_13617
 mkdir /var/tmp/rpms/vagrant
 wget https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm -O /var/tmp/rpms/vagrant/vagrant_2.2.7_x86_64.rpm
 
-IFS=$'\r\n' GLOBIGNORE='*' command eval  'RPM_LIST=($(cat /var/tmp/rpms/rpm-list.cfg))'
-for PACKAGE in "${RPM_LIST[@]}"; do :
-   download_rpm $PACKAGE
-done
+# IFS=$'\r\n' GLOBIGNORE='*' command eval  'RPM_LIST=($(cat /var/tmp/rpms/rpm-list.cfg))'
+# for PACKAGE in "${RPM_LIST[@]}"; do :
+#    download_rpm $PACKAGE
+# done
 
 # ********** FETCH REQUIRED DOCKER CONTAINERS ************
 yum install -y docker-ce
@@ -44,5 +44,5 @@ for PACKAGE in "${RPM_LIST[@]}"; do :
    D_IMG=$(echo $PACKAGE | cut -d' ' -f1)
    D_VER=$(echo $PACKAGE | cut -d' ' -f2)
    F_NAME=$(echo $PACKAGE | cut -d' ' -f3)
-   fetch_docker_images $D_IMG $D_VER $F_NAME
+#    fetch_docker_images $D_IMG $D_VER $F_NAME
 done
