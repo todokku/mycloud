@@ -20,8 +20,8 @@ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce
 yum update
 
 # ********** FETCH REQUIRED RMP PACKAGES ************
-# yum install -y yum-utils wget
-# yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum install -y yum-utils wget
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 # mkdir /var/tmp/rpms/epel-release-latest-7
 # wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -O /var/tmp/rpms/epel-release-latest-7/epel-release-latest-7.noarch.rpm
@@ -52,9 +52,9 @@ for PACKAGE in "${RPM_LIST[@]}"; do :
 done
 
 # ********** FETCH REQUIRED DOCKER CONTAINERS ************
-# yum install -y docker-ce
-# systemctl enable docker
-# systemctl start docker
+yum install -y docker-ce
+systemctl enable docker
+systemctl start docker
 
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'DIMG_LIST=($(cat /var/tmp/docker-images/image-list.cfg))'
 for PACKAGE in "${RPM_LIST[@]}"; do :
@@ -64,7 +64,7 @@ for PACKAGE in "${RPM_LIST[@]}"; do :
         D_IMG=$(echo $PACKAGE | cut -d' ' -f1)
         D_VER=$(echo $PACKAGE | cut -d' ' -f2)
         F_NAME=$(echo $PACKAGE | cut -d' ' -f3)
-        # fetch_docker_images $D_IMG $D_VER $F_NAME
+        fetch_docker_images $D_IMG $D_VER $F_NAME
     fi
 done
 
