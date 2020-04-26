@@ -45,7 +45,7 @@ class TaskController {
 
         (async() => {
             try {
-                await OSController.hostFeedbackSshExec("192.168.0.97", `ls -l`, (err, out) => {
+                await OSController.hostFeedbackSshExec("172.16.42.1", `ls -l`, (err, out) => {
                     console.log("ERR =>", err);
                     console.log("OUT =>", out);
                 });
