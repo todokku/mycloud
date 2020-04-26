@@ -384,7 +384,7 @@ collect_informations
 dependencies
 
 # Clone repo
-pull_git
+# pull_git
 
 # Install the core components
 install_core_components

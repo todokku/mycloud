@@ -31,8 +31,6 @@ echo "[TASK 1] Install RPM packages"
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
-# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
-# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/git/*.rpm
 

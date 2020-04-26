@@ -58,6 +58,12 @@ class EngineController {
         OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "deploy_worker.sh"), targetProvisioningK8SScriptFolder);
         OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "get_ip_hostname.sh"), targetProvisioningK8SScriptFolder);
         await OSController.chmodr(targetProvisioningScriptBaseDir, 0o755); 
+
+
+
+
+
+        console.log(process.cwd());
     }
 
     /**
