@@ -1,12 +1,12 @@
 #!/bin/bash
 
 fetch_docker_images() {
-    if [ -z "$(docker images $1:$2 | sed -n '1!p')" ]; then
+    if [ ! -f "/var/tmp/docker-images/$3-$2.tar" ]; then
         docker pull $1:$2
+        docker save -o /var/tmp/docker-images/$3-$2.tar $1:$2
+        docker rmi $1:$2
+        docker images purge
     fi
-    docker save -o /var/tmp/docker-images/$3-$2.tar $1:$2
-    docker rmi $1:$2
-    docker images purge
 }
 
 DOCKER_EXISTS=$(command -v docker)
