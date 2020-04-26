@@ -1,7 +1,7 @@
 #!/bin/bash
 
 fetch_docker_images() {
-    if [ ! -f "/var/tmp/docker-images/$3-$2.tar" ]; then
+    if [ ! -f /var/tmp/docker-images/$3-$2.tar ]; then
         docker pull $1:$2
         docker save -o /var/tmp/docker-images/$3-$2.tar $1:$2
         docker rmi $1:$2

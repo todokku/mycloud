@@ -76,7 +76,7 @@ dependencies () {
            sudo apt-get install -y wget
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y wget
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/wget/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install wget
             fi
@@ -93,9 +93,10 @@ dependencies () {
             sudo apt-get install docker-ce docker-ce-cli containerd.io -y
         elif [ "$DISTRO" == "redhat" ]; then
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y -q yum-utils device-mapper-persistent-data lvm2 git
-                sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 
-                sudo yum install -y -q docker-ce
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/yum-utils/*.rpm
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/device-mapper-persistent-data/*.rpm
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/lvm2/*.rpm
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/docker-ce/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
                sudo dnf install -y docker-ce --nobest
@@ -115,7 +116,7 @@ dependencies () {
                 sudo apt install -y virtualbox-6.1
             elif [ "$DISTRO" == "redhat" ]; then
                 if [ "$MAJ_V" == "7" ]; then
-                    sudo yum install -y https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
+                    sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/virtualbox/*.rpm
                     rm -rf ./VirtualBox-6.1-6.1.4_136177_el7-1.x86_64.rpm
                 elif [ "$MAJ_V" == "8" ]; then
                     sudo dnf -y install https://download.virtualbox.org/virtualbox/6.1.4/VirtualBox-6.1-6.1.4_136177_el8-1.x86_64.rpm
@@ -136,7 +137,7 @@ dependencies () {
                 sudo apt -y install vagrant
             elif [ "$DISTRO" == "redhat" ]; then
                 if [ "$MAJ_V" == "7" ]; then
-                    sudo yum install -y https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
+                    sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/vagrant/*.rpm
                 elif [ "$MAJ_V" == "8" ]; then
                     sudo dnf -y install https://releases.hashicorp.com/vagrant/2.2.7/vagrant_2.2.7_x86_64.rpm
                 fi
@@ -146,7 +147,7 @@ dependencies () {
 
     VAGRANT_VGA_PLUGIN_EXISTS=$(vagrant plugin list | grep "vagrant-vbguest")
     if [ "$VAGRANT_VGA_PLUGIN_EXISTS" == "" ]; then
-        vagrant plugin install vagrant-vbguest
+        sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/vagrant-vbguest/*.rpm
     fi
 
     NODE_EXISTS=$(command -v node)
@@ -159,11 +160,11 @@ dependencies () {
         elif [ "$DISTRO" == "redhat" ]; then
             curl -sL https://rpm.nodesource.com/setup_12.x | sudo -E bash -
             if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y nodejs
+                sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/nodejs/*.rpm
             elif [ "$MAJ_V" == "8" ]; then
                 sudo dnf -y install nodejs
             fi
-            sudo yum install -y gcc-c++ make
+            # sudo yum install -y gcc-c++ make
         fi
     fi
 
@@ -184,7 +185,7 @@ dependencies () {
                 sudo apt-get install tar -y &> /dev/null
             elif [ "$DISTRO" == "redhat" ]; then
                 if [ "$MAJ_V" == "7" ]; then
-                    sudo yum install -y tar
+                    sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/tar/*.rpm
                 elif [ "$MAJ_V" == "8" ]; then
                     sudo dnf -y install tar
                 fi
@@ -199,7 +200,7 @@ dependencies () {
                 sudo apt-get install sshpass -y &> /dev/null
             elif [ "$DISTRO" == "redhat" ]; then
                 if [ "$MAJ_V" == "7" ]; then
-                    sudo yum install -y sshpass
+                    sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/sshpass/*.rpm
                 elif [ "$MAJ_V" == "8" ]; then
                     sudo dnf -y install sshpass
                 fi
@@ -207,18 +208,18 @@ dependencies () {
         fi
     fi
 
-    GIT_EXISTS=$(command -v git)
-    if [ "$GIT_EXISTS" == "" ]; then
-        if [ "$DISTRO" == "ubuntu" ]; then
-            sudo apt-get install git -y &> /dev/null
-        elif [ "$DISTRO" == "redhat" ]; then
-            if [ "$MAJ_V" == "7" ]; then
-                sudo yum install -y git
-            elif [ "$MAJ_V" == "8" ]; then
-                sudo dnf -y install git
-            fi
-        fi
-    fi
+    # GIT_EXISTS=$(command -v git)
+    # if [ "$GIT_EXISTS" == "" ]; then
+    #     if [ "$DISTRO" == "ubuntu" ]; then
+    #         sudo apt-get install git -y &> /dev/null
+    #     elif [ "$DISTRO" == "redhat" ]; then
+    #         if [ "$MAJ_V" == "7" ]; then
+    #             sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/git/*.rpm
+    #         elif [ "$MAJ_V" == "8" ]; then
+    #             sudo dnf -y install git
+    #         fi
+    #     fi
+    # fi
 }
 
 collect_informations() {
@@ -357,14 +358,14 @@ authorize_private_registry() {
     rm -rf ./configPrivateRegistry.sh
 }
 
-pull_git() {
-    echo "[INIT] Pulling repo from GIT..."
-    if [ ! -d "$HOME/mycloud" ] 
-    then
-        mkdir $HOME/mycloud
-        git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
-    fi
-}
+# pull_git() {
+#     echo "[INIT] Pulling repo from GIT..."
+#     if [ ! -d "$HOME/mycloud" ] 
+#     then
+#         mkdir $HOME/mycloud
+#         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
+#     fi
+# }
 
 build_vagrant_boxes () {
     cd $HOME/mycloud/install/host-node/vagrant-base-boxes/master 
@@ -449,7 +450,7 @@ if [ "$IS_K8S_NODE" == "true" ]; then
 fi
 
 # Clone repo
-pull_git
+# pull_git
 
 # Build vagrant boxes
 # if [ "$IS_K8S_NODE" == "true" ]; then
