@@ -41,6 +41,16 @@ class TaskController {
         TaskKeycloakController.init(this, app, mqttController);
         
         this.services = YAML.parse(fs.readFileSync(path.join(process.env.MC_SERVICES_DIR, "available.yml"), 'utf8'));
+
+
+        try {
+            await OSController.hostFeedbackSshExec("192.168.0.82", `ls -l`, (err, out) => {
+                console.log("ERR =>", err);
+                console.log("OUT =>", out);
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     /**
