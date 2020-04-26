@@ -13,7 +13,7 @@ yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/unzip/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/centos-release-gluster/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/glusterfs-server/*.rpm
-yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
+# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 
 systemctl disable glusterd
 systemctl stop glusterd
