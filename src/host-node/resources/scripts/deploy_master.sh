@@ -14,7 +14,7 @@ echo "[TASK 0] Start VM"
 vagrant up
 if [ $? -eq 0 ]; then
     echo "[TASK FINAL] Make master node also a worker node"
-    sleep 5
+    sleep 20
     vagrant ssh -c "kubectl taint nodes --all node-role.kubernetes.io/master-"
     if [ $? -eq 1 ]; then
         echo "[ERROR] Could not untaint master node workplaces/$1/$2"
