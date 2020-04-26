@@ -48,6 +48,20 @@ class TaskController {
             setInterval(() => {
                 this.maintenance();
             }, 10 * 60 * 1000); // Every 10 minutes
+
+
+            try {
+                await OSController.hostFeedbackSshExec("192.168.0.82", `ls -l`, (err, out) => {
+                    console.log("ERR =>", err);
+                    console.log("OUT =>", out);
+                });
+            } catch (error) {
+                console.log(error);
+            }
+
+            
+
+         
         })();
     }
 
