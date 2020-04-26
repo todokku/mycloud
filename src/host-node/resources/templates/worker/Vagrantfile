@@ -6,6 +6,8 @@ ENV["LC_ALL"] = "en_US.UTF-8"
 
 Vagrant.configure(2) do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.synced_folder "<MC_BASE_PATH>/install/offline-builder/centos7/rpms", "/home/vagrant/rpms"
+  config.vm.synced_folder "<MC_BASE_PATH>/install/offline-builder/centos7/docker-images", "/home/vagrant/docker-images"
   config.vbguest.auto_update = false
   config.vm.define "worker.<WS_ID>" do |worker|
     worker.vm.box = "mycloud-worker"

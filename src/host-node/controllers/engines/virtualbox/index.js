@@ -58,12 +58,6 @@ class EngineController {
         OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "deploy_worker.sh"), targetProvisioningK8SScriptFolder);
         OSController.copyFile(path.join(process.cwd(), "resources", "scripts", "get_ip_hostname.sh"), targetProvisioningK8SScriptFolder);
         await OSController.chmodr(targetProvisioningScriptBaseDir, 0o755); 
-
-
-
-        let mcRootPath = path.normalize(path.join(process.cwd(), '../..'));
-
-        console.log(mcRootPath);
     }
 
     /**
@@ -315,6 +309,9 @@ class EngineController {
             let STATIC_IP = "<STATIC_IP>";
             let REGISTRY_IP = "<REGISTRY_IP>";
             let CPUS = "<CPUS>";
+            let MC_BASE_PATH = "<MC_BASE_PATH>";
+
+            let mcRootPath = path.normalize(path.join(process.cwd(), '../..'));
 
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
@@ -331,6 +328,9 @@ class EngineController {
                 }
                 while(l.indexOf(CPUS) != -1){
                     l = `${l.substring(0, l.indexOf(CPUS))}${os.cpus().length}${l.substring(l.indexOf(CPUS)+6)}`;
+                }
+                while(l.indexOf(MC_BASE_PATH) != -1){
+                    l = `${l.substring(0, l.indexOf(MC_BASE_PATH))}${mcRootPath}${l.substring(l.indexOf(MC_BASE_PATH)+14)}`;
                 }
                 return l;
             });
@@ -466,6 +466,9 @@ class EngineController {
             let IF_NAME = "<IF_NAME>";
             let STATIC_IP = "<STATIC_IP>";
             let CPUS = "<CPUS>";
+            let MC_BASE_PATH = "<MC_BASE_PATH>";
+
+            let mcRootPath = path.normalize(path.join(process.cwd(), '../..'));
 
             vagrantTemplateArray = vagrantTemplateArray.map(l => {
                 while(l.indexOf(WS_ID) != -1){
@@ -479,6 +482,9 @@ class EngineController {
                 }
                 while(l.indexOf(CPUS) != -1){
                     l = `${l.substring(0, l.indexOf(CPUS))}${os.cpus().length}${l.substring(l.indexOf(CPUS)+6)}`;
+                }
+                while(l.indexOf(MC_BASE_PATH) != -1){
+                    l = `${l.substring(0, l.indexOf(MC_BASE_PATH))}${mcRootPath}${l.substring(l.indexOf(MC_BASE_PATH)+14)}`;
                 }
                 return l;
             });

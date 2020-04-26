@@ -52,11 +52,11 @@ sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-username-claim=email' /etc/kubernete
 sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-client-id=kubernetes-cluster' /etc/kubernetes/manifests/kube-apiserver.yaml
 sed -i '/- kube-apiserver/a\ \ \ \ - --oidc-ca-file=/etc/kubernetes/pki/rootCA.crt' /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# Install Gluster client
-echo "[TASK 14] Install Gluster engine"
-yum install -y -q centos-release-gluster
-yum install -y -q glusterfs-server
-systemctl disable glusterd
-systemctl stop glusterd
+# # Install docker from Docker-ce repository
+# echo "[TASK 1] Install docker container engine"
+# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/centos-release-gluster/*.rpm
+# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/glusterfs-server/*.rpm
+# systemctl disable glusterd
+# systemctl stop glusterd
 
 /home/vagrant/gentoken.sh

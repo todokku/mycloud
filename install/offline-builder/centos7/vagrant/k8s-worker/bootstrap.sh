@@ -11,10 +11,13 @@ echo "[TASK 1] Install docker container engine"
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/yum-utils/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/device-mapper-persistent-data/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/lvm2/*.rpm
-# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/wget/*.rpm
-# yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/docker-ce/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/sshpass/*.rpm
 yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/unzip/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/centos-release-gluster/*.rpm
+yum install -y --cacheonly --disablerepo=* /home/vagrant/rpms/glusterfs-server/*.rpm
+
+systemctl disable glusterd
+systemctl stop glusterd
 
 usermod -aG docker vagrant
 
