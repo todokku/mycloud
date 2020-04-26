@@ -52,7 +52,7 @@ echo "export KUBECONFIG=/home/vagrant/.kube/admin.conf" | tee -a ~/.bashrc
 source ~/.bashrc
 
 # Deploy flannel network
-echo "[TASK 14] Deploy Calico network"
+echo "[TASK 14] Deploy Flannel network"
 # su - vagrant -c "kubectl create -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
 su - vagrant -c "kubectl apply -f /home/vagrant/k8s_templates/kube-flannel.yml"
 

@@ -338,7 +338,7 @@ class EngineController {
             OSController.writeArrayToFile(path.join(targetFolder, "Vagrantfile"), vagrantTemplateArray);
         } catch(err) {
             if (fs.existsSync(targetFolder)) {
-                await rmfr(targetFolder);
+                // await rmfr(targetFolder);
             }
             if(leasedIp){
                 this.mqttController.client.publish(`/mycloud/k8s/host/query/taskmanager/returnLeasedIp`, JSON.stringify({
