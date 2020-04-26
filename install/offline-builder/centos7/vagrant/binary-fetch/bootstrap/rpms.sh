@@ -14,6 +14,8 @@ download_rpm() {
     yumdownloader --assumeyes --destdir=/var/tmp/rpms/$1 --resolve $1
 }
 
+yum install -y centos-release-gluster
+
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'RPM_LIST=($(cat /var/tmp/rpms/rpm-list.cfg))'
 for PACKAGE in "${RPM_LIST[@]}"; do :
     if [[ "$PACKAGE" =~ ^#.*  ]]; then
