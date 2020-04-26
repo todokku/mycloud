@@ -61,9 +61,9 @@ class EngineController {
 
 
 
+        let mcRootPath = path.normalize(path.join(process.cwd(), '../..'));
 
-
-        console.log(process.cwd());
+        console.log(mcRootPath);
     }
 
     /**
