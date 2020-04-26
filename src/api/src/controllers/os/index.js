@@ -71,8 +71,8 @@ class OsController {
         
             ssh.connect({
                 host: ip,
-                username: 'mdk',
-                password: 'li14ebe14'
+                username: 'vagrant',
+                password: 'vagrant'
             }).then(function() {
                 try {
                     let sploit = command.split(' ');
