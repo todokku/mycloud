@@ -299,7 +299,7 @@ docker run -d \
 ' > /dev/null 2>&1
 
 echo "[TASK 18] Generate client registry setup script"
-M_IP="$(hostname -I | cut -d' ' -f2)"
+# M_IP="$(hostname -I | cut -d' ' -f2)"
 CRT="$(cat /opt/docker/containers/nginx/certs/docker-registry.crt)"
 CRT_NGINX="$(cat /opt/docker/containers/nginx/certs/nginx-registry.crt)"
 

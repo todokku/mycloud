@@ -2,7 +2,7 @@
 
 # Configure kubelet IP since running in VB
 # sed -i '9iEnvironment="KUBELET_EXTRA_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"' /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
-M_IP="$(hostname -I | cut -d' ' -f2)"
+M_IP="$(cat /etc/sysconfig/network-scripts/ifcfg-eth1 | grep IPADDR= | cut -d'=' -f2)"
 rm -rf /etc/sysconfig/kubelet
 echo "KUBELET_EXTRA_ARGS=--node-ip=$M_IP" >> /etc/sysconfig/kubelet
 
@@ -32,7 +32,6 @@ docker load --input /home/vagrant/docker-images/pause-3.2-3.2.tar
 
 # Initialize Kubernetes cluster
 echo "[TASK 11] Initialize Kubernetes Cluster"
-M_IP="$(hostname -I | cut -d' ' -f2)"
 echo "Initializing kubeadm on IP $M_IP"
 # kubeadm init --apiserver-advertise-address=$M_IP --pod-network-cidr=192.168.0.0/16
 kubeadm init --apiserver-advertise-address=$M_IP --pod-network-cidr=10.244.0.0/16

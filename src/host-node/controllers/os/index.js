@@ -27,8 +27,22 @@ class OsController {
 		if(this.ip){
 			return this.ip;
 		}
-		let result = await this.execSilentCommand(`ifconfig ${process.env.DEFAULT_INET_INTERFACE_SHORT} | grep "inet " | awk '{print $2}'`);
-		this.ip = result[0];
+		// let result = await this.execSilentCommand(`ifconfig ${process.env.DEFAULT_INET_INTERFACE_SHORT} | grep "inet " | awk '{print $2}'`);
+		// this.ip = result[0];
+		// return this.ip;
+
+		let ifaces = os.networkInterfaces();
+        // Iterate over interfaces ...
+        for (var dev in ifaces) {
+			if(process.env.DEFAULT_INET_INTERFACE_SHORT == dev) {
+				for (var i = 0, len = ifaces[dev].length; i < len; i++) {
+					var details = ifaces[dev][i];
+					if (details.family === 'IPv4') {
+						this.ip = details.address;
+					}
+				}
+			}
+		}
 		return this.ip;
 	}
 	
