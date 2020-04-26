@@ -11,6 +11,9 @@ _PWD="$(pwd)"
 
 cd $_DIR
 
+_BASEDIR="$(dirname "$_DIR")"
+_BASEDIR="$(dirname "$_BASEDIR")"
+
 distro() {
     # Determine OS platform
     UNAME=$(uname | tr "[:upper:]" "[:lower:]")
@@ -207,19 +210,6 @@ dependencies () {
             fi
         fi
     fi
-
-    # GIT_EXISTS=$(command -v git)
-    # if [ "$GIT_EXISTS" == "" ]; then
-    #     if [ "$DISTRO" == "ubuntu" ]; then
-    #         sudo apt-get install git -y &> /dev/null
-    #     elif [ "$DISTRO" == "redhat" ]; then
-    #         if [ "$MAJ_V" == "7" ]; then
-    #             sudo yum install -y --cacheonly --disablerepo=* ../offline-builder/centos7/rpms/git/*.rpm
-    #         elif [ "$MAJ_V" == "8" ]; then
-    #             sudo dnf -y install git
-    #         fi
-    #     fi
-    # fi
 }
 
 collect_informations() {
@@ -358,26 +348,12 @@ authorize_private_registry() {
     rm -rf ./configPrivateRegistry.sh
 }
 
-# pull_git() {
-#     echo "[INIT] Pulling repo from GIT..."
-#     if [ ! -d "$HOME/mycloud" ] 
-#     then
-#         mkdir $HOME/mycloud
-#         git clone https://github.com/mdundek/mycloud.git $HOME/mycloud
-#     fi
-# }
-
-build_vagrant_boxes () {
-    cd $HOME/mycloud/install/host-node/vagrant-base-boxes/master 
-    ./build.sh
-    cd $HOME/mycloud/install/host-node/vagrant-base-boxes/worker
-    ./build.sh
-}
-
 install_core_components() {
     echo "[STEP 2] Installing host controller components ..."
-    cd $HOME/mycloud/src/host-node/ # Position cmd in src folder
+    cd $_BASEDIR/src/host-node/ # Position cmd in src folder
     
+    mkdir -p $HOME/.mycloud
+
     if [ "$IS_GLUSTER_PEER" == "true" ]; then
         mkdir -p $HOME/.mycloud/gluster/etc/glusterfs &> /dev/null
         mkdir -p $HOME/.mycloud/gluster/var/lib/glusterd &> /dev/null
@@ -388,7 +364,7 @@ install_core_components() {
     # if [ "$IS_K8S_NODE" == "true" ]; then
     cp env.template env
 
-    VM_BASE=$HOME/mycloud/vm_base
+    VM_BASE=$HOME/.mycloud/vm_base
 
     sed -i "s/<MASTER_IP>/$MASTER_IP/g" ./env
     sed -i "s/<DB_PORT>/5432/g" ./env
@@ -412,8 +388,6 @@ install_core_components() {
         pm2 save
     fi
 }
-
-
 
 # Figure out what distro we are running
 distro
@@ -448,14 +422,6 @@ dependencies
 if [ "$IS_K8S_NODE" == "true" ]; then
     authorize_private_registry
 fi
-
-# Clone repo
-# pull_git
-
-# Build vagrant boxes
-# if [ "$IS_K8S_NODE" == "true" ]; then
-#     build_vagrant_boxes
-# fi
 
 # Install the core components
 install_core_components
