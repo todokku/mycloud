@@ -1,7 +1,9 @@
 #!/bin/bash
 
 fetch_docker_images() {
-    docker pull $1:$2
+    if [ -z "$(docker images $1:$2 | sed -n '1!p')" ]; then
+        docker pull $1:$2
+    fi
     docker save -o /var/tmp/docker-images/$3-$2.tar $1:$2
     docker rmi $1:$2
     docker images purge
