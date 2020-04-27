@@ -1,9 +1,8 @@
 #!/bin/bash
 
-_DIR="$(cd "$(dirname "$0")" && pwd)"
-_PWD="$(pwd)"
-
-cd $_DIR
+usage() {
+    echo "usage: ./install.sh [-c --preparecplane] [-p --preparehostnode] [-i --installhostnode] | [-h]"
+}
 
 distro() {
     # Determine OS platform
@@ -109,37 +108,96 @@ dependencies () {
     fi
 }
 
+
+
+
+
+
+
+
+DL_RPMS=0
+DL_DOCKER_IMGS=0
+
+PREPARE_CONTROL_PLANE=0
+PREPARE_HOST_NODE=0
+INSTALL_HOST_NODE_BOXES=0
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -p | --preparehostnode )    PREPARE_HOST_NODE=1
+                                    ;;
+        -i | --installhostnode )    INSTALL_HOST_NODE_BOXES=1
+                                    ;;
+        -c | --preparecplane )      PREPARE_CONTROL_PLANE=1
+                                    ;;
+        -h | --help )               usage
+                                    exit
+                                    ;;
+        * )                         usage
+                                    exit 1
+    esac
+    shift
+done
+if [ "$PREPARE_CONTROL_PLANE" = "0" ] && [ "$PREPARE_HOST_NODE" = "0" ] && [ "$INSTALL_HOST_NODE_BOXES" = "0" ]; then
+	usage
+    exit
+fi
+
+
+_DIR="$(cd "$(dirname "$0")" && pwd)"
+_PWD="$(pwd)"
+cd $_DIR
+
 distro
 
 dependencies
 
-cd vagrant/binary-fetch
-VAGRANT_BOX_EXISTS=$(vagrant box list | grep "mycloud-basebox-centos/7")
-if [ "$VAGRANT_BOX_EXISTS" != "" ]; then
-    vagrant box remove mycloud-basebox-centos/7
+if [ "$PREPARE_CONTROL_PLANE" = "1" ] || [ "$PREPARE_HOST_NODE" = "1" ]; then
+    cd vagrant/binary-fetch
+    VAGRANT_BOX_EXISTS=$(vagrant box list | grep "mycloud-basebox-centos/7")
+    if [ "$VAGRANT_BOX_EXISTS" != "" ]; then
+        vagrant box remove mycloud-basebox-centos/7
+    fi
+    vagrant halt && vagrant destroy -f
+    vagrant up --no-provision
+
+
+    vagrant provision --provision-with init
+
+
+
+
+
+
+
+    # rm -rf ../../virtual/mycloud-basebox-centos7.box
+    # vagrant package --output ../../virtual/mycloud-basebox-centos7.box
+    # vagrant box add mycloud-basebox-centos/7 ../../virtual/mycloud-basebox-centos7.box
+    # vagrant destroy -f
+    # rm -rf .vagrant
 fi
-vagrant halt && vagrant destroy -f
-vagrant up
-rm -rf ../../virtual/mycloud-basebox-centos7.box
-vagrant package --output ../../virtual/mycloud-basebox-centos7.box
-vagrant box add mycloud-basebox-centos/7 ../../virtual/mycloud-basebox-centos7.box
-vagrant destroy -f
-rm -rf .vagrant
 
-cd ../k8s-master
-vagrant halt && vagrant destroy -f
-vagrant up
-rm -rf ../../virtual/mycloud-master.box
-vagrant package --output ../../virtual/mycloud-master.box
-vagrant destroy -f
-rm -rf .vagrant
+# if [ "$PREPARE_HOST_NODE" = "1" ]; then
+#     cd ../k8s-master
+#     vagrant halt && vagrant destroy -f
+#     vagrant up
+#     rm -rf ../../virtual/mycloud-master.box
+#     vagrant package --output ../../virtual/mycloud-master.box
+#     vagrant destroy -f
+#     rm -rf .vagrant
 
-cd ../k8s-worker
-vagrant halt && vagrant destroy -f
-vagrant up
-rm -rf ../../virtual/mycloud-worker.box
-vagrant package --output ../../virtual/mycloud-worker.box
-vagrant destroy -f
-rm -rf .vagrant
+#     cd ../k8s-worker
+#     vagrant halt && vagrant destroy -f
+#     vagrant up
+#     rm -rf ../../virtual/mycloud-worker.box
+#     vagrant package --output ../../virtual/mycloud-worker.box
+#     vagrant destroy -f
+#     rm -rf .vagrant
+# fi
+
+# if [ "$INSTALL_HOST_NODE_BOXES" = "1" ]; then
+#     vagrant box add mycloud-master ../../virtual/mycloud-master.box
+#     vagrant box add mycloud-worker ../../virtual/mycloud-worker.box
+# fi
 
 cd "$_PWD"
