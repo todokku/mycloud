@@ -173,8 +173,8 @@ if [ "$PREPARE_CONTROL_PLANE" = "1" ] || [ "$PREPARE_HOST_NODE" = "1" ]; then
     # rm -rf ../../virtual/mycloud-basebox-centos7.box
     # vagrant package --output ../../virtual/mycloud-basebox-centos7.box
     # vagrant box add mycloud-basebox-centos/7 ../../virtual/mycloud-basebox-centos7.box
-    # vagrant destroy -f
-    # rm -rf .vagrant
+    vagrant destroy -f
+    rm -rf .vagrant
 fi
 
 # if [ "$PREPARE_HOST_NODE" = "1" ]; then
