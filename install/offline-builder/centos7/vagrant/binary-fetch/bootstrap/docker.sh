@@ -14,6 +14,7 @@ fetch_docker_images() {
 
 DOCKER_EXISTS=$(command -v docker)
 if [ "$DOCKER_EXISTS" == "" ]; then
+    echo "==> Installing Docker..."
     # ********** FETCH REQUIRED DOCKER CONTAINERS ************
     yum install -y docker-ce
     systemctl enable docker
