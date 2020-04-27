@@ -28,7 +28,10 @@ download_rpm() {
         mkdir /var/tmp/rpms/$1
     fi
     if [ -z "$(ls /var/tmp/rpms/$1)" ]; then 
+        echo "==> Downloading package $1"
         yumdownloader --assumeyes --destdir=/var/tmp/rpms/$1 --resolve $1
+    else
+        echo "==> $1 already present, skipping download"
     fi
 }
 
@@ -39,7 +42,6 @@ for PACKAGE in "${RPM_LIST[@]}"; do :
     if [[ "$PACKAGE" =~ ^#.*  ]]; then
         echo "==> Skipping rpm $PACKAGE"
     else
-        echo "==> Downloading package $PACKAGE"
         download_rpm $PACKAGE
     fi
 done
