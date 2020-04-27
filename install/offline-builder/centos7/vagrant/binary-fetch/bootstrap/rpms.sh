@@ -37,8 +37,9 @@ yum install -y centos-release-gluster
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'RPM_LIST=($(cat /var/tmp/rpms/rpm-list.cfg))'
 for PACKAGE in "${RPM_LIST[@]}"; do :
     if [[ "$PACKAGE" =~ ^#.*  ]]; then
-        echo "Skipping docker $PACKAGE"
+        echo "==> Skipping rpm $PACKAGE"
     else
+        echo "==> Downloading package $PACKAGE"
         download_rpm $PACKAGE
     fi
 done

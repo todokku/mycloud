@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    echo "usage: ./install.sh [-c --preparecplane] [-p --preparehostnode] [-i --installhostnode] | [-h]"
+    echo "usage: ./install.sh [-c --preparecplane] [-p --preparehostnode] [-i --installhostnode] [-b --preservebaseimage] | [-h]"
 }
 
 distro() {
@@ -117,7 +117,7 @@ dependencies () {
 
 DL_RPMS=0
 DL_DOCKER_IMGS=0
-
+PRESERVE_BASE_VM=0
 PREPARE_CONTROL_PLANE=0
 PREPARE_HOST_NODE=0
 INSTALL_HOST_NODE_BOXES=0
@@ -129,6 +129,8 @@ while [ "$1" != "" ]; do
         -i | --installhostnode )    INSTALL_HOST_NODE_BOXES=1
                                     ;;
         -c | --preparecplane )      PREPARE_CONTROL_PLANE=1
+                                    ;;
+        -b | --preservebaseimage )  PRESERVE_BASE_VM=1
                                     ;;
         -h | --help )               usage
                                     exit
@@ -160,15 +162,14 @@ if [ "$PREPARE_CONTROL_PLANE" = "1" ] || [ "$PREPARE_HOST_NODE" = "1" ]; then
     fi
     vagrant halt && vagrant destroy -f
     vagrant up --no-provision
-
-
     vagrant provision --provision-with init
 
 
 
 
-
-
+    if [ "$PRESERVE_BASE_VM" = "0" ]; then
+        vagrant provision --provision-with cleanup
+    fi
 
     # rm -rf ../../virtual/mycloud-basebox-centos7.box
     # vagrant package --output ../../virtual/mycloud-basebox-centos7.box
