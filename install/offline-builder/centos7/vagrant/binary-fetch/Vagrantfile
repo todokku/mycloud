@@ -23,6 +23,22 @@ Vagrant.configure(2) do |config|
       shell.path = "./bootstrap/init.sh"
     end
 
+    mycloud.vm.provision "rpms", type: "shell" do |shell|
+      shell.path = "./bootstrap/rpms.sh"
+    end
+
+    mycloud.vm.provision "docker", type: "shell" do |shell|
+      shell.path = "./bootstrap/docker.sh"
+    end
+
+    mycloud.vm.provision "mc", type: "shell" do |shell|
+      shell.path = "./bootstrap/mc.sh"
+    end
+
+    mycloud.vm.provision "cleanup", type: "shell" do |shell|
+      shell.path = "./bootstrap/cleanup.sh"
+    end
+
     # mycloud.vm.provision "shell", path: "./bootstrap/init.sh"
     # mycloud.vm.provision "shell", path: "./bootstrap/rpms.sh"
     # mycloud.vm.provision "shell", path: "./bootstrap/docker.sh"

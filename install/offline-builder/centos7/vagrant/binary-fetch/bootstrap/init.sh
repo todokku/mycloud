@@ -13,7 +13,6 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 EOF
 
 yum -y update
-yum -y update kernel
 
 # ********** FETCH REQUIRED RMP PACKAGES ************
 yum install -y yum-utils wget
